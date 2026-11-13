@@ -1,0 +1,49 @@
+name: XAU signals
+
+on:
+  schedule:
+    # A few minutes after each H1 close while gold trades (times are UTC).
+    # Gold reopens Sunday ~22:00-23:00 UTC and closes Friday ~21:00-22:00 UTC.
+    - cron: "7 * * * 1-5"
+    - cron: "7 22,23 * * 0"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "run = normal check, test = post a status message to Slack"
+        required: true
+        default: test
+        type: choice
+        options: [test, run]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: xau-signals
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run strategy check
+        env:
+          TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          MODE: ${{ github.event.inputs.mode || 'run' }}
+        run: python3 signals.py
+
+      - name: Save state
+        if: always()
+        run: |
+          if [ -n "$(git status --porcelain state.json)" ]; then
+            git config user.name "xau-signals-bot"
+            git config user.email "xau-signals-bot@users.noreply.github.com"
+            git add state.json
+            git commit -m "Update signal state"
+            git pull --rebase --quiet origin "${GITHUB_REF_NAME}" || true
+            git push
+          fi
