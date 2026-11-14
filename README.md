@@ -17,7 +17,7 @@ When nothing happens, it posts nothing.
 
 **Trade plan:** a stop-order entry just beyond the signal candle, with the stop beyond the last 5 candles. Take half off at +1R and move the stop to entry, then close the rest at +2R. The setup is cancelled if the colour flips or 12 hours pass before entry.
 
-**Tested 2016–2026 (`research/`):** 460 trades, 57% winners, +0.13R per trade after costs, profit factor 1.30. The video's original rules were break-even over the same period.
+**Tested 2008–2026 (`research/`):** 805 trades, 57% winners, +0.12R per trade after costs. That includes 8 untouched years (2008–2015) at +0.10R per trade. The video's original rules lost money over the same period.
 
 ## Context checks (shown on every setup, information only)
 | Check | Passes when |

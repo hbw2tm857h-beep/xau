@@ -64,6 +64,7 @@ class Lab:
         self.ema50 = ema_series(closes, 50)
         self.uk = [x["t"].astimezone(UK) for x in bars]
         self._trend = {}
+        self._dadx = {}
 
     def trend(self, i):
         k = self.F.d_idx[i]
@@ -135,21 +136,50 @@ def fill(lab, i_sig, d, entry, expiry, cancel_on_flip=False):
 # Strategy families: each yields (signal bar i, dir, entry, stop, expiry, cancel_on_flip)
 # --------------------------------------------------------------------------
 def gen_ha(lab, p):
-    """Video rules (shared evaluate), optional extra filters."""
+    """Shared evaluate() with optional overrides.
+
+    p: session/adx/h4/atr_band (filters), breakout, swing, plus
+       cfg: dict of CONFIG overrides, atr_stop: k (stop = entry -/+ k x H1 ATR),
+       h4_nowick: require the 4H HA candle to have no wick against us,
+       hours: (start, end) UK hours allowed, daily_adx: min daily ADX,
+       expiry: bars the stop order stays live
+    """
     cfg = dict(lab.cfg)
     cfg["filters"] = dict(cfg["filters"])
     for k in ("session", "adx", "h4", "atr_band"):
         cfg["filters"][k] = bool(p.get(k))
     cfg["require_breakout"] = p.get("breakout", True)
     cfg["stop_swing_bars"] = p.get("swing", 5)
+    cfg.update(p.get("cfg", {}))
+    F = lab.F
     for i in range(len(lab.b)):
-        if not lab.F.warm(i):
+        if not F.warm(i):
             continue
+        if p.get("hours"):
+            h = lab.uk[i].hour
+            a, b_ = p["hours"]
+            if not (a <= h < b_):
+                continue
         for d in (1, -1):
-            s = S.evaluate(lab.F, i, d, cfg)
-            if s:
-                yield i, d, s["entry"], s["stop"], 12, True
-                break
+            s = S.evaluate(F, i, d, cfg)
+            if not s:
+                continue
+            if p.get("h4_nowick"):
+                c4 = F.h4_ha[F.h4_idx[i]]
+                ok = S.no_lower_wick(c4, 0) if d == 1 else S.no_upper_wick(c4, 0)
+                if not ok:
+                    continue
+            if p.get("daily_adx"):
+                k = F.d_idx[i]
+                if k not in lab._dadx:
+                    lab._dadx[k] = S.adx_series(F.daily[max(0, k - 120):k + 1], 14)[-1]
+                if lab._dadx[k] is None or lab._dadx[k] < p["daily_adx"]:
+                    continue
+            entry, stop = s["entry"], s["stop"]
+            if p.get("atr_stop"):
+                stop = entry - d * p["atr_stop"] * (F.hatr[i] or 0)
+            yield i, d, entry, stop, p.get("expiry", 12), True
+            break
 
 
 def gen_asia(lab, p):

@@ -105,7 +105,7 @@ CONFIG = {
     "breakeven_at_r": None,       # only used with exit_mode "ha"
     "alert_entry_hit": True,
     "alert_daily_hold": True,     # only used with exit_mode "ha"
-    "track_record": "2016-2026 backtest: 460 trades, 57% winners, +0.13R per trade after costs",
+    "track_record": "Tested 2008-2026: 805 trades, 57% winners, +0.12R per trade after costs",
 
     # Position size (only if ACCOUNT_SIZE secret is set)
     "contract_oz": 100,           # oz per 1.00 lot - check MT5 symbol spec
@@ -918,7 +918,7 @@ def scorecard(journal, now):
             f"Best {best['r']:+.2f}R ({side_word(best['dir'])}) | worst {worst['r']:+.2f}R ({side_word(worst['dir'])})\n"
             f"All time: {a['n']} trades, {a['win']:.0f}% winners, {a['total']:+.1f}R, "
             f"biggest drop {a['dd']:.1f}R\n"
-            "_Backtest benchmark: 57% winners, +0.13R per trade. R = multiples of the risk on each trade; "
+            "_Backtest benchmark (2008-2026): 57% winners, +0.12R per trade. R = multiples of the risk on each trade; "
             "results assume every signal was taken at the alert levels._")
 
 
