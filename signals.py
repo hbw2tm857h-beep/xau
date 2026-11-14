@@ -104,6 +104,8 @@ CONFIG = {
     # Backtest
     "cost_per_trade": 0.35,       # $ spread + slippage per trade
     "oos_fraction": 0.30,         # last 30% of time = out-of-sample
+    "verdict_min_gain_r": 0.10,   # a filter must add this much avg R in both periods
+    "verdict_min_trades": 30,     # ...with at least this many test trades
 
     "fail_alert_after": 3,
     "max_catchup_bars": 6,
@@ -875,6 +877,25 @@ def fmt_stats_row(name, s_is, s_oos):
     return f"| {name} | {cell(s_is)} | {cell(s_oos)} |"
 
 
+def edge_note(s):
+    """Plain-English verdict on whether the baseline has an edge."""
+    if not s.get("n"):
+        return "No trades."
+    if s["n"] < 100:
+        size = f"Only {s['n']} trades, so this is an early read, not proof."
+    else:
+        size = f"{s['n']} trades is a reasonable sample."
+    if s["avg"] >= 0.2 and s["pf"] >= 1.5:
+        verdict = "*Verdict:* a real edge so far."
+    elif s["avg"] >= 0.05:
+        verdict = "*Verdict:* a thin edge after costs. Trade it small or paper-trade it while live results build up."
+    elif s["avg"] > -0.05:
+        verdict = "*Verdict:* roughly break-even after costs. No proven edge yet."
+    else:
+        verdict = "*Verdict:* losing after costs. Don't trade it as is."
+    return f"{verdict} {size}"
+
+
 def backtest_report(F, cfg, h1, repo):
     first, last = h1[0]["t"], h1[-1]["t"] + H1
     rows, results = [], {}
@@ -904,17 +925,20 @@ def backtest_report(F, cfg, h1, repo):
         if s_is["n"] == 0 or s_oos["n"] == 0:
             verdicts.append(f"- *{name}*: too few trades to judge.")
             continue
-        better = s_is["avg"] > b_is.get("avg", 0) and s_oos["avg"] > b_oos.get("avg", 0)
-        worse = s_is["avg"] < b_is.get("avg", 0) and s_oos["avg"] < b_oos.get("avg", 0)
-        if better and s_oos["n"] >= 15:
-            verdicts.append(f"- *{name}*: improved average R in both periods ({s_is['avg']:+.2f} / {s_oos['avg']:+.2f} vs "
-                            f"{b_is['avg']:+.2f} / {b_oos['avg']:+.2f}). Worth switching on.")
-        elif better:
-            verdicts.append(f"- *{name}*: better in both periods but only {s_oos['n']} test trades. Promising, not proven.")
-        elif worse:
-            verdicts.append(f"- *{name}*: worse in both periods. Leave it off.")
+        gap = cfg["verdict_min_gain_r"]
+        d_is = s_is["avg"] - b_is.get("avg", 0)
+        d_oos = s_oos["avg"] - b_oos.get("avg", 0)
+        nums = (f"({s_is['avg']:+.2f} / {s_oos['avg']:+.2f} vs {b_is.get('avg', 0):+.2f} / "
+                f"{b_oos.get('avg', 0):+.2f}, {s_oos['n']} test trades)")
+        if d_is >= gap and d_oos >= gap and s_oos["n"] >= cfg["verdict_min_trades"]:
+            verdicts.append(f"- *{name}*: clearly better in both periods {nums}. Worth switching on.")
+        elif d_is > 0 and d_oos > 0:
+            verdicts.append(f"- *{name}*: slightly better in both periods {nums}, but too small or too few trades "
+                            "to rule out luck. Keep watching.")
+        elif d_is < 0 and d_oos < 0:
+            verdicts.append(f"- *{name}*: worse in both periods {nums}. Leave it off.")
         else:
-            verdicts.append(f"- *{name}*: mixed (better in one period, worse in the other). No reliable edge.")
+            verdicts.append(f"- *{name}*: mixed {nums}. No reliable edge.")
 
     md = [
         "# Backtest: gold Heikin Ashi trend-ride",
@@ -941,6 +965,7 @@ def backtest_report(F, cfg, h1, repo):
         "## Baseline in detail (whole period)",
         "",
         f"- Trades: {b_all.get('n', 0)} (plus {base_cancels} setups cancelled before entry)",
+        f"- {edge_note(b_all).replace('*', '**')}",
     ]
     if b_all.get("n"):
         md += [
@@ -969,14 +994,13 @@ def backtest_report(F, cfg, h1, repo):
     report = "\n".join(md)
 
     link = f"https://github.com/{repo}/blob/main/backtest.md" if repo else "backtest.md"
-    best_name, best = max(((n, r) for n, r in results.items()), key=lambda kv: kv[1][3].get("avg", -99) if kv[1][3].get("n", 0) >= 15 else -99)
     if b_all.get("n"):
         slack = (":test_tube: *Backtest finished: gold Heikin Ashi strategy*\n"
                  f"{first:%b %Y} to {last:%b %Y}, costs included.\n"
                  f"*Video rules:* {b_all['n']} trades, {b_all['win']:.0f}% winners, avg *{b_all['avg']:+.2f}R* per trade, "
                  f"total {b_all['total']:+.1f}R, biggest drop {b_all['dd']:.1f}R.\n"
                  f"Test period only: {b_oos.get('n', 0)} trades, avg {b_oos.get('avg', 0):+.2f}R.\n"
-                 f"*Best version in the test period:* {best_name} (avg {best[3].get('avg', 0):+.2f}R over {best[3].get('n', 0)} trades).\n"
+                 f"{edge_note(b_all)}\n"
                  + "\n".join(verdicts) + f"\nFull report: {link}")
     else:
         slack = f":test_tube: Backtest finished but the baseline produced no trades. Report: {link}"
