@@ -1,38 +1,48 @@
 # xau: gold Heikin Ashi signals to Slack
 
-Alert-only bot. It **never places trades**. A few minutes after each H1 candle closes, GitHub Actions runs `signals.py`. The script checks the Heikin Ashi trend-ride checklist on XAU/USD and posts to Slack:
+Alert-only bot. It **never places trades**. A few minutes after each H1 candle closes, GitHub Actions runs `signals.py`. The script checks the Heikin Ashi trend-ride rules on XAU/USD and posts plain-English alerts to Slack:
 
-- **Signal** (long or short): the checklist results, a stop-order level, a stop idea, and the next daily level
-- **Entry level reached**, **stop idea reached**
-- **Exit**: the first opposite-colour H1 Heikin Ashi close
-- **Daily hold note**: the daily candle closed with no wick in your direction
+- **Setup** (buy or sell): the plan (entry, stop, size, exit, first level ahead, when it's cancelled), why the setup qualifies, and a grade from A to C based on the quality checks
+- **Entry triggered**, **stopped out**, **exit signal** (the first opposite-colour H1 Heikin Ashi close), **setup cancelled**, **hold overnight**
+- **Weekly scorecard** on Friday night, posted only if trades closed that week
 - **Warning**, sent only if the bot fails 3 runs in a row
 
 When nothing happens, it posts nothing.
 
-## The checklist (H1 candle close)
+## The rules (checked on each H1 candle close)
 1. Daily direction agrees: the daily Heikin Ashi colour, plus the daily close compared with the 50 EMA.
-2. The candle is the first Heikin Ashi candle of the new colour with no wick on the wrong side (no lower wick for longs, no upper wick for shorts).
+2. The candle is the first Heikin Ashi candle of the new colour with no wick on the wrong side.
 3. Its body is bigger than the previous candle's body.
-4. In the last 24 H1 candles, price closed through a daily support or resistance level.
-5. There is room before the next opposing daily level: at least 0.5 × the daily ATR.
+4. In the last 24 hours, price closed through a daily support or resistance level, and there's room before the next one.
 
-Daily levels come from pivot closes over the last 180 days, the same way you'd mark them on a line chart. Daily candles close at 17:00 New York time, like OANDA's.
+## Quality checks (shown on every setup; they set the grade)
+| Check | Passes when |
+|---|---|
+| Session | London / New York hours (07:00 to 20:00 UK) |
+| ADX | H1 trend strength is 20 or higher |
+| 4-hour | The last 4-hour Heikin Ashi candle is the same colour as the setup |
+| Volatility | The H1 ATR is neither in the bottom 10% nor the top 5% of the last 500 hours |
+| News | No high-impact US event within 30 minutes (live alerts only) |
 
-Every setting is in `CONFIG` at the top of `signals.py`. Edit it on GitHub and the next run uses the new values.
+Grade **A** means all 4 of the first four checks pass, **B** means 2 or 3 pass, and **C** means 0 or 1 pass. Any check can become a hard filter in `CONFIG["filters"]`. Only switch one on if the backtest shows it helps in both the training period and the test period.
+
+## Backtest
+Open the *Actions* tab and choose *XAU signals*, then *Run workflow*, with mode set to `backtest`. It replays about 2.5 years of H1 data through the same code the live bot uses. It compares the video's rules with each quality check added, splits the history into a training period and a test period, and writes the results to `backtest.md` with a summary in Slack.
+
+## Position size (optional)
+Add these repository secrets to show a lot size on every setup:
+- `ACCOUNT_SIZE`, for example `5000`
+- `ACCOUNT_CCY`: `GBP`, `USD` or `EUR`
+- `RISK_PCT`, for example `1`
+
+The calculation assumes 1 lot = 100 oz. Check the contract size in your MT5 symbol specification and change `contract_oz` in `CONFIG` if it differs.
 
 ## Setup
-1. **Slack webhook.** Go to api.slack.com/apps and choose *Create New App*, then *From scratch*, then *Incoming Webhooks*. Switch it on, choose *Add New Webhook*, pick **#gold-signals**, and copy the URL.
-2. **Twelve Data key.** Sign up for the free plan at twelvedata.com and copy your API key.
-3. **Secrets.** In this repo, open *Settings*, then *Secrets and variables*, then *Actions*, then *New repository secret*. Add both of these:
-   - `SLACK_WEBHOOK_URL`
-   - `TWELVEDATA_API_KEY`
-4. **Test.** Open the *Actions* tab and choose *XAU signals*, then *Run workflow*, with mode set to `test`. A status message should appear in #gold-signals.
-
-After that it runs on its own every hour while gold trades.
+1. Add the repository secrets `SLACK_WEBHOOK_URL` (an Incoming Webhook for #gold-signals) and `TWELVEDATA_API_KEY` (from the free plan).
+2. Open *Actions* and run the workflow with mode `test`. A status message should appear in Slack.
 
 ## Notes
-- Prices come from Twelve Data's XAU/USD feed, not OANDA's. Candles can differ by a few points, so check the signal against your MT5 chart.
+- Prices come from Twelve Data's XAU/USD feed, not OANDA's. Candles can differ by a few points, so compare each setup with your MT5 chart.
 - GitHub can start scheduled runs several minutes late.
-- The bot saves `state.json` after each run so it remembers any active trade idea.
+- `state.json` holds the active setup and `journal.json` holds closed trades for the scorecard.
 - This is a rule-based tool, not financial advice.
