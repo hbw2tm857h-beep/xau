@@ -110,9 +110,23 @@ def fetch_h1(api_key, symbol, n):
     return bars
 
 
+def market_open(t):
+    """Gold trades Sun 18:00 to Fri 17:00 New York time. Some free feeds still
+    print flat candles over the weekend; those would distort Heikin Ashi."""
+    ny = t.astimezone(NY)
+    wd, h = ny.weekday(), ny.hour  # Mon=0 ... Sun=6
+    if wd == 5:
+        return False
+    if wd == 4 and h >= 17:
+        return False
+    if wd == 6 and h < 18:
+        return False
+    return True
+
+
 def closed_h1(bars, now):
-    """Drop the still-forming candle."""
-    return [b for b in bars if b["t"] + timedelta(hours=1) <= now]
+    """Drop the still-forming candle and any weekend candles."""
+    return [b for b in bars if b["t"] + timedelta(hours=1) <= now and market_open(b["t"])]
 
 
 def trading_day(t):
