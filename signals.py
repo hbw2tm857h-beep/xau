@@ -17,8 +17,8 @@ Additions to make it automatable (editable in CONFIG): initial stop beyond
 the recent swing, "daily trend" = daily HA colour + close vs 50 EMA, daily
 levels from pivot closes.
 
-Quality checks (shown on every signal, graded A/B/C; each can be switched
-to a hard filter in CONFIG["filters"] once the backtest supports it):
+Checks (4H agreement is required; the rest are shown as context and can be
+switched to hard filters in CONFIG["filters"] if the backtest supports it):
   session  - London / New York hours
   adx      - trend strength on H1
   h4       - 4-hour Heikin Ashi colour agrees
@@ -51,7 +51,8 @@ from zoneinfo import ZoneInfo
 CONFIG = {
     "symbol": "XAU/USD",
     "h1_bars": 5000,              # live: one API call (~10 months of H1)
-    "backtest_pages": 3,          # backtest: 3 x 5000 H1 bars (~2.5 years)
+    "backtest_pages": 3,          # backtest fallback: 3 x 5000 Twelve Data H1 bars
+    "history_csv": "data/xauusd_h1.csv",  # backtest uses this 10-year file if present
 
     # Daily direction
     "daily_trend_mode": "ha_and_ema",   # "ha", "ha_and_ema" or "off"
@@ -63,8 +64,9 @@ CONFIG = {
     "sr_merge_atr": 0.5,
     "sr_max_levels": 12,
 
-    # Entry checklist (the video's rules)
-    "require_breakout": True,
+    # Entry checklist. The video required a daily-level breakout; the 10-year
+    # research (research/README.md) found the edge without it, with 4H agreement.
+    "require_breakout": False,
     "breakout_bars": 24,
     "require_room": True,
     "min_room_atr": 0.5,          # x daily ATR to the next opposing level
@@ -79,8 +81,9 @@ CONFIG = {
     "stop_buffer_atr": 0.2,       # x H1 ATR
     "atr_period": 14,
 
-    # Quality checks. True = required (filter), False = shown and graded only.
-    "filters": {"session": False, "adx": False, "h4": False, "atr_band": False,
+    # Checks. True = required (filter), False = shown for information only.
+    # 4-hour agreement is required: it is what turned the strategy positive.
+    "filters": {"session": False, "adx": False, "h4": True, "atr_band": False,
                 "news": False, "stop_width": False},
     "session_start_uk": 7,        # London open
     "session_end_uk": 20,         # end of the busy New York hours
@@ -92,10 +95,17 @@ CONFIG = {
     "max_stop_atr": 3.0,          # stop wider than this x H1 ATR = too wide
     "news_window_min": 30,
 
-    # Trade management
-    "breakeven_at_r": None,       # e.g. 1.0 = move stop to entry at +1R
+    # Trade management (tested best over 2016-2026: half off at +1R, stop to
+    # entry, rest at +2R). exit_mode "ha" = the video's opposite-colour exit.
+    "exit_mode": "targets",
+    "partial_r": 1.0,
+    "partial_frac": 0.5,
+    "target_r": 2.0,
+    "entry_expiry_bars": 12,      # stop order cancelled if not filled in 12 hours
+    "breakeven_at_r": None,       # only used with exit_mode "ha"
     "alert_entry_hit": True,
-    "alert_daily_hold": True,
+    "alert_daily_hold": True,     # only used with exit_mode "ha"
+    "track_record": "2016-2026 backtest: 460 trades, 57% winners, +0.13R per trade after costs",
 
     # Position size (only if ACCOUNT_SIZE secret is set)
     "contract_oz": 100,           # oz per 1.00 lot - check MT5 symbol spec
@@ -167,6 +177,20 @@ def fetch_h1_history(api_key, symbol, pages):
             allbars[b["t"]] = b
         end = bars[0]["t"] - H1
     return [allbars[k] for k in sorted(allbars)]
+
+
+def load_history_csv(path):
+    """10-year H1 file written by the 'Fetch gold history' workflow."""
+    import csv
+    bars = []
+    with open(path) as f:
+        for r in csv.DictReader(f):
+            t = datetime.strptime(r["time_utc"], "%Y-%m-%d %H:%M").replace(tzinfo=UTC)
+            o, h, l, c = float(r["open"]), float(r["high"]), float(r["low"]), float(r["close"])
+            if h - l <= 0 and o == c:
+                continue
+            bars.append({"t": t, "o": o, "h": h, "l": l, "c": c})
+    return bars
 
 
 def fetch_usd_rate(api_key, ccy):
@@ -590,62 +614,104 @@ def evaluate(F, i, d, cfg, news=None):
 # --------------------------------------------------------------------------
 # State machine (shared by live and backtest)
 # --------------------------------------------------------------------------
+def _close_r(idea, price, cost):
+    """R for the whole position if the remainder closes at `price`."""
+    d, risk = idea["dir"], idea["risk"]
+    done = idea.get("done", 0.0)
+    return idea.get("booked", 0.0) + (1 - done) * (price - idea["entry"]) * d / risk - cost / risk
+
+
 def step(F, i, st, cfg, news=None):
-    """Advance one closed H1 bar. Returns a list of event dicts."""
+    """Advance one closed H1 bar. Returns a list of event dicts.
+
+    Mirrors research/lab.py exactly: on the fill bar only the stop is checked;
+    afterwards stop first, then the partial, then the final target (or the
+    opposite-colour HA exit in "ha" mode).
+    """
     ev = []
     b, x = F.h1[i], F.ha[i]
     t_close = F.close_time(i)
     idea = st.get("idea")
     cost = cfg["cost_per_trade"]
+    targets = cfg["exit_mode"] == "targets"
+    closed = False
 
-    # 1) price action inside this candle
+    def hit(level, d, side):  # side "favour" = price moved our way to level
+        if side == "favour":
+            return b["h"] >= level if d == 1 else b["l"] <= level
+        return b["l"] <= level if d == 1 else b["h"] >= level
+
     if idea:
         d = idea["dir"]
         if not idea["triggered"]:
-            if (b["h"] >= idea["entry"]) if d == 1 else (b["l"] <= idea["entry"]):
+            idea["age"] = idea.get("age", 0) + 1
+            if hit(idea["entry"], d, "favour"):
                 idea["triggered"] = True
                 idea["entry_time"] = t_close.isoformat()
                 ev.append({"type": "entry", "idea": dict(idea), "t": t_close})
-        if idea["triggered"]:
-            if (b["l"] <= idea["stop"]) if d == 1 else (b["h"] >= idea["stop"]):
-                r = (idea["stop"] - idea["entry"]) * d / idea["risk"] - cost / idea["risk"]
-                ev.append({"type": "stop", "idea": dict(idea), "t": t_close, "r": r, "price": idea["stop"]})
+                if hit(idea["stop"], d, "against"):
+                    ev.append({"type": "stop", "idea": dict(idea), "t": t_close,
+                               "r": _close_r(idea, idea["stop"], cost), "price": idea["stop"]})
+                    st["idea"] = idea = None
+            elif (d == 1 and bear(x)) or (d == -1 and bull(x)):
+                ev.append({"type": "cancel", "idea": dict(idea), "t": t_close, "why": "flip"})
                 st["idea"] = idea = None
-            elif cfg["breakeven_at_r"] and not idea.get("be"):
-                lvl = idea["entry"] + d * cfg["breakeven_at_r"] * idea["risk"]
-                if (b["h"] >= lvl) if d == 1 else (b["l"] <= lvl):
-                    idea["stop"], idea["be"] = idea["entry"], True
-                    ev.append({"type": "breakeven", "idea": dict(idea), "t": t_close})
-
-    # 2) exit / cancel on opposite-colour HA close
-    if idea:
-        d = idea["dir"]
-        if (d == 1 and bear(x)) or (d == -1 and bull(x)):
-            if idea["triggered"]:
-                r = (b["c"] - idea["entry"]) * d / idea["risk"] - cost / idea["risk"]
-                ev.append({"type": "exit", "idea": dict(idea), "t": t_close, "r": r, "price": b["c"]})
+            elif idea["age"] >= cfg["entry_expiry_bars"]:
+                ev.append({"type": "cancel", "idea": dict(idea), "t": t_close, "why": "expired"})
+                st["idea"] = idea = None
+        else:
+            if hit(idea["stop"], d, "against"):
+                ev.append({"type": "stop", "idea": dict(idea), "t": t_close,
+                           "r": _close_r(idea, idea["stop"], cost), "price": idea["stop"]})
+                st["idea"] = idea = None
+                closed = True
+            elif targets:
+                if cfg["partial_r"] and not idea.get("done") and hit(idea["partial"], d, "favour"):
+                    idea["done"] = cfg["partial_frac"]
+                    idea["booked"] = cfg["partial_frac"] * cfg["partial_r"]
+                    idea["stop"] = idea["entry"]
+                    ev.append({"type": "partial", "idea": dict(idea), "t": t_close})
+                if hit(idea["target"], d, "favour"):
+                    ev.append({"type": "target", "idea": dict(idea), "t": t_close,
+                               "r": _close_r(idea, idea["target"], cost), "price": idea["target"]})
+                    st["idea"] = idea = None
+                    closed = True
             else:
-                ev.append({"type": "cancel", "idea": dict(idea), "t": t_close})
-            st["idea"] = idea = None
+                if cfg["breakeven_at_r"] and not idea.get("be"):
+                    lvl = idea["entry"] + d * cfg["breakeven_at_r"] * idea["risk"]
+                    if hit(lvl, d, "favour"):
+                        idea["stop"], idea["be"] = idea["entry"], True
+                        ev.append({"type": "breakeven", "idea": dict(idea), "t": t_close})
+                if (d == 1 and bear(x)) or (d == -1 and bull(x)):
+                    ev.append({"type": "exit", "idea": dict(idea), "t": t_close,
+                               "r": _close_r(idea, b["c"], cost), "price": b["c"]})
+                    st["idea"] = idea = None
+                    closed = True
 
-    # 3) new signal
-    for d in (1, -1):
-        if idea and idea["dir"] == d:
-            continue
-        s = evaluate(F, i, d, cfg, news)
-        if s:
-            st["idea"] = idea = {
-                "dir": d, "entry": round(s["entry"], 2), "stop": round(s["stop"], 2),
-                "risk": round(s["risk"], 4), "triggered": False, "grade": s["grade"],
-                "sig_time": s["t_close"].isoformat(),
-                "session": s["checks"]["session"][0],
-            }
-            ev.append({"type": "signal", "setup": s, "idea": dict(idea), "t": t_close})
-            break
+    # new signal: only when flat (a pending order may be replaced)
+    if not closed and not (idea and idea["triggered"]):
+        for d in (1, -1):
+            s = evaluate(F, i, d, cfg, news)
+            if s:
+                replaced = dict(idea) if idea else None
+                risk = s["risk"]
+                st["idea"] = idea = {
+                    "dir": d, "entry": round(s["entry"], 2), "stop": round(s["stop"], 2),
+                    "risk": round(risk, 4), "triggered": False, "age": 0,
+                    "partial": round(s["entry"] + d * cfg["partial_r"] * risk, 2) if cfg["partial_r"] else None,
+                    "target": round(s["entry"] + d * cfg["target_r"] * risk, 2) if cfg["target_r"] else None,
+                    "sig_time": s["t_close"].isoformat(),
+                    "session": s["checks"]["session"][0], "grade": None,
+                }
+                ev.append({"type": "signal", "setup": s, "idea": dict(idea), "t": t_close,
+                           "replaced": replaced})
+                break
     return ev
 
 
 def daily_hold(F, k, idea, cfg):
+    if cfg["exit_mode"] != "ha":
+        return None
     if not (cfg["alert_daily_hold"] and idea and idea.get("triggered") and k >= 0):
         return None
     x = heikin_ashi(F.daily[:k + 1])[-1]
@@ -694,19 +760,25 @@ def ccy_sym(c):
 
 
 def fmt_signal(e, cfg, sizing):
-    s = e["setup"]
+    s, idea = e["setup"], e["idea"]
     d = s["dir"]
     green, red = ("green", "red") if d == 1 else ("red", "green")
     icon = ":large_green_circle:" if d == 1 else ":red_circle:"
     wick = "lower" if d == 1 else "upper"
     above = "above" if d == 1 else "below"
+    targets = cfg["exit_mode"] == "targets"
     lines = [
-        f"{icon} *{side_word(d)} SETUP: Gold (XAUUSD)* | Grade *{s['grade']}* | 1H candle closed {uk_hm(s['t_close'])} UK",
-        f"_The 1-hour Heikin Ashi candle turned {green} with no {wick} wick: the strategy's entry trigger._",
+        f"{icon} *{side_word(d)} SETUP: Gold (XAUUSD)* | 1H candle closed {uk_hm(s['t_close'])} UK",
+        f"_The 1-hour Heikin Ashi candle turned {green} with no {wick} wick, in line with the daily trend "
+        "and the 4-hour candles: the strategy's entry trigger._",
+    ]
+    if e.get("replaced"):
+        lines.append(f"_Replaces the earlier {side_word(e['replaced']['dir']).lower()} setup that had not triggered._")
+    lines += [
         "",
         "*The plan*",
         f"• *Entry:* only if price trades {above} *{px(s['entry'])}* ({'buy' if d == 1 else 'sell'}-stop order)",
-        f"• *Stop:* *{px(s['stop'])}* ({s['risk']:.2f} from entry)",
+        f"• *Stop:* *{px(s['stop'])}* ({s['risk']:.2f} from entry = 1R)",
     ]
     ls = lot_size(s["risk"], sizing, cfg)
     if ls:
@@ -716,29 +788,36 @@ def fmt_signal(e, cfg, sizing):
             lines.append(f"• *Size:* {lots:.2f} lots risks about {sym}{amt:,.0f} ({sizing['risk_pct']:g}% of account)")
         else:
             lines.append(f"• *Size:* stop is too wide for {sizing['risk_pct']:g}% risk at the 0.01 lot minimum")
-    lines.append(f"• *Exit:* when a *{red}* 1-hour Heikin Ashi candle closes")
-    if s["target"] is not None:
-        rr = abs(s["target"] - s["entry"]) / s["risk"]
-        lines.append(f"• *First daily level ahead:* {px(s['target'])} ({rr:.1f}x the risk)")
-    lines.append(f"• *Cancelled if:* a {red} candle closes before price reaches {px(s['entry'])}")
+    if targets:
+        if idea.get("partial") is not None:
+            pct = int(cfg["partial_frac"] * 100)
+            lines.append(f"• *Take profit 1:* close {pct}% at *{px(idea['partial'])}* (+{cfg['partial_r']:g}R), "
+                         "then move the stop to entry")
+        lines.append(f"• *Take profit 2:* close the rest at *{px(idea['target'])}* (+{cfg['target_r']:g}R)")
+    else:
+        lines.append(f"• *Exit:* when a *{red}* 1-hour Heikin Ashi candle closes")
+    lines.append(f"• *Cancelled if:* a {red} candle closes, or {cfg['entry_expiry_bars']} hours pass, "
+                 f"before price reaches {px(s['entry'])}")
     lines += ["", "*Why it qualifies*",
-              f":white_check_mark: Daily trend is {'up' if d == 1 else 'down'}"]
+              f":white_check_mark: Daily trend is {'up' if d == 1 else 'down'}",
+              f":white_check_mark: {s['checks']['h4'][1]}",
+              f":white_check_mark: Candle {s['since']} of the new colour, body {s['body_ratio']:.1f}x the previous one"]
     if s["broken"] is not None:
         lines.append(f":white_check_mark: Broke {'above' if d == 1 else 'below'} the daily level {px(s['broken'])}")
     if s["next"] is not None:
         lines.append(f":white_check_mark: Room to the next daily level {px(s['next'])} ({s['room']:.0f} pts away)")
-    else:
-        lines.append(":white_check_mark: No daily level in the way")
-    lines.append(f":white_check_mark: Candle {s['since']} of the new colour, body {s['body_ratio']:.1f}x the previous one")
-    lines += ["", f"*Quality checks* ({s['score']} of 4)"]
-    for n in EXTRAS + ["stop_width", "news"]:
+    info = []
+    for n in ("session", "adx", "atr_band", "stop_width", "news"):
         if n in s["checks"]:
             ok, txt = s["checks"][n]
-            mark = ":white_check_mark:" if ok else (":warning:" if n in ("news", "stop_width") else ":x:")
             if n == "stop_width" and ok:
                 continue
-            lines.append(f"{mark} {txt}")
-    lines += ["", "_Prices from Twelve Data: compare with your MT5 chart. Rule-based alert, not financial advice._"]
+            mark = ":white_check_mark:" if ok else ":warning:"
+            info.append(f"{mark} {txt}")
+    if info:
+        lines += ["", "*Context*"] + info
+    lines += ["", f"_{cfg['track_record']}. Prices from Twelve Data: compare with your MT5 chart. "
+                  "Rule-based alert, not financial advice._"]
     return "\n".join(lines)
 
 
@@ -751,18 +830,35 @@ def fmt_event(e, cfg, sizing):
     sw = side_word(d)
     red = "red" if d == 1 else "green"
     if t == "entry":
-        return (f":dart: *Entry triggered: Gold {sw}* at {px(idea['entry'])} (candle closing {uk_hm(e['t'])} UK).\n"
-                f"Stop {px(idea['stop'])}. Exit on the first *{red}* 1-hour Heikin Ashi close.")
+        if cfg["exit_mode"] == "targets":
+            plan = (f"Stop {px(idea['stop'])} | take profit 1 {px(idea['partial'])} | "
+                    f"take profit 2 {px(idea['target'])}")
+        else:
+            plan = f"Stop {px(idea['stop'])}. Exit on the first *{red}* 1-hour Heikin Ashi close."
+        return f":dart: *Entry triggered: Gold {sw}* at {px(idea['entry'])} (candle closing {uk_hm(e['t'])} UK).\n{plan}"
+    if t == "partial":
+        pct = int(cfg["partial_frac"] * 100)
+        return (f":moneybag: *Take profit 1 hit: Gold {sw}* at {px(idea['partial'])}. Close {pct}% (+{cfg['partial_r']:g}R "
+                f"on that part) and move the stop to entry {px(idea['entry'])}. The rest is now risk-free and targets "
+                f"{px(idea['target'])}.")
+    if t == "target":
+        return (f":trophy: *Take profit 2 hit: Gold {sw}* at {px(e['price'])}. Trade closed: *{e['r']:+.2f}R* "
+                "after costs.")
     if t == "stop":
+        if idea.get("done"):
+            return (f":shield: *Gold {sw} closed at entry* {px(e['price'])} after take profit 1. "
+                    f"Trade result *{e['r']:+.2f}R* after costs.")
         return (f":octagonal_sign: *Stopped out: Gold {sw}* at {px(e['price'])}. "
-                f"Result *{e['r']:+.1f}R* (after costs).")
+                f"Result *{e['r']:+.2f}R* after costs.")
     if t == "exit":
         pts = (e["price"] - idea["entry"]) * d
         return (f":checkered_flag: *Exit signal: close the Gold {sw}*. A {red} 1-hour Heikin Ashi candle closed at "
                 f"{px(e['price'])} ({uk_hm(e['t'])} UK).\n"
-                f"Result from entry {px(idea['entry'])}: *{pts:+.2f} pts ({e['r']:+.1f}R)*")
+                f"Result from entry {px(idea['entry'])}: *{pts:+.2f} pts ({e['r']:+.2f}R)*")
     if t == "cancel":
-        return (f":heavy_minus_sign: *Setup cancelled: Gold {sw}*. The candles turned {red} before price reached "
+        why = (f"the candles turned {red}" if e.get("why") == "flip"
+               else f"{cfg['entry_expiry_bars']} hours passed")
+        return (f":heavy_minus_sign: *Setup cancelled: Gold {sw}*. {why[0].upper() + why[1:]} before price reached "
                 f"{px(idea['entry'])}. No trade.")
     if t == "breakeven":
         return f":shield: *Gold {sw} is +{cfg['breakeven_at_r']:g}R*: strategy moves the stop to entry {px(idea['entry'])}."
@@ -817,18 +913,21 @@ def scorecard(journal, now):
     best = max(week, key=lambda j: j["r"])
     worst = min(week, key=lambda j: j["r"])
     return (":bar_chart: *Gold signals: weekly scorecard*\n"
-            f"This week: *{w['n']} trades*, {w['win']:.0f}% winners, total *{w['total']:+.1f}R* "
-            f"(avg {w['avg']:+.2f}R per trade)\n"
-            f"Best {best['r']:+.1f}R ({side_word(best['dir'])}, grade {best['grade']}) | "
-            f"worst {worst['r']:+.1f}R ({side_word(worst['dir'])}, grade {worst['grade']})\n"
+            f"This week: *{w['n']} trade{'s' if w['n'] != 1 else ''}*, {w['win']:.0f}% winners, "
+            f"total *{w['total']:+.1f}R* (avg {w['avg']:+.2f}R per trade)\n"
+            f"Best {best['r']:+.2f}R ({side_word(best['dir'])}) | worst {worst['r']:+.2f}R ({side_word(worst['dir'])})\n"
             f"All time: {a['n']} trades, {a['win']:.0f}% winners, {a['total']:+.1f}R, "
             f"biggest drop {a['dd']:.1f}R\n"
-            "_R = multiples of the risk on each trade. Results assume you took every signal at the alert levels._")
+            "_Backtest benchmark: 57% winners, +0.13R per trade. R = multiples of the risk on each trade; "
+            "results assume every signal was taken at the alert levels._")
 
 
 # --------------------------------------------------------------------------
 # Backtest
 # --------------------------------------------------------------------------
+BASELINE = "Current rules"
+
+
 def simulate(F, cfg):
     st, trades, cancels = {}, [], 0
     start = next((i for i in range(len(F.h1)) if F.warm(i)), None)
@@ -836,7 +935,7 @@ def simulate(F, cfg):
         raise RuntimeError("Not enough history to backtest")
     for i in range(start, len(F.h1)):
         for e in step(F, i, st, cfg):
-            if e["type"] in ("exit", "stop"):
+            if e["type"] in ("exit", "stop", "target"):
                 idea = e["idea"]
                 trades.append({"t": datetime.fromisoformat(idea["sig_time"]), "dir": idea["dir"],
                                "grade": idea["grade"], "session": idea["session"], "r": e["r"],
@@ -857,14 +956,13 @@ def variants(cfg):
                 c[k] = val
         return c
     return [
-        ("Video rules (baseline)", v()),
+        (BASELINE, v()),
+        ("Video's original rules", v(filters={"h4": False}, require_breakout=True, exit_mode="ha")),
         ("+ London/NY hours only", v(filters={"session": True})),
         ("+ ADX trend strength", v(filters={"adx": True})),
-        ("+ 4-hour agrees", v(filters={"h4": True})),
         ("+ normal volatility", v(filters={"atr_band": True})),
-        ("+ stop not too wide", v(filters={"stop_width": True})),
-        ("+ all quality checks", v(filters={"session": True, "adx": True, "h4": True, "atr_band": True})),
-        ("Baseline + breakeven at 1R", v(breakeven_at_r=1.0)),
+        ("Exit: single target at +1R", v(partial_r=None, target_r=1.0)),
+        ("Exit: video's opposite-colour exit", v(exit_mode="ha")),
     ]
 
 
@@ -909,7 +1007,7 @@ def backtest_report(F, cfg, h1, repo):
         results[name] = (trades, cancels, stats(ins), stats(oos), stats([t["r"] for t in trades]))
         rows.append(fmt_stats_row(name, results[name][2], results[name][3]))
 
-    base_trades, base_cancels, b_is, b_oos, b_all = results["Video rules (baseline)"]
+    base_trades, base_cancels, b_is, b_oos, b_all = results[BASELINE]
 
     def breakdown(key, label_fn, trades):
         out = []
@@ -920,7 +1018,7 @@ def backtest_report(F, cfg, h1, repo):
 
     verdicts = []
     for name, (_, _, s_is, s_oos, _) in results.items():
-        if name.startswith("Video"):
+        if name == BASELINE:
             continue
         if s_is["n"] == 0 or s_oos["n"] == 0:
             verdicts.append(f"- *{name}*: too few trades to judge.")
@@ -941,7 +1039,7 @@ def backtest_report(F, cfg, h1, repo):
             verdicts.append(f"- *{name}*: mixed {nums}. No reliable edge.")
 
     md = [
-        "# Backtest: gold Heikin Ashi trend-ride",
+        "# Backtest: gold Heikin Ashi trend-ride (4H-confirmed, take-profit exits)",
         "",
         f"Generated {datetime.now(UTC):%Y-%m-%d %H:%M} UTC from {len(h1):,} H1 candles "
         f"({first:%d %b %Y} to {last:%d %b %Y}). Costs: ${cfg['cost_per_trade']:.2f} per trade.",
@@ -955,7 +1053,7 @@ def backtest_report(F, cfg, h1, repo):
         "",
         "| Rules | Trades | Win | Avg R | Total R | PF | Trades | Win | Avg R | Total R | PF |",
         "|---|---|---|---|---|---|---|---|---|---|---|",
-        "| | **Training** | | | | | **Test** | | | | |",
+        "| | **Earlier 70%** | | | | | **Latest 30%** | | | | |",
     ] + rows + [
         "",
         "## Verdicts",
@@ -974,8 +1072,8 @@ def backtest_report(F, cfg, h1, repo):
             f"- Biggest drop from a peak: {b_all['dd']:.1f}R; longest losing run: {b_all['streak']} trades",
             f"- Average time in a trade: {sum(t['hours'] for t in base_trades) / len(base_trades):.1f} hours",
             "",
-            "| Grade | Trades | Win | Avg R | Total R |", "|---|---|---|---|---|",
-        ] + breakdown(lambda t: t["grade"], lambda v: v, base_trades) + [
+            "| Year | Trades | Win | Avg R | Total R |", "|---|---|---|---|---|",
+        ] + breakdown(lambda t: t["t"].year, lambda v: str(v), base_trades) + [
             "",
             "| Direction | Trades | Win | Avg R | Total R |", "|---|---|---|---|---|",
         ] + breakdown(lambda t: t["dir"], lambda v: "Buy" if v == 1 else "Sell", base_trades) + [
@@ -985,7 +1083,7 @@ def backtest_report(F, cfg, h1, repo):
     md += [
         "",
         "## Caveats",
-        "- Twelve Data prices, not OANDA's; wicks can differ slightly.",
+        "- Backtest prices from Dukascopy (10-year file) or Twelve Data; live alerts use Twelve Data. OANDA can differ slightly.",
         "- Entries assume the stop order fills exactly at its level; if a candle hits both entry and stop, the stop is assumed.",
         "- No news blackout in the backtest (no historical calendar).",
         "- Past results do not guarantee future results. Not financial advice.",
@@ -997,7 +1095,7 @@ def backtest_report(F, cfg, h1, repo):
     if b_all.get("n"):
         slack = (":test_tube: *Backtest finished: gold Heikin Ashi strategy*\n"
                  f"{first:%b %Y} to {last:%b %Y}, costs included.\n"
-                 f"*Video rules:* {b_all['n']} trades, {b_all['win']:.0f}% winners, avg *{b_all['avg']:+.2f}R* per trade, "
+                 f"*Current rules:* {b_all['n']} trades, {b_all['win']:.0f}% winners, avg *{b_all['avg']:+.2f}R* per trade, "
                  f"total {b_all['total']:+.1f}R, biggest drop {b_all['dd']:.1f}R.\n"
                  f"Test period only: {b_oos.get('n', 0)} trades, avg {b_oos.get('avg', 0):+.2f}R.\n"
                  f"{edge_note(b_all)}\n"
@@ -1064,7 +1162,7 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None):
         if news is None and news_fn and any(evaluate(F, i, d, dict(cfg, filters={}), None) for d in (1, -1)):
             news = news_fn() or []
         for e in step(F, i, state, cfg, news):
-            if e["type"] in ("exit", "stop"):
+            if e["type"] in ("exit", "stop", "target"):
                 journal_add(journal, e)
             if e["type"] == "entry" and not cfg["alert_entry_hit"]:
                 continue
@@ -1141,7 +1239,10 @@ def main():
             if not api_key:
                 raise RuntimeError("TWELVEDATA_API_KEY secret is missing")
             if mode == "backtest":
-                h1 = closed_h1(fetch_h1_history(api_key, CONFIG["symbol"], CONFIG["backtest_pages"]), now)
+                if os.path.exists(CONFIG["history_csv"]):
+                    h1 = closed_h1(load_history_csv(CONFIG["history_csv"]), now)
+                else:
+                    h1 = closed_h1(fetch_h1_history(api_key, CONFIG["symbol"], CONFIG["backtest_pages"]), now)
                 F = Features(h1, CONFIG)
                 report, slack = backtest_report(F, CONFIG, h1, repo)
                 with open("backtest.md", "w") as f:
