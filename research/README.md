@@ -46,6 +46,32 @@ Every idea was tested one at a time against the current rules on 2016–2024 onl
 - The ATR-buffer "improvement" didn't survive the final test, so it was fitted to 2016–2024 and has been rejected. **The live bot is unchanged.**
 - All data has now been looked at. From here, the honest test is **live forward results**, which the Friday scorecard tracks, and the **same rules on other markets** they were never tuned on.
 
+## Round 3: do the gold rules work on other markets?
+The exact live rules were run on 5 other markets they were never tuned on, over 2008–2026 (`cross_market.py`). Costs and entry buffer were fixed beforehand. The pass mark was +0.05R per trade or better, at least 300 trades, and a positive result in both 2008–16 and 2017–26.
+
+| Market | Trades | Win | Avg R | Positive years | Result |
+|---|---|---|---|---|---|
+| **XAUUSD (reference)** | **839** | **59%** | **+0.16** | **15 / 19** | **pass** |
+| XAGUSD (silver) | 788 | 51% | −0.09 | 4 / 19 | fail |
+| EURUSD | 886 | 51% | −0.03 | 7 / 19 | fail |
+| GBPUSD | 876 | 49% | −0.07 | 7 / 19 | fail |
+| USDJPY | 896 | 52% | +0.01 | 9 / 19 | fail |
+| AUDUSD | 862 | 50% | −0.04 | 7 / 19 | fail |
+
+**Is gold's edge just the 2008–2026 bull market?** No (`gold_direction.py`):
+
+| Gold trades | Trades | Avg R |
+|---|---|---|
+| Longs | 504 | +0.14 |
+| Shorts | 310 | +0.12 |
+| Gold's down years (2013–15, 2018, 2021–22, 2026) | 278 | +0.17 |
+| Shorts in down years | 174 | +0.18 |
+
+**Conclusions**
+- **The edge is specific to gold.** It doesn't carry over to silver or the major currency pairs, so the bot stays gold-only. Adding the other markets would have added losing trades.
+- **Within gold it's robust.** It works for longs and shorts, in up and down years, and in 15 of 19 years. Gold's tendency to trend smoothly once the daily, 4-hour and 1-hour timeframes line up seems to be what the rules capture.
+- A pattern that worked on every market would have been stronger evidence. Gold-only means the live scorecard matters even more.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -55,4 +81,6 @@ python3 research/holdout.py  # final check on the untouched holdout, by year, co
 python3 research/round2.py   # 36 single changes vs current rules (2016-2024)
 python3 research/round3.py   # entry buffer sweep + greedy combinations
 python3 research/lockbox.py  # one-time final test on 2008-2015
+python3 research/cross_market.py   # same rules on silver + 4 FX majors
+python3 research/gold_direction.py # longs vs shorts, up vs down years
 ```
