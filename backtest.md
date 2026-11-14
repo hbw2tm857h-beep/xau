@@ -1,6 +1,6 @@
 # Backtest: gold Heikin Ashi trend-ride
 
-Generated 2026-11-14 17:58 UTC from 12,054 H1 candles (22 Nov 2024 to 13 Nov 2026). Costs: $0.35 per trade.
+Generated 2026-11-14 18:03 UTC from 12,053 H1 candles (22 Nov 2024 to 13 Nov 2026). Costs: $0.35 per trade.
 Training period: before 08 May 2026. Test period (rules never tuned on it): from 08 May 2026.
 
 **How to read this.** R is the result in multiples of the risk on each trade: +2R means you made twice what you risked. Avg R above 0 after costs means the rules made money over the period. Profit factor (PF) is gross wins ÷ gross losses; above 1.3 is decent. A filter only counts as an improvement if it helps in **both** periods.
@@ -21,17 +21,18 @@ Training period: before 08 May 2026. Test period (rules never tuned on it): from
 
 ## Verdicts
 
-- **+ London/NY hours only**: mixed (better in one period, worse in the other). No reliable edge.
-- **+ ADX trend strength**: worse in both periods. Leave it off.
-- **+ 4-hour agrees**: improved average R in both periods (+0.09 / +0.17 vs +0.03 / +0.11). Worth switching on.
-- **+ normal volatility**: improved average R in both periods (+0.04 / +0.13 vs +0.03 / +0.11). Worth switching on.
-- **+ stop not too wide**: worse in both periods. Leave it off.
-- **+ all quality checks**: mixed (better in one period, worse in the other). No reliable edge.
-- **Baseline + breakeven at 1R**: mixed (better in one period, worse in the other). No reliable edge.
+- **+ London/NY hours only**: mixed (+0.11 / -0.05 vs +0.03 / +0.11, 18 test trades). No reliable edge.
+- **+ ADX trend strength**: worse in both periods (-0.01 / -0.13 vs +0.03 / +0.11, 24 test trades). Leave it off.
+- **+ 4-hour agrees**: slightly better in both periods (+0.09 / +0.17 vs +0.03 / +0.11, 20 test trades), but too small or too few trades to rule out luck. Keep watching.
+- **+ normal volatility**: slightly better in both periods (+0.04 / +0.13 vs +0.03 / +0.11, 27 test trades), but too small or too few trades to rule out luck. Keep watching.
+- **+ stop not too wide**: worse in both periods (-0.05 / +0.09 vs +0.03 / +0.11, 29 test trades). Leave it off.
+- **+ all quality checks**: mixed (+0.12 / -0.12 vs +0.03 / +0.11, 8 test trades). No reliable edge.
+- **Baseline + breakeven at 1R**: mixed (+0.02 / +0.11 vs +0.03 / +0.11, 34 test trades). No reliable edge.
 
 ## Baseline in detail (whole period)
 
 - Trades: 79 (plus 37 setups cancelled before entry)
+- **Verdict:** a thin edge after costs. Trade it small or paper-trade it while live results build up. Only 79 trades, so this is an early read, not proof.
 - Winners: 39%, average win +0.74R, average loss -0.37R
 - Total: +5.1R, profit factor 1.29
 - Biggest drop from a peak: 3.2R; longest losing run: 6 trades
