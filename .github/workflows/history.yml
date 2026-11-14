@@ -9,6 +9,14 @@ on:
         description: "Start date (yyyy-mm-dd)"
         required: true
         default: "2016-01-01"
+      to:
+        description: "End date (yyyy-mm-dd or now)"
+        required: true
+        default: "now"
+      out:
+        description: "Output file in data/"
+        required: true
+        default: "xauusd_h1.csv"
 
 permissions:
   contents: write
@@ -27,15 +35,18 @@ jobs:
         with:
           node-version: "20"
       - name: Download H1 candles year by year
+        env:
+          OUT: ${{ github.event.inputs.out }}
         run: |
           set -e
           mkdir -p dl data
           START_YEAR=$(echo "${{ github.event.inputs.from }}" | cut -d- -f1)
-          THIS_YEAR=$(date -u +%Y)
+          END_IN="${{ github.event.inputs.to }}"
+          if [ "$END_IN" = "now" ]; then THIS_YEAR=$(date -u +%Y); else THIS_YEAR=$(( $(echo "$END_IN" | cut -d- -f1) - 1 )); fi
           for Y in $(seq "$START_YEAR" "$THIS_YEAR"); do
             FROM="$Y-01-01"; TO="$((Y+1))-01-01"
             [ "$Y" = "$START_YEAR" ] && FROM="${{ github.event.inputs.from }}"
-            [ "$Y" = "$THIS_YEAR" ] && TO="now"
+            [ "$Y" = "$THIS_YEAR" ] && [ "$END_IN" = "now" ] && TO="now"
             echo "== $Y"
             npx --yes dukascopy-node@1 -i xauusd -from "$FROM" -to "$TO" -t h1 -f csv \
               -dir "dl/$Y" -s -r 3 -rp 2000 -bs 5 -bp 1500 --chrome-path "$(which google-chrome || true)"
@@ -48,7 +59,8 @@ jobs:
                   for r in csv.DictReader(f):
                       ts = int(r["timestamp"]) // 1000
                       rows[ts] = (r["open"], r["high"], r["low"], r["close"])
-          with open("data/xauusd_h1.csv", "w", newline="") as f:
+          import os
+          with open(os.path.join("data", os.environ["OUT"]), "w", newline="") as f:
               w = csv.writer(f)
               w.writerow(["time_utc", "open", "high", "low", "close"])
               for ts in sorted(rows):
@@ -60,7 +72,7 @@ jobs:
         run: |
           git config user.name "xau-signals-bot"
           git config user.email "xau-signals-bot@users.noreply.github.com"
-          git add data/xauusd_h1.csv
+          git add "data/${{ github.event.inputs.out }}"
           git commit -m "Update H1 gold history" || exit 0
           git pull --rebase --quiet origin "${GITHUB_REF_NAME}" || true
           git push
