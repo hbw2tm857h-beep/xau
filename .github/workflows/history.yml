@@ -14,9 +14,13 @@ on:
         required: true
         default: "now"
       out:
-        description: "Output file in data/"
+        description: "Output file in data/ (used for xauusd)"
         required: true
         default: "xauusd_h1.csv"
+      instruments:
+        description: "Comma-separated Dukascopy instruments (others save to data/<instrument>_h1.csv)"
+        required: true
+        default: "xauusd"
 
 permissions:
   contents: write
@@ -28,7 +32,7 @@ concurrency:
 jobs:
   fetch:
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,42 +41,47 @@ jobs:
       - name: Download H1 candles year by year
         env:
           OUT: ${{ github.event.inputs.out }}
+          INSTRUMENTS: ${{ github.event.inputs.instruments }}
         run: |
           set -e
           mkdir -p dl data
           START_YEAR=$(echo "${{ github.event.inputs.from }}" | cut -d- -f1)
           END_IN="${{ github.event.inputs.to }}"
           if [ "$END_IN" = "now" ]; then THIS_YEAR=$(date -u +%Y); else THIS_YEAR=$(( $(echo "$END_IN" | cut -d- -f1) - 1 )); fi
+          for INST in $(echo "$INSTRUMENTS" | tr ',' ' '); do
           for Y in $(seq "$START_YEAR" "$THIS_YEAR"); do
             FROM="$Y-01-01"; TO="$((Y+1))-01-01"
             [ "$Y" = "$START_YEAR" ] && FROM="${{ github.event.inputs.from }}"
             [ "$Y" = "$THIS_YEAR" ] && [ "$END_IN" = "now" ] && TO="now"
-            echo "== $Y"
-            npx --yes dukascopy-node@1 -i xauusd -from "$FROM" -to "$TO" -t h1 -f csv \
-              -dir "dl/$Y" -s -r 3 -rp 2000 -bs 5 -bp 1500 --chrome-path "$(which google-chrome || true)"
+            echo "== $INST $Y"
+            npx --yes dukascopy-node@1 -i "$INST" -from "$FROM" -to "$TO" -t h1 -f csv \
+              -dir "dl/$INST/$Y" -s -r 3 -rp 2000 -bs 5 -bp 1500 --chrome-path "$(which google-chrome || true)"
+          done
           done
           python3 - <<'EOF'
-          import csv, glob, datetime
-          rows = {}
-          for path in sorted(glob.glob("dl/*/*.csv")):
-              with open(path) as f:
-                  for r in csv.DictReader(f):
-                      ts = int(r["timestamp"]) // 1000
-                      rows[ts] = (r["open"], r["high"], r["low"], r["close"])
-          import os
-          with open(os.path.join("data", os.environ["OUT"]), "w", newline="") as f:
-              w = csv.writer(f)
-              w.writerow(["time_utc", "open", "high", "low", "close"])
-              for ts in sorted(rows):
-                  t = datetime.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d %H:%M")
-                  w.writerow([t, *rows[ts]])
-          print(len(rows), "rows")
+          import csv, glob, datetime, os
+          for inst in os.environ["INSTRUMENTS"].split(","):
+              inst = inst.strip()
+              rows = {}
+              for path in sorted(glob.glob(f"dl/{inst}/*/*.csv")):
+                  with open(path) as f:
+                      for r in csv.DictReader(f):
+                          ts = int(r["timestamp"]) // 1000
+                          rows[ts] = (r["open"], r["high"], r["low"], r["close"])
+              out = os.environ["OUT"] if inst == "xauusd" else f"{inst}_h1.csv"
+              with open(os.path.join("data", out), "w", newline="") as f:
+                  w = csv.writer(f)
+                  w.writerow(["time_utc", "open", "high", "low", "close"])
+                  for ts in sorted(rows):
+                      t = datetime.datetime.utcfromtimestamp(ts).strftime("%Y-%m-%d %H:%M")
+                      w.writerow([t, *rows[ts]])
+              print(inst, len(rows), "rows ->", out)
           EOF
       - name: Commit data
         run: |
           git config user.name "xau-signals-bot"
           git config user.email "xau-signals-bot@users.noreply.github.com"
-          git add "data/${{ github.event.inputs.out }}"
+          git add data/*.csv
           git commit -m "Update H1 gold history" || exit 0
           git pull --rebase --quiet origin "${GITHUB_REF_NAME}" || true
           git push
