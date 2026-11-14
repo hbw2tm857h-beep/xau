@@ -1,0 +1,116 @@
+// XAU World: Daily Levels & Trend
+// Draws the same daily support/resistance levels the gold signals bot and
+// GoldTrendEA use (pivot daily closes over 180 days, merged within 0.5 x daily
+// ATR, the 12 nearest to price), plus a panel with the daily trend and the
+// last closed 4-hour Heikin Ashi colour. Add it to OANDA:XAUUSD; it syncs to
+// the TradingView mobile app.
+//@version=6
+indicator("XAU World: Daily Levels & Trend", shorttitle = "XAU Levels", overlay = true, max_lines_count = 50, max_labels_count = 50)
+
+lookback  = input.int(180, "Lookback (days)", minval = 30)
+strength  = input.int(3, "Pivot strength (days each side)", minval = 1)
+mergeATR  = input.float(0.5, "Merge levels closer than (x daily ATR)", step = 0.1)
+maxLevels = input.int(12, "Levels to show", minval = 1, maxval = 12)
+lineCol   = input.color(color.new(#D4A017, 0), "Level colour")
+showPrice = input.bool(true, "Show level prices")
+showPanel = input.bool(true, "Show trend panel")
+
+// ---- runs on the DAILY timeframe ------------------------------------------
+pick(float[] a, int i) =>
+    i < a.size() ? a.get(i) : na
+
+dailyLevels() =>
+    var float[] piv    = array.new_float()
+    var int[]   pivBar = array.new_int()
+    ph = ta.pivothigh(close, strength, strength)
+    pl = ta.pivotlow(close, strength, strength)
+    if not na(ph)
+        piv.push(ph)
+        pivBar.push(bar_index - strength)
+    if not na(pl)
+        piv.push(pl)
+        pivBar.push(bar_index - strength)
+    while pivBar.size() > 0 and pivBar.get(0) < bar_index - lookback
+        pivBar.shift()
+        piv.shift()
+    atr = ta.sma(ta.tr(true), 14)
+    // merge nearby pivots into zones (average price)
+    sorted = piv.copy()
+    sorted.sort(order.ascending)
+    merged = array.new_float()
+    if sorted.size() > 0
+        sum = sorted.get(0)
+        cnt = 1
+        last = sorted.get(0)
+        for i = 1 to sorted.size()
+            if i < sorted.size() and sorted.get(i) - last <= mergeATR * atr
+                sum += sorted.get(i)
+                cnt += 1
+                last := sorted.get(i)
+            else
+                merged.push(sum / cnt)
+                if i < sorted.size()
+                    sum := sorted.get(i)
+                    cnt := 1
+                    last := sorted.get(i)
+    // keep the levels nearest to the latest close
+    keep = array.new_float()
+    pool = merged.copy()
+    while keep.size() < maxLevels and pool.size() > 0
+        bestIdx = 0
+        bestDist = math.abs(pool.get(0) - close)
+        if pool.size() > 1
+            for j = 1 to pool.size() - 1
+                dd = math.abs(pool.get(j) - close)
+                if dd < bestDist
+                    bestDist := dd
+                    bestIdx := j
+        keep.push(pool.remove(bestIdx))
+    keep.sort(order.ascending)
+    [pick(keep, 0), pick(keep, 1), pick(keep, 2), pick(keep, 3), pick(keep, 4), pick(keep, 5),
+     pick(keep, 6), pick(keep, 7), pick(keep, 8), pick(keep, 9), pick(keep, 10), pick(keep, 11)]
+
+[l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11] = request.security(syminfo.tickerid, "D", dailyLevels())
+
+// ---- daily trend and 4-hour Heikin Ashi (last CLOSED candles, no repaint) --
+haTicker = ticker.heikinashi(syminfo.tickerid)
+[dHaO, dHaC] = request.security(haTicker, "D", [open[1], close[1]], lookahead = barmerge.lookahead_on)
+[dC, dEma]   = request.security(syminfo.tickerid, "D", [close[1], ta.ema(close, 50)[1]], lookahead = barmerge.lookahead_on)
+[h4O, h4C]   = request.security(haTicker, "240", [open[1], close[1]], lookahead = barmerge.lookahead_on)
+
+trend = dHaC > dHaO and dC > dEma ? 1 : dHaC < dHaO and dC < dEma ? -1 : 0
+h4    = h4C > h4O ? 1 : h4C < h4O ? -1 : 0
+
+// ---- draw on the last bar only ---------------------------------------------
+var line[]  lines  = array.new_line()
+var label[] labels = array.new_label()
+
+if barstate.islast
+    for ln in lines
+        ln.delete()
+    for lb in labels
+        lb.delete()
+    lines.clear()
+    labels.clear()
+    lv = array.from(l0, l1, l2, l3, l4, l5, l6, l7, l8, l9, l10, l11)
+    for p in lv
+        if not na(p)
+            lines.push(line.new(bar_index - 1, p, bar_index, p, extend = extend.both, color = lineCol, style = line.style_dashed, width = 1))
+            if showPrice
+                labels.push(label.new(bar_index + 3, p, str.tostring(p, format.mintick), style = label.style_label_left, color = color.new(lineCol, 85), textcolor = lineCol, size = size.small))
+
+var table panel = table.new(position.top_right, 2, 3, bgcolor = color.new(color.black, 20), border_width = 1)
+if barstate.islast and showPanel
+    tTxt = trend == 1 ? "UP" : trend == -1 ? "DOWN" : "unclear"
+    tCol = trend == 1 ? color.lime : trend == -1 ? color.red : color.gray
+    hTxt = h4 == 1 ? "green" : h4 == -1 ? "red" : "flat"
+    hCol = h4 == 1 ? color.lime : h4 == -1 ? color.red : color.gray
+    aligned = trend != 0 and trend == h4
+    aTxt = aligned ? (trend == 1 ? "BUY setups only" : "SELL setups only") : "wait: not aligned"
+    aCol = aligned ? tCol : color.gray
+    panel.cell(0, 0, "Daily trend", text_color = color.white, text_size = size.small)
+    panel.cell(1, 0, tTxt, text_color = tCol, text_size = size.small)
+    panel.cell(0, 1, "4H Heikin Ashi", text_color = color.white, text_size = size.small)
+    panel.cell(1, 1, hTxt, text_color = hCol, text_size = size.small)
+    panel.cell(0, 2, "Strategy", text_color = color.white, text_size = size.small)
+    panel.cell(1, 2, aTxt, text_color = aCol, text_size = size.small)
