@@ -3,7 +3,7 @@
 //|  Gold H1 Heikin Ashi trend-ride, confirmed by the daily trend and |
 //|  the 4-hour Heikin Ashi candle. The same rules as the xau signals |
 //|  bot (research/README.md): tested 2008-2026 on Dukascopy H1 data, |
-//|  805 trades, 57% winners, +0.12R per trade after costs.           |
+//|  715 trades, 60% winners, +0.18R per trade after costs.           |
 //|                                                                  |
 //|  Default: ALERTS ONLY (MT5 push + optional Slack). Set           |
 //|  InpAutoTrade = true to place and manage trades - test on a      |
@@ -12,7 +12,9 @@
 //|  Rules (checked when each H1 candle closes):                     |
 //|   1. Daily trend: last daily Heikin Ashi candle and the daily    |
 //|      close vs the 50 EMA agree (up or down).                     |
-//|   2. Last closed 4-hour Heikin Ashi candle is the same colour.   |
+//|   2. Last closed 4-hour Heikin Ashi candle is the same colour,   |
+//|      and that 4-hour close is beyond the Ichimoku cloud (above   |
+//|      for buys, below for sells; 9/26/52). Research round 4.      |
 //|   3. H1 Heikin Ashi candle: first one of the new colour with no  |
 //|      wick against the move (no lower wick for buys), body at     |
 //|      least as big as the previous candle, colour flip within 12. |
@@ -24,7 +26,7 @@
 //|  12 hours pass. One trade at a time.                             |
 //+------------------------------------------------------------------+
 #property copyright "Bradley - Built by Lumn"
-#property version   "2.00"
+#property version   "2.10"
 #property description "Gold H1 Heikin Ashi trend-ride with 4H confirmation. Alerts by default; optional auto-trading."
 
 #include <Trade/Trade.mqh>
@@ -41,6 +43,7 @@ input int    InpSRLookbackDays   = 180;
 input int    InpSRPivot          = 3;
 input double InpSRMergeATR       = 0.5;
 input int    InpSRMaxLevels      = 12;
+input bool   InpRequireCloud     = true;  // 4H close beyond the Ichimoku cloud
 input bool   InpRequireRoom      = true;
 input double InpMinRoomATR       = 0.5;
 input int    InpMaxBarsSinceFlip = 12;
@@ -162,6 +165,31 @@ bool NoLowerWick(const double &o[], const double &l[], const double &c[], int i)
   { return(MathMin(o[i], c[i]) - l[i] <= _Point * 0.5); }
 bool NoUpperWick(const double &o[], const double &h[], const double &c[], int i)
   { return(h[i] - MathMax(o[i], c[i]) <= _Point * 0.5); }
+
+//+------------------------------------------------------------------+
+//| Ichimoku cloud on H4 (9/26/52, cloud shifted 26 bars forward):    |
+//| +1 last closed H4 close above the cloud, -1 below, 0 inside.      |
+//+------------------------------------------------------------------+
+double MidHL(ENUM_TIMEFRAMES tf, int shift, int p)
+  {
+   int hi = iHighest(_Symbol, tf, MODE_HIGH, p, shift);
+   int lo = iLowest(_Symbol, tf, MODE_LOW, p, shift);
+   if(hi < 0 || lo < 0) return(0);
+   return((iHigh(_Symbol, tf, hi) + iLow(_Symbol, tf, lo)) / 2.0);
+  }
+
+int CloudDir()
+  {
+   if(Bars(_Symbol, PERIOD_H4) < 26 + 52 + 2) return(0);
+   int s = 1 + 25;                       // cloud drawn at bar 1 was computed 25 bars earlier
+   double ten = MidHL(PERIOD_H4, s, 9), kij = MidHL(PERIOD_H4, s, 26), sb = MidHL(PERIOD_H4, s, 52);
+   if(ten == 0 || kij == 0 || sb == 0) return(0);
+   double sa = (ten + kij) / 2.0;
+   double c = iClose(_Symbol, PERIOD_H4, 1);
+   if(c > MathMax(sa, sb)) return(1);
+   if(c < MathMin(sa, sb)) return(-1);
+   return(0);
+  }
 
 string Px(double p) { return(DoubleToString(p, 2)); }
 string Side(int d)  { return(d == 1 ? "BUY" : "SELL"); }
@@ -360,6 +388,10 @@ bool CheckSignal(int d, const double &o[], const double &h[], const double &l[],
    if((d == 1 && !Bull(o4, c4, 1)) || (d == -1 && !Bear(o4, c4, 1)))
       return(false);
 
+   // 4-hour close beyond the Ichimoku cloud
+   if(InpRequireCloud && CloudDir() != d)
+      return(false);
+
    // room to the next daily level
    double close1 = iClose(_Symbol, PERIOD_H1, 1);
    double datr = Buf(hATRd, 1);
@@ -369,6 +401,7 @@ bool CheckSignal(int d, const double &o[], const double &h[], const double &l[],
 
    why = ":white_check_mark: Daily trend " + (d == 1 ? "up" : "down") + "\n"
          ":white_check_mark: 4-hour candles agree\n"
+         + (InpRequireCloud ? ":white_check_mark: 4-hour price is " + (d == 1 ? "above" : "below") + " the Ichimoku cloud\n" : "") +
          ":white_check_mark: Candle " + (string)since + " of the new colour, body " + DoubleToString(b2 > 0 ? b1 / b2 : 0, 1) + "x the previous one\n"
          + (nxt != 0 ? ":white_check_mark: Next daily level " + Px(nxt) + " (" + DoubleToString(MathAbs(nxt - close1), 0) + " pts away)" : ":white_check_mark: No daily level in the way");
    return(true);
@@ -421,7 +454,7 @@ void FireSignal(int d, string why)
                   + "• *Take profit 2:* *" + Px(g.target) + "* (+" + DoubleToString(InpTargetR, 1) + "R)\n"
                   + "• *Cancelled if:* the colour flips or " + (string)InpEntryExpiryBars + " hours pass first\n"
                   + "*Why it qualifies*\n" + why + "\n"
-                  + "_Tested 2008-2026: 805 trades, 57% winners, +0.12R per trade after costs. Not financial advice._";
+                  + "_Tested 2008-2026: 715 trades, 60% winners, +0.18R per trade after costs. Not financial advice._";
    string push = "Gold " + Side(d) + " setup | entry " + Px(g.entry) + " SL " + Px(g.stop) + " TP1 " + Px(g.partial) + " TP2 " + Px(g.target);
    Notify(slack, push);
 

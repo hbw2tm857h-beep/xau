@@ -22,6 +22,8 @@ switched to hard filters in CONFIG["filters"] if the backtest supports it):
   session  - London / New York hours
   adx      - trend strength on H1
   h4       - 4-hour Heikin Ashi colour agrees
+  h4_cloud - last closed 4-hour candle closed beyond the Ichimoku cloud in the
+             trade's direction (research round 4: TradingView indicators)
   atr_band - volatility neither dead nor extreme
   news     - live only: no high-impact US event close by
 
@@ -83,7 +85,7 @@ CONFIG = {
 
     # Checks. True = required (filter), False = shown for information only.
     # 4-hour agreement is required: it is what turned the strategy positive.
-    "filters": {"session": False, "adx": False, "h4": True, "atr_band": False,
+    "filters": {"session": False, "adx": False, "h4": True, "h4_cloud": True, "atr_band": False,
                 "news": False, "stop_width": False},
     "session_start_uk": 7,        # London open
     "session_end_uk": 20,         # end of the busy New York hours
@@ -105,7 +107,7 @@ CONFIG = {
     "breakeven_at_r": None,       # only used with exit_mode "ha"
     "alert_entry_hit": True,
     "alert_daily_hold": True,     # only used with exit_mode "ha"
-    "track_record": "Tested 2008-2026: 805 trades, 57% winners, +0.12R per trade after costs",
+    "track_record": "Tested 2008-2026: 715 trades, 60% winners, +0.18R per trade after costs",
 
     # Position size (only if ACCOUNT_SIZE secret is set)
     "contract_oz": 100,           # oz per 1.00 lot - check MT5 symbol spec
@@ -274,6 +276,32 @@ def aggregate(h1, keyfn, endfn):
 # --------------------------------------------------------------------------
 # Indicators
 # --------------------------------------------------------------------------
+def ichimoku_cloud_dir(bars):
+    """+1 close above the Ichimoku cloud, -1 below, 0 inside (9/26/52, cloud
+    shifted 26 bars forward, as on TradingView). Uses closed bars only."""
+    n = len(bars)
+    out = [0] * n
+
+    def mid(i, p):
+        if i < p - 1:
+            return None
+        seg = bars[i - p + 1:i + 1]
+        return (max(b["h"] for b in seg) + min(b["l"] for b in seg)) / 2
+
+    span_a, span_b = [None] * n, [None] * n
+    for i in range(n):
+        t, k = mid(i, 9), mid(i, 26)
+        span_a[i] = (t + k) / 2 if t is not None and k is not None else None
+        span_b[i] = mid(i, 52)
+    for i in range(25, n):
+        a, b = span_a[i - 25], span_b[i - 25]
+        if a is None or b is None:
+            continue
+        c = bars[i]["c"]
+        out[i] = 1 if c > max(a, b) else -1 if c < min(a, b) else 0
+    return out
+
+
 def heikin_ashi(bars):
     ha = []
     for i, b in enumerate(bars):
@@ -437,6 +465,7 @@ class Features:
         self.daily = aggregate(h1, trading_day, day_end)
         self.h4 = aggregate(h1, h4_key, h4_end)
         self.h4_ha = heikin_ashi(self.h4)
+        self.h4_cloud = ichimoku_cloud_dir(self.h4)
         self.d_idx, self.h4_idx = [-1] * n, [-1] * n
         dj = hj = -1
         for i, b in enumerate(h1):
@@ -575,6 +604,10 @@ def evaluate(F, i, d, cfg, news=None):
     h4_ok = h4c is not None and (bull(h4c) if d == 1 else bear(h4c))
     col = "green" if h4c is not None and bull(h4c) else "red"
     checks["h4"] = (h4_ok, f"4-hour candles {'agree' if h4_ok else 'disagree'} ({col})")
+    cl = F.h4_cloud[hk] if hk >= 0 else 0
+    cl_ok = cl == d
+    where = "above" if cl == 1 else "below" if cl == -1 else "inside"
+    checks["h4_cloud"] = (cl_ok, f"4-hour price is {where} the Ichimoku cloud")
     pct = F.atr_pct[i]
     if pct is None:
         checks["atr_band"] = (False, "Volatility unknown")
@@ -801,6 +834,7 @@ def fmt_signal(e, cfg, sizing):
     lines += ["", "*Why it qualifies*",
               f":white_check_mark: Daily trend is {'up' if d == 1 else 'down'}",
               f":white_check_mark: {s['checks']['h4'][1]}",
+              f":white_check_mark: {s['checks']['h4_cloud'][1]}",
               f":white_check_mark: Candle {s['since']} of the new colour, body {s['body_ratio']:.1f}x the previous one"]
     if s["broken"] is not None:
         lines.append(f":white_check_mark: Broke {'above' if d == 1 else 'below'} the daily level {px(s['broken'])}")
@@ -918,7 +952,7 @@ def scorecard(journal, now):
             f"Best {best['r']:+.2f}R ({side_word(best['dir'])}) | worst {worst['r']:+.2f}R ({side_word(worst['dir'])})\n"
             f"All time: {a['n']} trades, {a['win']:.0f}% winners, {a['total']:+.1f}R, "
             f"biggest drop {a['dd']:.1f}R\n"
-            "_Backtest benchmark (2008-2026): 57% winners, +0.12R per trade. R = multiples of the risk on each trade; "
+            "_Backtest benchmark (2008-2026): 60% winners, +0.18R per trade. R = multiples of the risk on each trade; "
             "results assume every signal was taken at the alert levels._")
 
 
@@ -958,6 +992,7 @@ def variants(cfg):
     return [
         (BASELINE, v()),
         ("Video's original rules", v(filters={"h4": False}, require_breakout=True, exit_mode="ha")),
+        ("Without the 4H Ichimoku cloud check", v(filters={"h4_cloud": False})),
         ("+ London/NY hours only", v(filters={"session": True})),
         ("+ ADX trend strength", v(filters={"adx": True})),
         ("+ normal volatility", v(filters={"atr_band": True})),

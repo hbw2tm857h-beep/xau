@@ -72,6 +72,31 @@ The exact live rules were run on 5 other markets they were never tuned on, over 
 - **Within gold it's robust.** It works for longs and shorts, in up and down years, and in 15 of 19 years. Gold's tendency to trend smoothly once the daily, 4-hour and 1-hour timeframes line up seems to be what the rules capture.
 - A pattern that worked on every market would have been stronger evidence. Gold-only means the live scorecard matters even more.
 
+## Round 4: popular TradingView indicators (16 Nov 2026)
+**Question:** do the best-known TradingView indicators add anything to the gold rules?
+
+**What was tested** (`tv_indicators.py`, `round4_tradingview.py`, `results_round4_tradingview.csv`): 20 of the most popular **open-source** scripts, ported from their published Pine code with the **author's default settings** and no tuning on gold. They were SuperTrend, UT Bot Alerts, SSL Channel, Squeeze Momentum, WaveTrend, QQE MOD, Chandelier Exit, Range Filter, Hull Suite, HalfTrend, the LuxAlgo Smart Money Concepts structure (internal and swing), MACD, RSI, EMA 200, the Ichimoku cloud, Parabolic SAR, Stoch RSI, DMI and the Donchian midline. Each one was tested 3 ways, one at a time: as an H1 filter, as a 4H filter, and as a replacement for the Heikin Ashi trigger. That makes 60 tests.
+
+Some scripts were left out. Protected and invite-only scripts don't publish their code. VWAP, MFI, OBV and Cipher B's money flow need volume, which spot gold doesn't have. The Nadaraya-Watson Envelope repaints, and Lorentzian Classification is a machine-learning model that would need fitting.
+
+**Pass mark:** the same as round 2, which is better average R by more than 0.02 in both 2016–22 and 2023–24, while keeping at least 60% of the trades. Anything that passed was then checked on 2008–15 and 2025–26. Those periods had been seen before, but none of these indicators was chosen or set using them. To be adopted, a change had to beat the live rules in all four periods.
+
+| Passed stage 1 | 2016–22 | 2023–24 | 2008–15 | 2025–26 | Verdict |
+|---|---|---|---|---|---|
+| Live rules (reference) | +0.094 | +0.088 | +0.104 | +0.299 | |
+| **Ichimoku cloud, 4H** | **+0.136** | **+0.156** | **+0.168** | **+0.326** | **adopted** |
+| Chandelier Exit, 4H | +0.117 | +0.208 | +0.129 | +0.343 | passed, not added (see below) |
+| Hull Suite, H1 | +0.124 | +0.172 | +0.105 | +0.363 | flat on 2008–15 |
+| Stoch RSI K/D, 4H | +0.146 | +0.294 | +0.126 | +0.398 | cuts 36% of trades; total R falls |
+| WaveTrend trigger | −0.056 | +0.019 | −0.020 | +0.037 | worse than the live rules |
+
+**Findings**
+1. **None of the 20 indicators beat the Heikin Ashi trigger.** As triggers, all 20 did worse than the live rules over 2016–22. The best was the SMC swing structure at +0.085R, against +0.094R, and that came from only 34 trades.
+2. **The Ichimoku cloud on 4H is a real improvement.** Over 2008–26 it removes 110 trades that averaged −0.17R. The average goes from +0.12R to +0.18R and total R from +97 to +125. It's better in 15 of 19 years. Dropping the same number of trades at random never matched the gain in 5,000 tries.
+3. **Chandelier Exit 4H also passed, but it isn't stacked on top.** It measures the same thing (the 4-hour trend), and adding a second filter that was picked from the same 60 tests is how curve-fitting starts.
+4. **Most H1 filters do nothing.** RSI, MACD, EMA 200, DMI and Donchian are within ±0.02R of the live rules. Gold's edge here comes from the timeframes agreeing, not from extra confirmations on the same hourly chart.
+5. **Caveat:** 60 tests were run, so a few passes by luck are expected. The cloud passed four separate periods and fits the earlier finding that 4-hour agreement is where the edge comes from, but live results are still the real test.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -83,4 +108,5 @@ python3 research/round3.py   # entry buffer sweep + greedy combinations
 python3 research/lockbox.py  # one-time final test on 2008-2015
 python3 research/cross_market.py   # same rules on silver + 4 FX majors
 python3 research/gold_direction.py # longs vs shorts, up vs down years
+python3 research/round4_tradingview.py # 20 TradingView indicators x 3 uses
 ```

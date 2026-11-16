@@ -11,13 +11,13 @@ When nothing happens, it posts nothing.
 
 ## The rules (checked on each H1 candle close)
 1. Daily direction agrees: the daily Heikin Ashi colour, plus the daily close compared with the 50 EMA.
-2. The last closed **4-hour** Heikin Ashi candle is the same colour.
+2. The last closed **4-hour** Heikin Ashi candle is the same colour, and the last 4-hour close is on the right side of the **Ichimoku cloud** (above it for buys, below for sells). The cloud check was added in research round 4, which tested 20 popular TradingView indicators.
 3. The H1 candle is the first Heikin Ashi candle of the new colour with no wick on the wrong side, and its body is bigger than the previous candle's body.
 4. There's room before the next daily support or resistance level.
 
 **Trade plan:** a stop-order entry just beyond the signal candle, with the stop beyond the last 5 candles. Take half off at +1R and move the stop to entry, then close the rest at +2R. The setup is cancelled if the colour flips or 12 hours pass before entry.
 
-**Tested 2008–2026 (`research/`):** 805 trades, 57% winners, +0.12R per trade after costs. That includes 8 untouched years (2008–2015) at +0.10R per trade. The video's original rules lost money over the same period.
+**Tested 2008–2026 (`research/`):** 715 trades, 60% winners, +0.18R per trade after costs, profit factor 1.42. Before the Ichimoku cloud check it was 805 trades, 57% winners and +0.12R. The video's original rules lost money over the same period.
 
 ## Context checks (shown on every setup, information only)
 | Check | Passes when |
