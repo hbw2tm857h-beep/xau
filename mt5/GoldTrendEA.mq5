@@ -3,7 +3,7 @@
 //|  Gold H1 Heikin Ashi trend-ride, confirmed by the daily trend and |
 //|  the 4-hour Heikin Ashi candle. The same rules as the xau signals |
 //|  bot (research/README.md): tested 2008-2026 on Dukascopy H1 data, |
-//|  805 trades, 57% winners, +0.12R per trade after costs.           |
+//|  715 trades, 60% winners, +0.18R per trade after costs.           |
 //|                                                                  |
 //|  Default: ALERTS ONLY (MT5 push + optional Slack). Set           |
 //|  InpAutoTrade = true to place and manage trades - test on a      |
@@ -12,7 +12,9 @@
 //|  Rules (checked when each H1 candle closes):                     |
 //|   1. Daily trend: last daily Heikin Ashi candle and the daily    |
 //|      close vs the 50 EMA agree (up or down).                     |
-//|   2. Last closed 4-hour Heikin Ashi candle is the same colour.   |
+//|   2. Last closed 4-hour Heikin Ashi candle is the same colour,   |
+//|      and that 4-hour close is beyond the Ichimoku cloud (above   |
+//|      for buys, below for sells; 9/26/52). Research round 4.      |
 //|   3. H1 Heikin Ashi candle: first one of the new colour with no  |
 //|      wick against the move (no lower wick for buys), body at     |
 //|      least as big as the previous candle, colour flip within 12. |
@@ -22,9 +24,12 @@
 //|  the last 5 candles + 0.2 x H1 ATR. Half off at +1R and stop to  |
 //|  entry, rest at +2R. Order cancelled if the HA colour flips or   |
 //|  12 hours pass. One trade at a time.                             |
+//|                                                                  |
+//|  Second setup (research round 5, separate magic InpMagic + 1):   |
+//|  inside-day breakout on D1 - see OnNewD1(). Half risk by default.|
 //+------------------------------------------------------------------+
 #property copyright "Bradley - Built by Lumn"
-#property version   "2.00"
+#property version   "2.20"
 #property description "Gold H1 Heikin Ashi trend-ride with 4H confirmation. Alerts by default; optional auto-trading."
 
 #include <Trade/Trade.mqh>
@@ -41,6 +46,7 @@ input int    InpSRLookbackDays   = 180;
 input int    InpSRPivot          = 3;
 input double InpSRMergeATR       = 0.5;
 input int    InpSRMaxLevels      = 12;
+input bool   InpRequireCloud     = true;  // 4H close beyond the Ichimoku cloud
 input bool   InpRequireRoom      = true;
 input double InpMinRoomATR       = 0.5;
 input int    InpMaxBarsSinceFlip = 12;
@@ -52,6 +58,10 @@ input double InpPartialR         = 1.0;
 input double InpPartialFrac      = 0.5;
 input double InpTargetR          = 2.0;
 input int    InpEntryExpiryBars  = 12;
+
+input group "Second setup: inside-day breakout (research round 5)"
+input bool   InpInsideDay        = true;  // Alert/trade the inside-day breakout too
+input double InpInsideDayRisk    = 0.5;   // x InpRiskPercent for these trades (tested: half size)
 
 input group "Notifications"
 input bool   InpPush             = true;  // MT5 push to your phone
@@ -72,6 +82,17 @@ struct Idea
 
 Idea     g;
 datetime g_lastH1 = 0;
+
+//--- inside-day breakout state (separate magic number: InpMagic + 1)
+struct InsideDay
+  {
+   int      state;      // 0 none, 1 orders waiting, 2 in the trade
+   int      dir;
+   double   hi, lo, entry, stop;
+  };
+InsideDay ib;
+datetime g_lastD1 = 0;
+CTrade   ibTrade;
 double   g_levels[];
 int      hEMA = INVALID_HANDLE, hATRd = INVALID_HANDLE, hATRh = INVALID_HANDLE;
 CTrade   trade;
@@ -88,8 +109,10 @@ int OnInit()
    if(hEMA == INVALID_HANDLE || hATRd == INVALID_HANDLE || hATRh == INVALID_HANDLE)
       return(INIT_FAILED);
    trade.SetExpertMagicNumber(InpMagic);
+   ibTrade.SetExpertMagicNumber(InpMagic + 1);
    GV = "GTE_" + _Symbol + "_" + (string)InpMagic + "_";
    LoadState();
+   LoadIB();
    EventSetTimer(10);
    Print("GoldTrendEA started: ", (InpAutoTrade ? "AUTO-TRADING" : "alerts only"),
          ", risk ", DoubleToString(InpRiskPercent, 2), "%");
@@ -100,6 +123,7 @@ void OnDeinit(const int reason)
   {
    EventKillTimer();
    SaveState();
+   SaveIB();
    if(!MQLInfoInteger(MQL_TESTER))
       ObjectsDeleteAll(0, "GTE_LV_");
    IndicatorRelease(hEMA);
@@ -124,6 +148,19 @@ void Process()
          BuildLevels();
      }
    ManageIntrabar();
+
+   if(InpInsideDay)
+     {
+      datetime d1 = iTime(_Symbol, PERIOD_D1, 0);
+      if(d1 != 0 && d1 != g_lastD1)
+        {
+         bool firstD = (g_lastD1 == 0);
+         g_lastD1 = d1;
+         if(!firstD)
+            OnNewD1();
+        }
+      ManageIB();
+     }
   }
 
 //+------------------------------------------------------------------+
@@ -162,6 +199,31 @@ bool NoLowerWick(const double &o[], const double &l[], const double &c[], int i)
   { return(MathMin(o[i], c[i]) - l[i] <= _Point * 0.5); }
 bool NoUpperWick(const double &o[], const double &h[], const double &c[], int i)
   { return(h[i] - MathMax(o[i], c[i]) <= _Point * 0.5); }
+
+//+------------------------------------------------------------------+
+//| Ichimoku cloud on H4 (9/26/52, cloud shifted 26 bars forward):    |
+//| +1 last closed H4 close above the cloud, -1 below, 0 inside.      |
+//+------------------------------------------------------------------+
+double MidHL(ENUM_TIMEFRAMES tf, int shift, int p)
+  {
+   int hi = iHighest(_Symbol, tf, MODE_HIGH, p, shift);
+   int lo = iLowest(_Symbol, tf, MODE_LOW, p, shift);
+   if(hi < 0 || lo < 0) return(0);
+   return((iHigh(_Symbol, tf, hi) + iLow(_Symbol, tf, lo)) / 2.0);
+  }
+
+int CloudDir()
+  {
+   if(Bars(_Symbol, PERIOD_H4) < 26 + 52 + 2) return(0);
+   int s = 1 + 25;                       // cloud drawn at bar 1 was computed 25 bars earlier
+   double ten = MidHL(PERIOD_H4, s, 9), kij = MidHL(PERIOD_H4, s, 26), sb = MidHL(PERIOD_H4, s, 52);
+   if(ten == 0 || kij == 0 || sb == 0) return(0);
+   double sa = (ten + kij) / 2.0;
+   double c = iClose(_Symbol, PERIOD_H4, 1);
+   if(c > MathMax(sa, sb)) return(1);
+   if(c < MathMin(sa, sb)) return(-1);
+   return(0);
+  }
 
 string Px(double p) { return(DoubleToString(p, 2)); }
 string Side(int d)  { return(d == 1 ? "BUY" : "SELL"); }
@@ -360,6 +422,10 @@ bool CheckSignal(int d, const double &o[], const double &h[], const double &l[],
    if((d == 1 && !Bull(o4, c4, 1)) || (d == -1 && !Bear(o4, c4, 1)))
       return(false);
 
+   // 4-hour close beyond the Ichimoku cloud
+   if(InpRequireCloud && CloudDir() != d)
+      return(false);
+
    // room to the next daily level
    double close1 = iClose(_Symbol, PERIOD_H1, 1);
    double datr = Buf(hATRd, 1);
@@ -369,6 +435,7 @@ bool CheckSignal(int d, const double &o[], const double &h[], const double &l[],
 
    why = ":white_check_mark: Daily trend " + (d == 1 ? "up" : "down") + "\n"
          ":white_check_mark: 4-hour candles agree\n"
+         + (InpRequireCloud ? ":white_check_mark: 4-hour price is " + (d == 1 ? "above" : "below") + " the Ichimoku cloud\n" : "") +
          ":white_check_mark: Candle " + (string)since + " of the new colour, body " + DoubleToString(b2 > 0 ? b1 / b2 : 0, 1) + "x the previous one\n"
          + (nxt != 0 ? ":white_check_mark: Next daily level " + Px(nxt) + " (" + DoubleToString(MathAbs(nxt - close1), 0) + " pts away)" : ":white_check_mark: No daily level in the way");
    return(true);
@@ -421,7 +488,7 @@ void FireSignal(int d, string why)
                   + "• *Take profit 2:* *" + Px(g.target) + "* (+" + DoubleToString(InpTargetR, 1) + "R)\n"
                   + "• *Cancelled if:* the colour flips or " + (string)InpEntryExpiryBars + " hours pass first\n"
                   + "*Why it qualifies*\n" + why + "\n"
-                  + "_Tested 2008-2026: 805 trades, 57% winners, +0.12R per trade after costs. Not financial advice._";
+                  + "_Tested 2008-2026: 715 trades, 60% winners, +0.18R per trade after costs. Not financial advice._";
    string push = "Gold " + Side(d) + " setup | entry " + Px(g.entry) + " SL " + Px(g.stop) + " TP1 " + Px(g.partial) + " TP2 " + Px(g.target);
    Notify(slack, push);
 
@@ -433,8 +500,10 @@ void FireSignal(int d, string why)
 //+------------------------------------------------------------------+
 //| Position sizing from risk %                                      |
 //+------------------------------------------------------------------+
-double Lots(double riskPrice)
+double Lots(double riskPrice, double riskPct = -1)
   {
+   if(riskPct < 0)
+      riskPct = InpRiskPercent;
    double tv = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
    double ts = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
    double step = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);
@@ -442,7 +511,7 @@ double Lots(double riskPrice)
    double vmax = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MAX);
    if(tv <= 0 || ts <= 0 || step <= 0)
       return(0);
-   double money = AccountInfoDouble(ACCOUNT_BALANCE) * InpRiskPercent / 100.0;
+   double money = AccountInfoDouble(ACCOUNT_BALANCE) * riskPct / 100.0;
    double perLot = riskPrice / ts * tv;
    if(perLot <= 0)
       return(0);
@@ -661,6 +730,190 @@ void LoadState()
    g.sigTime = (datetime)GlobalVariableGet(GV + "sig");
    if(g.dir != 0)
       Print("GoldTrendEA: restored ", Side(g.dir), " idea, entry ", Px(g.entry), (g.triggered ? " (in trade)" : " (pending)"));
+  }
+
+//+------------------------------------------------------------------+
+//| Second setup: inside-day breakout                                |
+//| After a daily candle inside the previous day's range: buy-stop   |
+//| at its high, sell-stop at its low (one cancels the other), stop  |
+//| at the other side, close at the next daily close. Tested         |
+//| 2008-2026: 726 trades, 49% winners, +0.10R after costs. Uses the |
+//| broker's D1 candles: these should roll at 17:00 New York (most   |
+//| gold brokers on GMT+2/+3 server time do).                        |
+//+------------------------------------------------------------------+
+void OnNewD1()
+  {
+   // the previous trade day has closed: settle whatever is left
+   if(ib.state == 2)
+     {
+      double px = (ib.dir == 1) ? SymbolInfoDouble(_Symbol, SYMBOL_BID) : SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+      if(InpAutoTrade)
+         IBCloseAll();
+      double r = (px - ib.entry) * ib.dir / MathAbs(ib.entry - ib.stop);
+      Notify(":checkered_flag: *Inside-day trade: close the Gold " + Side(ib.dir) + " now* (daily close, " + Px(px) + "). Result about " + DoubleToString(r, 2) + "R.",
+             "Gold inside-day " + Side(ib.dir) + ": close now at the daily close, about " + DoubleToString(r, 2) + "R");
+     }
+   else if(ib.state == 1)
+     {
+      if(InpAutoTrade)
+         IBCloseAll();
+      Notify(":heavy_minus_sign: *Inside-day setup cancelled: Gold*. Price stayed between " + Px(ib.lo) + " and " + Px(ib.hi) + ". No trade.",
+             "Gold inside-day cancelled: no breakout");
+     }
+   IBReset();
+
+   double h1 = iHigh(_Symbol, PERIOD_D1, 1), l1 = iLow(_Symbol, PERIOD_D1, 1);
+   double h2 = iHigh(_Symbol, PERIOD_D1, 2), l2 = iLow(_Symbol, PERIOD_D1, 2);
+   if(h1 == 0 || h2 == 0 || !(h1 < h2 && l1 > l2))
+     { SaveIB(); return; }
+
+   ib.state = 1; ib.hi = NormalizeDouble(h1, _Digits); ib.lo = NormalizeDouble(l1, _Digits);
+   double riskPct = InpRiskPercent * InpInsideDayRisk;
+   Notify(":package: *INSIDE-DAY SETUP: Gold (XAUUSD)*\n"
+          "Yesterday's range (" + Px(ib.lo) + " to " + Px(ib.hi) + ") stayed inside the day before's. Separate from the trend setups.\n"
+          "• *Buy-stop:* *" + Px(ib.hi) + "*, stop *" + Px(ib.lo) + "*\n"
+          "• *Sell-stop:* *" + Px(ib.lo) + "*, stop *" + Px(ib.hi) + "*\n"
+          "• One cancels the other. Risk " + DoubleToString(ib.hi - ib.lo, 2) + " = 1R, at " + DoubleToString(riskPct, 2) + "% of the account\n"
+          "• No take-profit: close at the next daily close. Cancelled if neither side trades today.\n"
+          "_Tested 2008-2026: 726 trades, 49% winners, +0.10R per trade after costs. Not financial advice._",
+          "Gold inside-day setup: buy-stop " + Px(ib.hi) + " / sell-stop " + Px(ib.lo) + ", stop at the other side, close at the daily close");
+   if(InpAutoTrade)
+     {
+      double lots = Lots(ib.hi - ib.lo, riskPct);
+      if(lots <= 0)
+         Notify(":warning: Inside-day setup skipped for auto-trading: the range is too wide for your risk % at the minimum lot size.",
+                "Gold inside-day skipped: range too wide for risk %");
+      else
+        {
+         double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK), bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
+         bool ok;
+         if(ask >= ib.hi)        // gapped through: the research fills at the open
+            ok = ibTrade.Buy(lots, _Symbol, ask, ib.lo, 0, "GTE-ID");
+         else if(bid <= ib.lo)
+            ok = ibTrade.Sell(lots, _Symbol, bid, ib.hi, 0, "GTE-ID");
+         else
+            ok = ibTrade.BuyStop(lots, ib.hi, _Symbol, ib.lo, 0, ORDER_TIME_GTC, 0, "GTE-ID")
+                 && ibTrade.SellStop(lots, ib.lo, _Symbol, ib.hi, 0, ORDER_TIME_GTC, 0, "GTE-ID");
+         if(!ok)
+            Notify(":warning: Inside-day order failed: " + ibTrade.ResultRetcodeDescription(),
+                   "Gold inside-day order failed: " + ibTrade.ResultRetcodeDescription());
+        }
+     }
+   SaveIB();
+  }
+
+void ManageIB()
+  {
+   if(ib.state == 0)
+      return;
+   double bid = SymbolInfoDouble(_Symbol, SYMBOL_BID), ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK);
+   if(ib.state == 1)
+     {
+      int d = 0;
+      double fill = 0;
+      if(InpAutoTrade)
+        {
+         for(int i = PositionsTotal() - 1; i >= 0; i--)
+           {
+            ulong t = PositionGetTicket(i);
+            if(t > 0 && PositionGetInteger(POSITION_MAGIC) == InpMagic + 1 && PositionGetString(POSITION_SYMBOL) == _Symbol)
+              {
+               d = (PositionGetInteger(POSITION_TYPE) == POSITION_TYPE_BUY) ? 1 : -1;
+               fill = PositionGetDouble(POSITION_PRICE_OPEN);
+              }
+           }
+         if(d != 0)
+            IBDeletePending();   // one cancels the other
+        }
+      else if(ask >= ib.hi) { d = 1;  fill = MathMax(ask, ib.hi); }
+      else if(bid <= ib.lo) { d = -1; fill = MathMin(bid, ib.lo); }
+      if(d == 0)
+         return;
+      ib.state = 2; ib.dir = d; ib.entry = fill; ib.stop = (d == 1) ? ib.lo : ib.hi;
+      Notify(":dart: *Inside-day entry: Gold " + Side(d) + "* at " + Px(fill) + ". " + (d == 1 ? "Delete the sell-stop. " : "Delete the buy-stop. ") +
+             "Stop " + Px(ib.stop) + "; close at the daily close.",
+             "Gold inside-day " + Side(d) + " entry " + Px(fill) + ", stop " + Px(ib.stop));
+      SaveIB();
+      return;
+     }
+   // in the trade: watch the stop
+   bool gone;
+   if(InpAutoTrade)
+     {
+      gone = true;
+      for(int i = PositionsTotal() - 1; i >= 0; i--)
+        {
+         ulong t = PositionGetTicket(i);
+         if(t > 0 && PositionGetInteger(POSITION_MAGIC) == InpMagic + 1 && PositionGetString(POSITION_SYMBOL) == _Symbol)
+            gone = false;
+        }
+     }
+   else
+      gone = (ib.dir == 1) ? (bid <= ib.stop) : (ask >= ib.stop);
+   if(gone)
+     {
+      Notify(":octagonal_sign: *Inside-day stopped out: Gold " + Side(ib.dir) + "* at " + Px(ib.stop) + ". Result about -1R.",
+             "Gold inside-day " + Side(ib.dir) + " stopped at " + Px(ib.stop));
+      if(InpAutoTrade)
+         IBDeletePending();
+      IBReset();
+      SaveIB();
+     }
+  }
+
+void IBDeletePending()
+  {
+   for(int i = OrdersTotal() - 1; i >= 0; i--)
+     {
+      ulong t = OrderGetTicket(i);
+      if(t > 0 && OrderGetInteger(ORDER_MAGIC) == InpMagic + 1 && OrderGetString(ORDER_SYMBOL) == _Symbol)
+         ibTrade.OrderDelete(t);
+     }
+  }
+
+void IBCloseAll()
+  {
+   IBDeletePending();
+   for(int i = PositionsTotal() - 1; i >= 0; i--)
+     {
+      ulong t = PositionGetTicket(i);
+      if(t > 0 && PositionGetInteger(POSITION_MAGIC) == InpMagic + 1 && PositionGetString(POSITION_SYMBOL) == _Symbol)
+         ibTrade.PositionClose(t);
+     }
+  }
+
+void IBReset()
+  {
+   ib.state = 0; ib.dir = 0; ib.hi = ib.lo = ib.entry = ib.stop = 0;
+  }
+
+void SaveIB()
+  {
+   if(MQLInfoInteger(MQL_TESTER))
+      return;
+   GlobalVariableSet(GV + "ib_state", ib.state);
+   GlobalVariableSet(GV + "ib_dir", ib.dir);
+   GlobalVariableSet(GV + "ib_hi", ib.hi);
+   GlobalVariableSet(GV + "ib_lo", ib.lo);
+   GlobalVariableSet(GV + "ib_entry", ib.entry);
+   GlobalVariableSet(GV + "ib_stop", ib.stop);
+   GlobalVariableSet(GV + "ib_day", (double)iTime(_Symbol, PERIOD_D1, 0));
+  }
+
+void LoadIB()
+  {
+   IBReset();
+   if(MQLInfoInteger(MQL_TESTER) || !GlobalVariableCheck(GV + "ib_state"))
+      return;
+   ib.state = (int)GlobalVariableGet(GV + "ib_state");
+   ib.dir = (int)GlobalVariableGet(GV + "ib_dir");
+   ib.hi = GlobalVariableGet(GV + "ib_hi");
+   ib.lo = GlobalVariableGet(GV + "ib_lo");
+   ib.entry = GlobalVariableGet(GV + "ib_entry");
+   ib.stop = GlobalVariableGet(GV + "ib_stop");
+   // restarted on a later day: let OnNewD1 settle it on the first tick
+   datetime saved = (datetime)GlobalVariableGet(GV + "ib_day");
+   g_lastD1 = (saved != 0 && saved != iTime(_Symbol, PERIOD_D1, 0)) ? saved : 0;
   }
 
 //+------------------------------------------------------------------+

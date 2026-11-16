@@ -4,6 +4,7 @@ Alert-only bot. It **never places trades**. A few minutes after each H1 candle c
 
 - **Setup** (buy or sell): the plan (entry, stop, size, take profit 1 and 2, when it's cancelled), why the setup qualifies, and context checks
 - **Entry triggered**, **take profit 1** (close half, move the stop to entry), **take profit 2**, **stopped out**, **setup cancelled**
+- **Inside-day setup** (the second strategy, after the daily close): two one-cancels-the-other stop orders, then entry, stopped out, close at the daily close, or cancelled
 - **Weekly scorecard** on Friday night, posted only if trades closed that week
 - **Warning**, sent only if the bot fails 3 runs in a row
 
@@ -11,13 +12,22 @@ When nothing happens, it posts nothing.
 
 ## The rules (checked on each H1 candle close)
 1. Daily direction agrees: the daily Heikin Ashi colour, plus the daily close compared with the 50 EMA.
-2. The last closed **4-hour** Heikin Ashi candle is the same colour.
+2. The last closed **4-hour** Heikin Ashi candle is the same colour, and the last 4-hour close is on the right side of the **Ichimoku cloud** (above it for buys, below for sells). The cloud check was added in research round 4, which tested 20 popular TradingView indicators.
 3. The H1 candle is the first Heikin Ashi candle of the new colour with no wick on the wrong side, and its body is bigger than the previous candle's body.
 4. There's room before the next daily support or resistance level.
 
 **Trade plan:** a stop-order entry just beyond the signal candle, with the stop beyond the last 5 candles. Take half off at +1R and move the stop to entry, then close the rest at +2R. The setup is cancelled if the colour flips or 12 hours pass before entry.
 
-**Tested 2008–2026 (`research/`):** 805 trades, 57% winners, +0.12R per trade after costs. That includes 8 untouched years (2008–2015) at +0.10R per trade. The video's original rules lost money over the same period.
+**Tested 2008–2026 (`research/`):** 715 trades, 60% winners, +0.18R per trade after costs, profit factor 1.42. Before the Ichimoku cloud check it was 805 trades, 57% winners and +0.12R. The video's original rules lost money over the same period.
+
+## Second setup: inside-day breakout (research round 5)
+This runs separately from the trend setups and has its own alerts. When a daily candle (17:00 New York close) sits entirely inside the previous day's range, the bot posts two orders, and the first one to trade cancels the other:
+- a buy-stop at the inside day's high, with the stop at its low
+- a sell-stop at its low, with the stop at its high
+
+There's no take-profit. The trade closes at the next daily close whatever happens, and the orders are cancelled if neither side trades that day. Lot sizes use **half** the normal risk (`inside_day_risk_mult`). Set `"inside_day": False` in `CONFIG` to turn it off.
+
+**Tested 2008–2026:** 726 trades, 49% winners, +0.10R per trade after costs, profit factor 1.32, positive in all four test periods. It's a thinner edge than the trend setups, but almost uncorrelated with them. Running both at this size raised the Sharpe ratio from 0.95 to 1.09. Round 5 tested 77 more indicators, calendar and other-market filters and 10 well-known strategies, and this was the only one that passed (`research/README.md`).
 
 ## Context checks (shown on every setup, information only)
 | Check | Passes when |

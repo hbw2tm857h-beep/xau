@@ -22,6 +22,8 @@ switched to hard filters in CONFIG["filters"] if the backtest supports it):
   session  - London / New York hours
   adx      - trend strength on H1
   h4       - 4-hour Heikin Ashi colour agrees
+  h4_cloud - last closed 4-hour candle closed beyond the Ichimoku cloud in the
+             trade's direction (research round 4: TradingView indicators)
   atr_band - volatility neither dead nor extreme
   news     - live only: no high-impact US event close by
 
@@ -83,7 +85,7 @@ CONFIG = {
 
     # Checks. True = required (filter), False = shown for information only.
     # 4-hour agreement is required: it is what turned the strategy positive.
-    "filters": {"session": False, "adx": False, "h4": True, "atr_band": False,
+    "filters": {"session": False, "adx": False, "h4": True, "h4_cloud": True, "atr_band": False,
                 "news": False, "stop_width": False},
     "session_start_uk": 7,        # London open
     "session_end_uk": 20,         # end of the busy New York hours
@@ -105,7 +107,16 @@ CONFIG = {
     "breakeven_at_r": None,       # only used with exit_mode "ha"
     "alert_entry_hit": True,
     "alert_daily_hold": True,     # only used with exit_mode "ha"
-    "track_record": "Tested 2008-2026: 805 trades, 57% winners, +0.12R per trade after costs",
+    "track_record": "Tested 2008-2026: 715 trades, 60% winners, +0.18R per trade after costs",
+
+    # Second, independent setup (research round 5): inside-day breakout. When a
+    # daily candle's range sits inside the previous day's, place a buy-stop at
+    # its high and a sell-stop at its low (one cancels the other), stop at the
+    # other side, and close at the next daily close. Runs alongside the trend
+    # setups with its own alerts and its own line in the scorecard.
+    "inside_day": True,
+    "inside_day_risk_mult": 0.5,  # size at half the normal risk: the two together had the best return per drawdown
+    "inside_day_track_record": "Tested 2008-2026: 726 trades, 49% winners, +0.10R per trade after costs",
 
     # Position size (only if ACCOUNT_SIZE secret is set)
     "contract_oz": 100,           # oz per 1.00 lot - check MT5 symbol spec
@@ -274,6 +285,32 @@ def aggregate(h1, keyfn, endfn):
 # --------------------------------------------------------------------------
 # Indicators
 # --------------------------------------------------------------------------
+def ichimoku_cloud_dir(bars):
+    """+1 close above the Ichimoku cloud, -1 below, 0 inside (9/26/52, cloud
+    shifted 26 bars forward, as on TradingView). Uses closed bars only."""
+    n = len(bars)
+    out = [0] * n
+
+    def mid(i, p):
+        if i < p - 1:
+            return None
+        seg = bars[i - p + 1:i + 1]
+        return (max(b["h"] for b in seg) + min(b["l"] for b in seg)) / 2
+
+    span_a, span_b = [None] * n, [None] * n
+    for i in range(n):
+        t, k = mid(i, 9), mid(i, 26)
+        span_a[i] = (t + k) / 2 if t is not None and k is not None else None
+        span_b[i] = mid(i, 52)
+    for i in range(25, n):
+        a, b = span_a[i - 25], span_b[i - 25]
+        if a is None or b is None:
+            continue
+        c = bars[i]["c"]
+        out[i] = 1 if c > max(a, b) else -1 if c < min(a, b) else 0
+    return out
+
+
 def heikin_ashi(bars):
     ha = []
     for i, b in enumerate(bars):
@@ -437,6 +474,7 @@ class Features:
         self.daily = aggregate(h1, trading_day, day_end)
         self.h4 = aggregate(h1, h4_key, h4_end)
         self.h4_ha = heikin_ashi(self.h4)
+        self.h4_cloud = ichimoku_cloud_dir(self.h4)
         self.d_idx, self.h4_idx = [-1] * n, [-1] * n
         dj = hj = -1
         for i, b in enumerate(h1):
@@ -575,6 +613,10 @@ def evaluate(F, i, d, cfg, news=None):
     h4_ok = h4c is not None and (bull(h4c) if d == 1 else bear(h4c))
     col = "green" if h4c is not None and bull(h4c) else "red"
     checks["h4"] = (h4_ok, f"4-hour candles {'agree' if h4_ok else 'disagree'} ({col})")
+    cl = F.h4_cloud[hk] if hk >= 0 else 0
+    cl_ok = cl == d
+    where = "above" if cl == 1 else "below" if cl == -1 else "inside"
+    checks["h4_cloud"] = (cl_ok, f"4-hour price is {where} the Ichimoku cloud")
     pct = F.atr_pct[i]
     if pct is None:
         checks["atr_band"] = (False, "Volatility unknown")
@@ -723,6 +765,78 @@ def daily_hold(F, k, idea, cfg):
 
 
 # --------------------------------------------------------------------------
+# Second setup: inside-day breakout (research/round5_standalone.py)
+# --------------------------------------------------------------------------
+def is_inside_day(daily, k):
+    return k >= 1 and daily[k]["h"] < daily[k - 1]["h"] and daily[k]["l"] > daily[k - 1]["l"]
+
+
+def ib_step(F, i, st, cfg):
+    """Advance the inside-day setup by one closed H1 bar (kept in st["ib"]).
+
+    Matches the research rules: the order is live for the next daily candle
+    only; the first side traded fills (at the open if price gaps through); the
+    stop is the other side; if one H1 candle touches both sides the stop is
+    assumed; whatever is open is closed at that day's close.
+    """
+    ev = []
+    if not cfg.get("inside_day"):
+        return ev
+    b, t_close, cost = F.h1[i], F.close_time(i), cfg["cost_per_trade"]
+    k = F.d_idx[i]
+    new_day = i > 0 and k >= 0 and k != F.d_idx[i - 1]
+    if new_day and F.daily[k]["end"] <= b["t"]:
+        # the day ended in a gap before this candle (early holiday close): settle it at its last price first
+        ev += _ib_day_close(F, k, st, F.h1[i - 1]["c"], t_close, cost)
+    ib = st.get("ib")
+    if ib and not ib["triggered"]:
+        up, dn = b["h"] >= ib["hi"], b["l"] <= ib["lo"]
+        if up or dn:
+            d = (1 if up else -1) if up != dn else (1 if b["o"] >= (ib["hi"] + ib["lo"]) / 2 else -1)
+            entry = max(b["o"], ib["hi"]) if d == 1 else min(b["o"], ib["lo"])
+            stop = ib["lo"] if d == 1 else ib["hi"]
+            ib.update(triggered=True, dir=d, entry=round(entry, 2), stop=stop,
+                      risk=round(abs(entry - stop), 4), entry_time=t_close.isoformat())
+            ev.append({"type": "ib_entry", "idea": dict(ib), "t": t_close})
+            if up and dn:
+                ev.append({"type": "ib_stop", "idea": dict(ib), "t": t_close,
+                           "r": _close_r(ib, stop, cost), "price": stop})
+                st["ib"] = ib = None
+    elif ib:
+        d = ib["dir"]
+        if (b["l"] <= ib["stop"]) if d == 1 else (b["h"] >= ib["stop"]):
+            ev.append({"type": "ib_stop", "idea": dict(ib), "t": t_close,
+                       "r": _close_r(ib, ib["stop"], cost), "price": ib["stop"]})
+            st["ib"] = ib = None
+
+    if new_day and F.daily[k]["end"] > b["t"]:
+        ev += _ib_day_close(F, k, st, b["c"], t_close, cost)  # this candle closed the day
+    return ev
+
+
+def _ib_day_close(F, k, st, price, t, cost):
+    """Daily candle k has closed: settle the open inside-day trade or cancel the
+    unfilled orders, then look for a new inside day."""
+    ev = []
+    ib = st.get("ib")
+    day_end_iso = F.daily[k]["end"].isoformat()
+    if ib and ib["setup_day_end"] != day_end_iso:
+        if ib["triggered"]:
+            ev.append({"type": "ib_close", "idea": dict(ib), "t": t,
+                       "r": _close_r(ib, price, cost), "price": price})
+        else:
+            ev.append({"type": "ib_cancel", "idea": dict(ib), "t": t})
+        st["ib"] = None
+    if is_inside_day(F.daily, k):
+        cur, prev = F.daily[k], F.daily[k - 1]
+        st["ib"] = {"strategy": "inside_day", "hi": round(cur["h"], 2), "lo": round(cur["l"], 2),
+                    "prev_hi": round(prev["h"], 2), "prev_lo": round(prev["l"], 2),
+                    "triggered": False, "setup_day_end": day_end_iso, "sig_time": F.daily[k]["end"].isoformat()}
+        ev.append({"type": "ib_signal", "idea": dict(st["ib"]), "t": t})
+    return ev
+
+
+# --------------------------------------------------------------------------
 # Plain-English Slack messages
 # --------------------------------------------------------------------------
 def px(v):
@@ -801,6 +915,7 @@ def fmt_signal(e, cfg, sizing):
     lines += ["", "*Why it qualifies*",
               f":white_check_mark: Daily trend is {'up' if d == 1 else 'down'}",
               f":white_check_mark: {s['checks']['h4'][1]}",
+              f":white_check_mark: {s['checks']['h4_cloud'][1]}",
               f":white_check_mark: Candle {s['since']} of the new colour, body {s['body_ratio']:.1f}x the previous one"]
     if s["broken"] is not None:
         lines.append(f":white_check_mark: Broke {'above' if d == 1 else 'below'} the daily level {px(s['broken'])}")
@@ -821,8 +936,57 @@ def fmt_signal(e, cfg, sizing):
     return "\n".join(lines)
 
 
+def fmt_ib_event(e, cfg, sizing):
+    t, ib = e["type"], e["idea"]
+    if t == "ib_signal":
+        risk = ib["hi"] - ib["lo"]
+        lines = [
+            f":package: *INSIDE-DAY SETUP: Gold (XAUUSD)* | daily candle closed {uk_day(e['t'])} UK",
+            f"_Today's range ({px(ib['lo'])} to {px(ib['hi'])}) stayed inside yesterday's "
+            f"({px(ib['prev_lo'])} to {px(ib['prev_hi'])}). This second strategy trades the breakout during the "
+            "next daily candle. It runs separately from the trend setups._",
+            "",
+            "*The plan* (two orders, one cancels the other)",
+            f"• *Buy-stop:* *{px(ib['hi'])}*, stop *{px(ib['lo'])}*",
+            f"• *Sell-stop:* *{px(ib['lo'])}*, stop *{px(ib['hi'])}*",
+            f"• *Risk:* {risk:.2f} per side = 1R",
+        ]
+        half = dict(sizing, risk_pct=sizing["risk_pct"] * cfg.get("inside_day_risk_mult", 1.0)) if sizing else None
+        ls = lot_size(risk, half, cfg)
+        if ls:
+            lots, amt = ls
+            sym = ccy_sym(sizing["ccy"])
+            lines.append(f"• *Size:* {lots:.2f} lots risks about {sym}{amt:,.0f} ({half['risk_pct']:g}% of account, "
+                         "smaller than the trend setups)"
+                         if lots >= 0.01 else
+                         f"• *Size:* range too wide for {half['risk_pct']:g}% risk at the 0.01 lot minimum")
+        lines += [
+            "• *No take-profit:* close the trade at the next daily close (17:00 New York) whatever happens",
+            "• *Cancelled if:* neither side trades before that close",
+            "",
+            f"_{cfg['inside_day_track_record']}. Rule-based alert, not financial advice._",
+        ]
+        return "\n".join(lines)
+    if t == "ib_cancel":
+        return (f":heavy_minus_sign: *Inside-day setup cancelled: Gold*. Price stayed between {px(ib['lo'])} and "
+                f"{px(ib['hi'])} for the whole day. Delete both orders. No trade.")
+    sw = side_word(ib["dir"])
+    if t == "ib_entry":
+        other = "sell" if ib["dir"] == 1 else "buy"
+        return (f":dart: *Inside-day entry: Gold {sw}* at {px(ib['entry'])} (candle closing {uk_hm(e['t'])} UK). "
+                f"Delete the {other}-stop. Stop {px(ib['stop'])}; close at the daily close (17:00 New York).")
+    if t == "ib_stop":
+        return f":octagonal_sign: *Inside-day stopped out: Gold {sw}* at {px(e['price'])}. Result *{e['r']:+.2f}R* after costs."
+    if t == "ib_close":
+        return (f":checkered_flag: *Inside-day trade: close the Gold {sw} now* (daily close, {px(e['price'])}). "
+                f"Result from entry {px(ib['entry'])}: *{e['r']:+.2f}R* after costs.")
+    return None
+
+
 def fmt_event(e, cfg, sizing):
     t = e["type"]
+    if t.startswith("ib_"):
+        return fmt_ib_event(e, cfg, sizing)
     if t == "signal":
         return fmt_signal(e, cfg, sizing)
     idea = e["idea"]
@@ -879,7 +1043,7 @@ def journal_add(journal, e):
         "sig_time": idea["sig_time"], "entry_time": idea.get("entry_time"),
         "exit_time": e["t"].isoformat(), "dir": idea["dir"], "grade": idea.get("grade"),
         "entry": idea["entry"], "exit": round(e["price"], 2), "r": round(e["r"], 3),
-        "how": e["type"],
+        "how": e["type"], "strategy": idea.get("strategy", "trend"),
     })
 
 
@@ -912,13 +1076,25 @@ def scorecard(journal, now):
     a = stats([j["r"] for j in journal])
     best = max(week, key=lambda j: j["r"])
     worst = min(week, key=lambda j: j["r"])
+    by = []
+    for key, label, bench in (("trend", "Trend setups", "60% winners, +0.18R"),
+                              ("inside_day", "Inside-day setups", "49% winners, +0.10R")):
+        js = [j for j in journal if j.get("strategy", "trend") == key]
+        if not js:
+            continue
+        s = stats([j["r"] for j in js])
+        wk = [j["r"] for j in week if j.get("strategy", "trend") == key]
+        by.append(f"• {label}: this week {len(wk)} trade{'s' if len(wk) != 1 else ''}, {sum(wk):+.1f}R | "
+                  f"all time {s['n']} trades, {s['win']:.0f}% winners, avg {s['avg']:+.2f}R "
+                  f"_(backtest: {bench})_")
     return (":bar_chart: *Gold signals: weekly scorecard*\n"
             f"This week: *{w['n']} trade{'s' if w['n'] != 1 else ''}*, {w['win']:.0f}% winners, "
             f"total *{w['total']:+.1f}R* (avg {w['avg']:+.2f}R per trade)\n"
             f"Best {best['r']:+.2f}R ({side_word(best['dir'])}) | worst {worst['r']:+.2f}R ({side_word(worst['dir'])})\n"
             f"All time: {a['n']} trades, {a['win']:.0f}% winners, {a['total']:+.1f}R, "
             f"biggest drop {a['dd']:.1f}R\n"
-            "_Backtest benchmark (2008-2026): 57% winners, +0.12R per trade. R = multiples of the risk on each trade; "
+            + "\n".join(by) + ("\n" if by else "")
+            + "_Backtest benchmarks are 2008-2026 after costs. R = multiples of the risk on each trade; "
             "results assume every signal was taken at the alert levels._")
 
 
@@ -945,6 +1121,20 @@ def simulate(F, cfg):
     return trades, cancels, F.close_time(start)
 
 
+def simulate_ib(F, cfg):
+    """Replay the inside-day setup with the live code (ib_step)."""
+    st, trades = {}, []
+    start = next((i for i in range(len(F.h1)) if F.warm(i)), None)
+    if start is None:
+        return trades
+    for i in range(start, len(F.h1)):
+        for e in ib_step(F, i, st, dict(cfg, inside_day=True)):
+            if e["type"] in ("ib_stop", "ib_close"):
+                trades.append({"t": datetime.fromisoformat(e["idea"]["sig_time"]), "dir": e["idea"]["dir"],
+                               "r": e["r"], "how": e["type"]})
+    return trades
+
+
 def variants(cfg):
     def v(**kw):
         c = json.loads(json.dumps(cfg, default=str))
@@ -958,6 +1148,7 @@ def variants(cfg):
     return [
         (BASELINE, v()),
         ("Video's original rules", v(filters={"h4": False}, require_breakout=True, exit_mode="ha")),
+        ("Without the 4H Ichimoku cloud check", v(filters={"h4_cloud": False})),
         ("+ London/NY hours only", v(filters={"session": True})),
         ("+ ADX trend strength", v(filters={"adx": True})),
         ("+ normal volatility", v(filters={"atr_band": True})),
@@ -1080,6 +1271,32 @@ def backtest_report(F, cfg, h1, repo):
             "",
             "| Session | Trades | Win | Avg R | Total R |", "|---|---|---|---|---|",
         ] + breakdown(lambda t: t["session"], lambda v: "London / NY" if v else "Asia / late", base_trades)
+
+    ib_trades = simulate_ib(F, cfg)
+    ib_all = stats([t["r"] for t in ib_trades])
+    if ib_all.get("n"):
+        ib_is = stats([t["r"] for t in ib_trades if t["t"] < split])
+        ib_oos = stats([t["r"] for t in ib_trades if t["t"] >= split])
+        md += [
+            "",
+            "## Second setup: inside-day breakout (runs separately)",
+            "",
+            "After a daily candle that sits inside the previous day's range: buy-stop at its high, sell-stop at its low, "
+            "stop at the other side, close at the next daily close. Research round 5.",
+            "",
+            "| Period | Trades | Win | Avg R | Total R | PF |", "|---|---|---|---|---|---|",
+            f"| Earlier 70% | {ib_is.get('n', 0)} | {ib_is.get('win', 0):.0f}% | {ib_is.get('avg', 0):+.2f} | "
+            f"{ib_is.get('total', 0):+.1f} | {ib_is.get('pf', 0):.2f} |",
+            f"| Latest 30% | {ib_oos.get('n', 0)} | {ib_oos.get('win', 0):.0f}% | {ib_oos.get('avg', 0):+.2f} | "
+            f"{ib_oos.get('total', 0):+.1f} | {ib_oos.get('pf', 0):.2f} |",
+            f"| Whole period | {ib_all['n']} | {ib_all['win']:.0f}% | {ib_all['avg']:+.2f} | {ib_all['total']:+.1f} | "
+            f"{ib_all['pf']:.2f} |",
+            "",
+            f"- {edge_note(ib_all).replace('*', '**')}",
+            f"- Biggest drop from a peak: {ib_all['dd']:.1f}R; longest losing run: {ib_all['streak']} trades",
+            "",
+            "| Year | Trades | Win | Avg R | Total R |", "|---|---|---|---|---|",
+        ] + breakdown(lambda t: t["t"].year, lambda v: str(v), ib_trades)
     md += [
         "",
         "## Caveats",
@@ -1099,7 +1316,10 @@ def backtest_report(F, cfg, h1, repo):
                  f"total {b_all['total']:+.1f}R, biggest drop {b_all['dd']:.1f}R.\n"
                  f"Test period only: {b_oos.get('n', 0)} trades, avg {b_oos.get('avg', 0):+.2f}R.\n"
                  f"{edge_note(b_all)}\n"
-                 + "\n".join(verdicts) + f"\nFull report: {link}")
+                 + "\n".join(verdicts)
+                 + (f"\n*Inside-day setup (separate):* {ib_all['n']} trades, {ib_all['win']:.0f}% winners, "
+                    f"avg *{ib_all['avg']:+.2f}R*, total {ib_all['total']:+.1f}R." if ib_all.get("n") else "")
+                 + f"\nFull report: {link}")
     else:
         slack = f":test_tube: Backtest finished but the baseline produced no trades. Report: {link}"
     return report, slack
@@ -1125,11 +1345,20 @@ def status_message(F, st, cfg, now):
                     f"{'in the trade' if idea['triggered'] else 'waiting for entry'}")
     else:
         idea_txt = "none"
+    ib = st.get("ib")
+    if ib:
+        ib_txt = (f"{side_word(ib['dir'])} from {px(ib['entry'])}, stop {px(ib['stop'])}" if ib["triggered"]
+                  else f"orders at {px(ib['hi'])} / {px(ib['lo'])}, waiting")
+    else:
+        ib_txt = "none"
+    cloud = {1: "above", -1: "below", 0: "inside"}[F.h4_cloud[hk]] if hk >= 0 else "unknown"
     return (":satellite_antenna: *Gold signals: status check*\n"
             f"Last 1H candle: closed {uk_day(last['t'] + H1)} UK at {px(last['c'])}, Heikin Ashi {col}\n"
-            f"Daily trend: *{trend}* | 4-hour candles: {h4c} | ADX {a:.0f} | volatility rank {pct:.0f}%\n"
+            f"Daily trend: *{trend}* | 4-hour candles: {h4c}, price {cloud} the cloud | ADX {a:.0f} | "
+            f"volatility rank {pct:.0f}%\n"
             f"Daily levels: {lv}\n"
-            f"Active setup: {idea_txt}\n"
+            f"Active trend setup: {idea_txt}\n"
+            f"Active inside-day setup: {ib_txt}\n"
             "Data and Slack are working.")
 
 
@@ -1161,10 +1390,10 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None):
         # fetch news lazily, only when a setup is possible on this bar
         if news is None and news_fn and any(evaluate(F, i, d, dict(cfg, filters={}), None) for d in (1, -1)):
             news = news_fn() or []
-        for e in step(F, i, state, cfg, news):
-            if e["type"] in ("exit", "stop", "target"):
+        for e in step(F, i, state, cfg, news) + ib_step(F, i, state, cfg):
+            if e["type"] in ("exit", "stop", "target", "ib_stop", "ib_close"):
                 journal_add(journal, e)
-            if e["type"] == "entry" and not cfg["alert_entry_hit"]:
+            if e["type"] in ("entry", "ib_entry") and not cfg["alert_entry_hit"]:
                 continue
             msg = fmt_event(e, cfg, sizing)
             if msg:
