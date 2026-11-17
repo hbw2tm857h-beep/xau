@@ -1,6 +1,16 @@
 {
   "fail_count": 0,
+  "ib": {
+    "hi": 3891.96,
+    "lo": 3837.09,
+    "prev_hi": 3901.18,
+    "prev_lo": 3833.62,
+    "setup_day_end": "2026-11-17T22:00:00+00:00",
+    "sig_time": "2026-11-17T22:00:00+00:00",
+    "strategy": "inside_day",
+    "triggered": false
+  },
   "idea": null,
-  "last_daily_k_end": "2026-11-16T22:00:00+00:00",
-  "last_h1": "2026-11-17T20:00:00+00:00"
+  "last_daily_k_end": "2026-11-17T22:00:00+00:00",
+  "last_h1": "2026-11-17T21:00:00+00:00"
 }
