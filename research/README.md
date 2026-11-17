@@ -159,6 +159,48 @@ Mean reversion (RSI-2, Bollinger) loses on gold, and so do opening-range and tim
 
 **Caveats:** it's a thin edge (+0.10R). It's sensitive to costs, so check your broker's spread on gold. It needs the broker's daily candles to close at 17:00 New York. On a small account the daily range is often too wide for half-percent risk at 0.01 lots.
 
+## Round 6: six pre-registered ideas, and a look at the split (17 Nov 2026)
+
+`round6.py`, `results_round6.csv`, `round6b_allocation.py`, `results_round6b_allocation.csv`
+
+By this point `results*.csv` records **1,063 tested configurations**. At a nominal p<0.05 about 53 of those would look good by luck alone, so this round deliberately tested *six* ideas rather than hundreds, each with a mechanical reason, and paid the Bonferroni price for six (p<0.0083).
+
+Two came from something the data said. The four context checks are information only, and the grade built from them is **inverted**: grade A averages +0.12R over 235 trades against grade B's +0.20R over 475. That is not mysterious once you look at how the grade is built — `h4` is a hard filter, so it contributes a guaranteed point and the grade is really out of three, with A requiring `session`, `adx` and `atr_band` all to pass. The backtest already says that requiring `session` or `adx` **hurts**. Grade A selects for two conditions known to be mildly harmful. So the obvious question was whether their *complements* help.
+
+| Test | tune 2016-22 | val 2023-24 | kept | p | Verdict |
+|---|---|---|---|---|---|
+| BASELINE live rules | +0.156 | +0.156 | — | — | 721 trades, +0.181R all-period |
+| H1 outside-hours only (20-07 UK) | +0.190 | **-0.020** | 61% | 0.103 | no |
+| H2 quiet trend only (ADX < 20) | **-0.027** | +0.187 | 34% | 0.067 | no |
+| H3 room-aware target | -0.017 | -0.046 | 104% | 1.000 | no |
+| H4 skip after a losing trade | -0.012 | +0.096 | 86% | 0.095 | no |
+| H5 stop at the signal candle (swing=1) | -0.115 | -0.251 | 130% | 1.000 | no |
+| H6 stop at two candles (swing=2) | +0.004 | -0.093 | 108% | 1.000 | no |
+
+**None passed.** What the round is actually worth:
+
+- **The inverse filters don't work either.** H1 and H2 each look good in three of four periods and fail the fourth, with H2 keeping only a third of the trades. The grade is a poor signal, but its complement is not a good one. The right conclusion is that these checks carry little information in either direction, not that they should be flipped.
+- **The 5-bar swing stop is doing real work.** H5 is the most decisive result here: stopping at the signal candle alone collapses the edge from +0.181R to **+0.013R** while *increasing* trades from 721 to 935. H6 (two candles) lands in between at +0.138R. Stop width is not a free parameter, and the current setting is well chosen.
+- **Capping the target at a nearby level costs money.** H3 is mildly worse everywhere, so the winners that run straight through a daily level more than pay for the ones that stall at it.
+- **Losses don't usefully cluster.** H4's validate period flatters it, the tune period does not.
+
+### Round 6b: is the inside-day setup sized right?
+Not another pattern search: one parameter over two already-validated return streams. Monthly correlation between the two strategies is **+0.091**, which independently confirms they are near-uncorrelated.
+
+| Inside-day weight | Total | Max DD | Return/DD | Sharpe |
+|---|---|---|---|---|
+| 0.00 (trend only) | 130.6 | 12.2 | **10.70** | 0.999 |
+| 0.25 | 149.1 | 15.2 | 9.79 | 1.095 |
+| **0.50 (live)** | 167.6 | 18.3 | 9.18 | 1.143 |
+| 0.75 | 186.1 | 21.3 | 8.75 | **1.154** |
+| 1.00 | 204.6 | 24.4 | 8.37 | 1.142 |
+| 1.50 | 241.7 | 31.1 | 7.77 | 1.093 |
+
+Sharpe sits on a flat plateau from 0.5 to 1.0 and peaks at 0.75 by **0.011**, which is noise across 224 months — and it is a re-read of the same 18 years the weight was originally chosen on, not a new test. Return-over-drawdown actually prefers trend-only. **No change recommended:** 0.5 is a defensible point on a flat curve, and the honest summary is that the two objectives disagree, so the setting is a preference about drawdown rather than a number to optimise.
+
+### Where that leaves things
+All the gold data has been seen, so nothing here can be adopted on backtest evidence. Round 6 produced no candidate, and round 6b produced no change. The remaining honest routes to more edge are (1) forward live evidence, which the `nursery.json` tiers and `gate()` now collect, (2) the feature ledger, which from now on stores every hour the bot evaluates so later questions are answered from recorded features rather than re-derived, and (3) execution quality, which H1 data cannot measure.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -174,4 +216,6 @@ python3 research/round4_tradingview.py # 20 TradingView indicators x 3 uses
 python3 research/round5.py             # 21 more indicators, calendar, USD and silver filters
 python3 research/round5_standalone.py  # 10 well-known standalone strategies
 python3 research/round5_insideday_checks.py # robustness of the one that passed
+python3 research/round6.py              # 6 pre-registered ideas, Bonferroni-corrected
+python3 research/round6b_allocation.py  # inside-day risk weight sweep
 ```

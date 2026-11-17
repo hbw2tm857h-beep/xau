@@ -1,0 +1,23 @@
+{
+  "hypotheses_tested": 1063,
+  "strategies": {
+    "inside_day": {
+      "expected_avg_r": 0.1,
+      "expected_n": 722,
+      "expected_win": 49,
+      "history": [],
+      "label": "Inside-day setups",
+      "note": "Round 5: inside-day breakout at half risk",
+      "tier": "live"
+    },
+    "trend": {
+      "expected_avg_r": 0.18,
+      "expected_n": 720,
+      "expected_win": 60,
+      "history": [],
+      "label": "Trend setups",
+      "note": "Rounds 1-4: Heikin Ashi trend-ride, 4H agreement + Ichimoku cloud",
+      "tier": "live"
+    }
+  }
+}

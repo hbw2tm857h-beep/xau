@@ -137,6 +137,19 @@ CONFIG = {
     "verdict_min_gain_r": 0.10,   # a filter must add this much avg R in both periods
     "verdict_min_trades": 30,     # ...with at least this many test trades
 
+    # Nursery (layer 2): which strategies are traded, which are only watched,
+    # and what it takes to move between tiers. See nursery.json.
+    "nursery_file": "nursery.json",
+    "gate_promote_min_trades": 30,   # live closed trades before promotion is considered
+    "gate_demote_min_trades": 30,    # ...and before a live strategy can be demoted
+    "gate_trailing": 50,             # recent live trades used to judge a live strategy
+    "gate_tolerance": 0.5,           # live avg R must stay above this x the tested edge
+    "gate_alpha": 0.05,              # one-sided bootstrap on live trades
+    "gate_bootstrap": 2000,
+    # Recorded test rows in research/results*.csv. Used only to report how
+    # strict a backtest search would have to be; see gate().
+    "hypotheses_tested": 1063,
+
     "fail_alert_after": 3,
     # GitHub's scheduler often runs hours late or skips runs, so every missed
     # hour is replayed (up to 2 days) and alerts more than 2 hours old say so.
@@ -1333,7 +1346,7 @@ def stats(rs):
             "avg_loss": sum(losses) / len(losses) if losses else 0.0}
 
 
-def scorecard(journal, now):
+def scorecard(journal, now, nursery=None):
     week = [j for j in journal if datetime.fromisoformat(j["exit_time"]) >= now - timedelta(days=7)]
     if not week:
         return None
@@ -1342,14 +1355,18 @@ def scorecard(journal, now):
     best = max(week, key=lambda j: j["r"])
     worst = min(week, key=lambda j: j["r"])
     by = []
-    for key, label, bench in (("trend", "Trend setups", "60% winners, +0.18R"),
-                              ("inside_day", "Inside-day setups", "49% winners, +0.10R")):
+    strategies = (nursery or {}).get("strategies", {})
+    for key in sorted(strategies):
+        d = strategies[key]
         js = [j for j in journal if j.get("strategy", "trend") == key]
         if not js:
             continue
         s = stats([j["r"] for j in js])
         wk = [j["r"] for j in week if j.get("strategy", "trend") == key]
-        by.append(f"• {label}: this week {len(wk)} trade{'s' if len(wk) != 1 else ''}, {sum(wk):+.1f}R | "
+        bench = f"{d.get('expected_win', 0):.0f}% winners, {d.get('expected_avg_r', 0):+.2f}R"
+        tier = d.get("tier", "live")
+        by.append(f"• {d.get('label', key)}{'' if tier == 'live' else f' [{tier}]'}: this week "
+                  f"{len(wk)} trade{'s' if len(wk) != 1 else ''}, {sum(wk):+.1f}R | "
                   f"all time {s['n']} trades, {s['win']:.0f}% winners, avg {s['avg']:+.2f}R "
                   f"_(backtest: {bench})_")
     return (":bar_chart: *Gold signals: weekly scorecard*\n"
@@ -1361,6 +1378,134 @@ def scorecard(journal, now):
             + "\n".join(by) + ("\n" if by else "")
             + "_Backtest benchmarks are 2008-2026 after costs. R = multiples of the risk on each trade; "
             "results assume every signal was taken at the alert levels._")
+
+
+# --------------------------------------------------------------------------
+# Nursery and gate
+#
+# A strategy sits in one of three tiers:
+#   candidate  tracked silently - journalled and in the ledger, no alerts
+#   shadow     alerted, marked as paper, with no position size
+#   live       alerted and sized
+#
+# The gate judges each strategy on its own live trades once a week. It applies
+# demotions by itself, because they cut risk, and only ever *proposes*
+# promotions, because they add it: raising real size stays a human decision.
+# --------------------------------------------------------------------------
+TIERS = ("candidate", "shadow", "live")
+
+
+def default_nursery(cfg):
+    return {
+        "hypotheses_tested": cfg["hypotheses_tested"],
+        "strategies": {
+            "trend": {
+                "tier": "live", "label": "Trend setups",
+                "expected_avg_r": 0.18, "expected_win": 60, "expected_n": 720,
+                "note": "Rounds 1-4: Heikin Ashi trend-ride, 4H agreement + Ichimoku cloud",
+                "history": [],
+            },
+            "inside_day": {
+                "tier": "live", "label": "Inside-day setups",
+                "expected_avg_r": 0.10, "expected_win": 49, "expected_n": 722,
+                "note": "Round 5: inside-day breakout at half risk",
+                "history": [],
+            },
+        },
+    }
+
+
+def load_nursery(cfg):
+    """The registry, falling back to the defaults so a missing or partial file
+    cannot change what the bot trades."""
+    base = default_nursery(cfg)
+    n = load_json(cfg["nursery_file"], None)
+    if not isinstance(n, dict) or not isinstance(n.get("strategies"), dict):
+        return base
+    n.setdefault("hypotheses_tested", base["hypotheses_tested"])
+    for name, d in base["strategies"].items():
+        cur = n["strategies"].setdefault(name, d)
+        for k, v in d.items():
+            cur.setdefault(k, v)
+        if cur.get("tier") not in TIERS:
+            cur["tier"] = d["tier"]
+    return n
+
+
+def tier_of(nursery, strategy):
+    s = nursery["strategies"].get(strategy or "trend")
+    t = (s or {}).get("tier", "live")
+    return t if t in TIERS else "live"
+
+
+def bootstrap_p(rs, b=2000, seed=7):
+    """One-sided bootstrap estimate of P(true average R <= 0), by resampling
+    the trades. None when there are too few to say anything."""
+    import random
+    if len(rs) < 5:
+        return None
+    rnd, n, hits = random.Random(seed), len(rs), 0
+    for _ in range(b):
+        if sum(rnd.choice(rs) for _ in range(n)) / n <= 0:
+            hits += 1
+    return hits / b
+
+
+def gate(nursery, journal, cfg, now):
+    """Judge every strategy on its live trades. Mutates the registry for
+    demotions only; returns the Slack message."""
+    lines = []
+    tested = max(1, int(nursery.get("hypotheses_tested", 1)))
+    alpha_search = cfg["gate_alpha"] / tested
+    for name, s in sorted(nursery["strategies"].items()):
+        tier = tier_of(nursery, name)
+        label = s.get("label", name)
+        exp = s.get("expected_avg_r")
+        rs = [j["r"] for j in journal if j.get("strategy", "trend") == name]
+        if not rs:
+            lines.append(f"• *{label}* ({tier}): no closed live trades yet; tested {exp:+.2f}R.")
+            continue
+        a = stats(rs)
+        trail = rs[-cfg["gate_trailing"]:]
+        t = stats(trail)
+        floor = (exp or 0.0) * cfg["gate_tolerance"]
+        head = (f"• *{label}* ({tier}): {a['n']} live trade{'s' if a['n'] != 1 else ''}, "
+                f"avg {a['avg']:+.2f}R | last {t['n']} avg {t['avg']:+.2f}R | tested {exp:+.2f}R")
+        if tier == "live":
+            if t["n"] >= cfg["gate_demote_min_trades"] and t["avg"] < floor:
+                s["tier"] = "shadow"
+                s.setdefault("history", []).append({
+                    "when": now.isoformat(), "from": "live", "to": "shadow",
+                    "why": f"last {t['n']} trades avg {t['avg']:+.3f}R, below {floor:+.3f}R"})
+                lines.append(head + f"\n   :arrow_down: *Demoted to shadow.* The last {t['n']} trades average "
+                             f"{t['avg']:+.2f}R, under half the {exp:+.2f}R it was promoted on. Alerts carry on, "
+                             "marked paper and without a size, until it earns its way back.")
+            else:
+                lines.append(head + " — holding.")
+            continue
+        p = bootstrap_p(trail, cfg["gate_bootstrap"])
+        enough = a["n"] >= cfg["gate_promote_min_trades"]
+        if enough and a["avg"] > 0 and a["avg"] >= floor and p is not None and p < cfg["gate_alpha"]:
+            nxt = "live" if tier == "shadow" else "shadow"
+            lines.append(head + f"\n   :arrow_up: *Ready to promote to {nxt}* (bootstrap p={p:.3f} < "
+                         f"{cfg['gate_alpha']}). This one is yours to make: set \"tier\": \"{nxt}\" for "
+                         f"`{name}` in `{cfg['nursery_file']}`.")
+        else:
+            if not enough:
+                why = f"{cfg['gate_promote_min_trades'] - a['n']} more closed trades needed"
+            elif a["avg"] <= 0:
+                why = "live average is not positive"
+            elif a["avg"] < floor:
+                why = f"live average is under half the tested {exp:+.2f}R"
+            else:
+                why = f"bootstrap p={p:.3f}, not under {cfg['gate_alpha']}" if p is not None else "too few trades to test"
+            lines.append(head + f" — not yet: {why}.")
+    return (":seedling: *Nursery gate*\n" + "\n".join(lines)
+            + f"\n_Promotion is judged on live trades only, with a one-sided bootstrap at p<{cfg['gate_alpha']}: "
+              "the rule was fixed before that data existed, so there is no multiple-testing penalty to pay. "
+              f"Choosing a rule out of the {tested:,} recorded backtest searches is the part that does need the "
+              f"correction, at p<{alpha_search:.6f} — which is why a candidate has to earn live evidence here "
+              "instead of arriving on a backtest alone. Demotions apply themselves; promotions never do._")
 
 
 # --------------------------------------------------------------------------
@@ -1634,8 +1779,10 @@ def status_message(F, st, cfg, now):
             "Data and Slack are working.")
 
 
-def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None):
+def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nursery=None):
     out = []
+    if nursery is None:
+        nursery = load_nursery(cfg)
     h1 = closed_h1(h1_raw, now)
     if len(h1) < 500:
         raise RuntimeError(f"Only {len(h1)} closed H1 candles returned")
@@ -1670,9 +1817,16 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None):
             if e["type"] in ("exit", "stop", "target", "ib_stop", "ib_close"):
                 journal_add(journal, e)
                 closed_trades.append(journal[-1])
+            tier = tier_of(nursery, (e.get("idea") or {}).get("strategy", "trend"))
+            if tier == "candidate":
+                continue   # tracked in the journal and the ledger, never alerted
             if e["type"] in ("entry", "ib_entry") and not cfg["alert_entry_hit"]:
                 continue
-            msg = fmt_event(e, cfg, sizing)
+            # shadow tier gets no size: it is being watched, not traded
+            msg = fmt_event(e, cfg, sizing if tier == "live" else None)
+            if msg and tier == "shadow":
+                msg = (":microscope: _Shadow (paper): this strategy is being tracked for evidence, "
+                       "not traded. No size given._\n" + msg)
             if msg:
                 lag_h = (now - e["t"]).total_seconds() / 3600
                 if lag_h > cfg["late_alert_hours"]:
@@ -1754,8 +1908,15 @@ def main():
 
     try:
         if mode == "scorecard":
-            m = scorecard(journal, now)
+            nursery = load_nursery(CONFIG)
+            m = scorecard(journal, now, nursery)
             msgs = [m] if m else []
+            msgs.append(gate(nursery, journal, CONFIG, now))
+            save_json(CONFIG["nursery_file"], nursery)
+        elif mode == "gate":
+            nursery = load_nursery(CONFIG)
+            msgs = [gate(nursery, journal, CONFIG, now)]
+            save_json(CONFIG["nursery_file"], nursery)
         elif mode == "backfill":
             h1 = closed_h1(load_history(CONFIG), now)
             out_path = CONFIG["ledger_backfill_csv"]
@@ -1785,7 +1946,8 @@ def main():
                     msgs = [status_message(Features(h1, CONFIG), state, CONFIG, now)]
                 else:
                     sizing = sizing_from_env(api_key) if os.environ.get("ACCOUNT_SIZE") else None
-                    msgs = run_live(state, journal, h1_raw, now, CONFIG, sizing, fetch_news)
+                    msgs = run_live(state, journal, h1_raw, now, CONFIG, sizing, fetch_news,
+                                    load_nursery(CONFIG))
         state["fail_count"] = 0
     except Exception as e:  # noqa: BLE001 - report every failure the same way
         print(f"ERROR: {e}", file=sys.stderr)
