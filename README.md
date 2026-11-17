@@ -44,6 +44,13 @@ Every setup also gets a grade: A when all four checks pass, B for two or three, 
 ## Backtest
 Open the *Actions* tab and choose *XAU signals*, then *Run workflow*, with mode set to `backtest`. It replays the 10-year history file through the same code the live bot uses. It compares the video's rules with each quality check added, splits the history into a training period and a test period, and writes the results to `backtest.md` with a summary in Slack.
 
+## MT5 Expert Advisor (`mt5/GoldTrendEA.mq5`)
+The same rules as an EA for MetaTrader 5, **alerts only by default** (MT5 push plus optional Slack); set `InpAutoTrade = true` to place and manage orders, and test on a demo account first. All 19 strategy parameters match `CONFIG`, so it trades what was backtested. Compile it in MetaEditor (F7) before use.
+
+Two things it handles that the Python bot gets for free:
+- **Gaps.** If the terminal is closed or offline, every missed H1 candle is re-checked in order (up to `InpMaxCatchupBars`), reading the higher timeframes as they stood at the time. A setup found more than two hours late is marked, and the EA says whether its entry was already reached while it was away — it never enters late.
+- **The broker's idea of a day.** Everything daily — trend, 50 EMA, daily ATR, the levels and the inside-day test — reads the *broker's* D1 candles, while the research builds its own days in New York time rolling at 17:00 NY. Those agree only if your broker's day rolls there too. Most gold brokers on GMT+2/+3 server time do, but the US and EU change clocks on different dates, so the boundary can slip by an hour for a few weeks each spring and autumn, and some brokers never use that convention. On the first tick the EA works out the broker's actual boundary and warns if it differs, naming the offset. It is a warning, not a block: hourly setups are unaffected, but treat the daily context and the inside-day setup as approximate until you have checked. Turn it off with `InpCheckDailyRoll`.
+
 ## Tiers: what gets traded, what only gets watched
 Each strategy in `nursery.json` sits in one of three tiers:
 

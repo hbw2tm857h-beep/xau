@@ -38,9 +38,17 @@
 //|                                                                  |
 //|  Second setup (research round 5, separate magic InpMagic + 1):   |
 //|  inside-day breakout on D1 - see OnNewD1(). Half risk by default.|
+//|                                                                  |
+//|  Broker daily candles (v2.31): everything daily here - trend,    |
+//|  50 EMA, daily ATR, the support/resistance levels and the        |
+//|  inside-day test - reads the BROKER's D1 candles, while the      |
+//|  research builds its own days in New York time rolling at 17:00  |
+//|  NY. Those agree only while the broker's day rolls there too.    |
+//|  DailyRollCheck() works out the broker's actual boundary on the  |
+//|  first tick and warns if it differs. It does not stop trading.   |
 //+------------------------------------------------------------------+
 #property copyright "Bradley - Built by Lumn"
-#property version   "2.30"
+#property version   "2.31"
 #property description "Gold H1 Heikin Ashi trend-ride with 4H confirmation. Alerts by default; optional auto-trading."
 
 #include <Trade/Trade.mqh>
@@ -83,6 +91,7 @@ input bool   InpPush             = true;  // MT5 push to your phone
 input bool   InpSlack            = false; // Post to Slack (add hooks.slack.com to WebRequest list)
 input string InpSlackWebhook     = "";
 input bool   InpDrawLevels       = true;
+input bool   InpCheckDailyRoll   = true;  // Warn if the broker's daily candles don't roll at 17:00 New York
 
 //--- trade idea / position state (persisted in terminal global variables)
 struct Idea
@@ -152,6 +161,13 @@ void OnTimer() { Process(); }
 //+------------------------------------------------------------------+
 void Process()
   {
+   static bool rollChecked = false;
+   if(!rollChecked && InpCheckDailyRoll && Bars(_Symbol, PERIOD_D1) >= 3 && iTime(_Symbol, PERIOD_D1, 1) != 0)
+     {
+      rollChecked = true;
+      DailyRollCheck();
+     }
+
    datetime t = iTime(_Symbol, PERIOD_H1, 0);
    if(t != 0 && t != g_lastH1)
      {
@@ -1080,6 +1096,78 @@ void LoadIB()
    // restarted on a later day: let OnNewD1 settle it on the first tick
    datetime saved = (datetime)GlobalVariableGet(GV + "ib_day");
    g_lastD1 = (saved != 0 && saved != iTime(_Symbol, PERIOD_D1, 0)) ? saved : 0;
+  }
+
+//+------------------------------------------------------------------+
+//| Broker daily-candle check                                        |
+//|                                                                  |
+//| New York's offset from GMT in hours: 5 = EST, 4 = EDT, by the US |
+//| rule that DST runs from the second Sunday in March to the first  |
+//| Sunday in November. MQL5 has no timezone database, so this is    |
+//| worked out from the date. Checked against the IANA data for every |
+//| daily roll from 2008 to 2030 at 20:00-23:00 GMT: no mismatches.  |
+//| Within a couple of hours of a switchover the answer can be one    |
+//| hour out, which is only ever the ambiguity this warns about.      |
+//+------------------------------------------------------------------+
+int NyOffsetHours(datetime t)
+  {
+   MqlDateTime d, m, n;
+   TimeToStruct(t, d);
+   TimeToStruct(StringToTime(StringFormat("%04d.03.01 00:00", d.year)), m);
+   int firstSunMar = 1 + ((7 - m.day_of_week) % 7);   // day_of_week: 0 = Sunday
+   int secondSunMar = firstSunMar + 7;
+   TimeToStruct(StringToTime(StringFormat("%04d.11.01 00:00", d.year)), n);
+   int firstSunNov = 1 + ((7 - n.day_of_week) % 7);
+
+   bool dst;
+   if(d.mon < 3 || d.mon > 11)
+      dst = false;
+   else if(d.mon > 3 && d.mon < 11)
+      dst = true;
+   else if(d.mon == 3)
+      dst = (d.day > secondSunMar || (d.day == secondSunMar && d.hour >= 2));
+   else
+      dst = (d.day < firstSunNov || (d.day == firstSunNov && d.hour < 2));
+   return(dst ? 4 : 5);
+  }
+
+//+------------------------------------------------------------------+
+//| Compare the broker's daily boundary with the 17:00 New York close |
+//| the rules were tested on, and say so either way. Warn only; the   |
+//| EA keeps working, because the hourly trigger is unaffected.       |
+//+------------------------------------------------------------------+
+void DailyRollCheck()
+  {
+   if(MQLInfoInteger(MQL_TESTER))
+      return;                    // TimeGMT() is server time in the tester
+   datetime d1 = iTime(_Symbol, PERIOD_D1, 1);   // last completed daily candle
+   if(d1 == 0)
+      return;
+   int srvOff = (int)MathRound((double)(TimeCurrent() - TimeGMT()) / 3600.0);
+   datetime d1gmt = (datetime)((long)d1 - (long)srvOff * 3600);
+   MqlDateTime g;
+   TimeToStruct(d1gmt, g);
+   int want = (17 + NyOffsetHours(d1gmt)) % 24;  // 22:00 GMT in winter, 21:00 in summer
+   int diff = g.hour - want;
+   if(diff > 12)  diff -= 24;
+   if(diff < -12) diff += 24;
+
+   string where = StringFormat("server GMT%+d, daily candles open %02d:00 GMT, 17:00 New York is %02d:00 GMT",
+                               srvOff, g.hour, want);
+   if(diff == 0)
+     {
+      Print("GoldTrendEA: broker daily candles roll at 17:00 New York, as the tested rules assume (", where, ").");
+      return;
+     }
+   string msg = StringFormat(
+      "The broker's daily candles are %+d hour%s from the 17:00 New York close the rules were tested on (%s). "
+      "The daily trend, the 50 EMA, the daily levels and the inside-day test all read the broker's D1, so they "
+      "cover a different day than the research did. Hourly setups are unaffected. Treat the daily context and "
+      "the inside-day setup as approximate, and compare them with a 17:00 New York chart.",
+      diff, (MathAbs(diff) == 1 ? "" : "s"), where);
+   Print("GoldTrendEA: ", msg);
+   Notify(":warning: *Gold EA: the broker's daily candles are offset.* " + msg,
+          StringFormat("Gold EA: broker daily candles %+dh from 17:00 New York", diff));
   }
 
 //+------------------------------------------------------------------+
