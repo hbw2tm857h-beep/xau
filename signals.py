@@ -202,6 +202,20 @@ def fetch_h1_history(api_key, symbol, pages):
     return [allbars[k] for k in sorted(allbars)]
 
 
+def load_history(cfg):
+    """Every history file named in CONFIG, merged and de-duplicated by bar
+    time, so the backtest and the ledger backfill both see 2008-2026."""
+    merged = {}
+    for p in [cfg["history_csv"]] + list(cfg.get("history_extra_csv") or []):
+        if os.path.exists(p):
+            for b in load_history_csv(p):
+                merged[b["t"]] = b
+    if not merged:
+        raise RuntimeError(f"{cfg['history_csv']} not found: "
+                           "run the 'Fetch gold history' workflow first")
+    return [merged[k] for k in sorted(merged)]
+
+
 def load_history_csv(path):
     """10-year H1 file written by the 'Fetch gold history' workflow."""
     import csv
@@ -1057,6 +1071,7 @@ def ledger_backfill(cfg, h1, path):
     ledger row for every warm hour. Rows are marked source=backfill."""
     import csv
     import gzip
+    import io
     F = Features(h1, cfg)
     st, journal, n = {}, [], 0
     start = next((i for i in range(len(F.h1)) if F.warm(i)), None)
@@ -1064,8 +1079,13 @@ def ledger_backfill(cfg, h1, path):
         raise RuntimeError("Not enough history to backfill the ledger")
     if os.path.dirname(path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
-    opener = gzip.open if path.endswith(".gz") else open
-    with opener(path, "wt", newline="") as f:
+    # mtime=0 so re-running on the same data gives a byte-identical file
+    # instead of a fresh multi-megabyte blob in git every time
+    if path.endswith(".gz"):
+        f = io.TextIOWrapper(gzip.GzipFile(path, "wb", compresslevel=9, mtime=0), newline="")
+    else:
+        f = open(path, "w", newline="")
+    with f:
         w = csv.DictWriter(f, fieldnames=LEDGER_COLS, extrasaction="ignore", lineterminator="\n")
         w.writeheader()
         for i in range(start, len(F.h1)):
@@ -1511,6 +1531,13 @@ def backtest_report(F, cfg, h1, repo):
             "| Year | Trades | Win | Avg R | Total R |", "|---|---|---|---|---|",
         ] + breakdown(lambda t: t["t"].year, lambda v: str(v), base_trades) + [
             "",
+            "Grade is how many of the four context checks passed when the setup appeared "
+            "(A = all four, B = two or three, C = fewer). None of them is a filter, so this "
+            "table says whether the grade is worth anything.",
+            "",
+            "| Grade | Trades | Win | Avg R | Total R |", "|---|---|---|---|---|",
+        ] + breakdown(lambda t: t["grade"], lambda v: str(v), base_trades) + [
+            "",
             "| Direction | Trades | Win | Avg R | Total R |", "|---|---|---|---|---|",
         ] + breakdown(lambda t: t["dir"], lambda v: "Buy" if v == 1 else "Sell", base_trades) + [
             "",
@@ -1730,14 +1757,7 @@ def main():
             m = scorecard(journal, now)
             msgs = [m] if m else []
         elif mode == "backfill":
-            path = CONFIG["history_csv"]
-            if not os.path.exists(path):
-                raise RuntimeError(f"{path} not found: run the 'Fetch gold history' workflow first")
-            merged = {}
-            for p in [path] + [q for q in CONFIG["history_extra_csv"] if os.path.exists(q)]:
-                for b in load_history_csv(p):
-                    merged[b["t"]] = b
-            h1 = closed_h1([merged[k] for k in sorted(merged)], now)
+            h1 = closed_h1(load_history(CONFIG), now)
             out_path = CONFIG["ledger_backfill_csv"]
             n, jr = ledger_backfill(CONFIG, h1, out_path)
             msgs = [f":books: *Feature ledger backfilled.* {n:,} hours of features written to `{out_path}` "
@@ -1750,7 +1770,7 @@ def main():
                 raise RuntimeError("TWELVEDATA_API_KEY secret is missing")
             if mode == "backtest":
                 if os.path.exists(CONFIG["history_csv"]):
-                    h1 = closed_h1(load_history_csv(CONFIG["history_csv"]), now)
+                    h1 = closed_h1(load_history(CONFIG), now)
                 else:
                     h1 = closed_h1(fetch_h1_history(api_key, CONFIG["symbol"], CONFIG["backtest_pages"]), now)
                 F = Features(h1, CONFIG)

@@ -18,7 +18,7 @@ When nothing happens, it posts nothing.
 
 **Trade plan:** a stop-order entry just beyond the signal candle, with the stop beyond the last 5 candles. Take half off at +1R and move the stop to entry, then close the rest at +2R. The setup is cancelled if the colour flips or 12 hours pass before entry.
 
-**Tested 2008–2026 (`research/`):** 715 trades, 60% winners, +0.18R per trade after costs, profit factor 1.42. Before the Ichimoku cloud check it was 805 trades, 57% winners and +0.12R. The video's original rules lost money over the same period.
+**Tested 2008–2026 (`research/`):** 720 trades, 60% winners, +0.18R per trade after costs, profit factor 1.44 — reproducible with mode `backtest`, which now replays both history files. The research rounds reported 715 and 1.42, before the history file was last refreshed. Before the Ichimoku cloud check it was 805 trades, 57% winners and +0.12R. The video's original rules lost money over the same period.
 
 ## Second setup: inside-day breakout (research round 5)
 This runs separately from the trend setups and has its own alerts. When a daily candle (17:00 New York close) sits entirely inside the previous day's range, the bot posts two orders, and the first one to trade cancels the other:
@@ -27,7 +27,7 @@ This runs separately from the trend setups and has its own alerts. When a daily 
 
 There's no take-profit. The trade closes at the next daily close whatever happens, and the orders are cancelled if neither side trades that day. Lot sizes use **half** the normal risk (`inside_day_risk_mult`). Set `"inside_day": False` in `CONFIG` to turn it off.
 
-**Tested 2008–2026:** 726 trades, 49% winners, +0.10R per trade after costs, profit factor 1.32, positive in all four test periods. It's a thinner edge than the trend setups, but almost uncorrelated with them. Running both at this size raised the Sharpe ratio from 0.95 to 1.09. Round 5 tested 77 more indicators, calendar and other-market filters and 10 well-known strategies, and this was the only one that passed (`research/README.md`).
+**Tested 2008–2026:** 722 trades, 49% winners, +0.10R per trade after costs, profit factor 1.32, positive in all four test periods. It's a thinner edge than the trend setups, but almost uncorrelated with them. Running both at this size raised the Sharpe ratio from 0.95 to 1.09. Round 5 tested 77 more indicators, calendar and other-market filters and 10 well-known strategies, and this was the only one that passed (`research/README.md`).
 
 ## Context checks (shown on every setup, information only)
 | Check | Passes when |
@@ -38,6 +38,8 @@ There's no take-profit. The trade closes at the next daily close whatever happen
 | News | No high-impact US event within 30 minutes |
 
 None of these improved results by a meaningful amount in both test periods, so none of them is a filter. Any of them can be switched on in `CONFIG["filters"]`.
+
+Every setup also gets a grade: A when all four checks pass, B for two or three, C for fewer. It is information only, and `backtest.md` shows why — over 2008–2026 grade A averages **+0.12R across 235 trades** while grade B averages **+0.20R across 475**. More checks passing has been slightly *worse*, not better, so do not treat an A as a reason to size up.
 
 ## Backtest
 Open the *Actions* tab and choose *XAU signals*, then *Run workflow*, with mode set to `backtest`. It replays the 10-year history file through the same code the live bot uses. It compares the video's rules with each quality check added, splits the history into a training period and a test period, and writes the results to `backtest.md` with a summary in Slack.
