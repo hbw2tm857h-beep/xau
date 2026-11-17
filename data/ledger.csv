@@ -1,3 +1,4 @@
 t_close,source,state_before,open,high,low,close,ha_dir,ha_body,body_ratio,lower_wick,upper_wick,bars_since_flip,trigger_dir,d_trend,d_ha_dir,d_close_vs_ema_atr,h4_ha_dir,h4_cloud,atr_h1,atr_pct,adx,datr,nearest_above,nearest_below,room_above_atr,room_below_atr,hour_uk,dow,in_session,daily_close,inside_day,setup_dir,grade,score,entry,stop,risk,target,events
 2026-11-17T16:00:00+00:00,live,flat,3861.86,3891.96,3855.79,3875.84,1,13.265,21.587,2.306,20.594,2,0,-1,-1,-2.663,-1,-1,15.831,58.8,15.19,96.43,4081.67,3875.51,2.134,0.003,16,1,1,3856.39,,0,,,,,,,
 2026-11-17T17:00:00+00:00,live,flat,3876.13,3876.87,3861.76,3864.65,1,5.121,0.386,2.976,7.018,3,0,-1,-1,-2.663,-1,-1,16.184,62.0,14.68,96.43,3875.51,,0.113,,17,1,1,3856.39,,0,,,,,,,
+2026-11-17T18:00:00+00:00,live,flat,3864.11,3871.49,3862.5,3863.37,-1,1.929,0.377,2.868,4.194,1,0,-1,-1,-2.663,1,-1,15.849,58.8,14.21,96.43,3875.51,,0.126,,18,1,1,3856.39,,0,,,,,,,
