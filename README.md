@@ -44,6 +44,23 @@ Every setup also gets a grade: A when all four checks pass, B for two or three, 
 ## Backtest
 Open the *Actions* tab and choose *XAU signals*, then *Run workflow*, with mode set to `backtest`. It replays the 10-year history file through the same code the live bot uses. It compares the video's rules with each quality check added, splits the history into a training period and a test period, and writes the results to `backtest.md` with a summary in Slack.
 
+## Tiers: what gets traded, what only gets watched
+Each strategy in `nursery.json` sits in one of three tiers:
+
+| Tier | Alerts | Size | Journalled |
+|---|---|---|---|
+| `candidate` | none | — | yes |
+| `shadow` | yes, marked as paper | none shown | yes |
+| `live` | yes | yes | yes |
+
+So a new idea can accumulate **live, out-of-sample evidence at zero risk and zero noise** before it ever touches real size. Both current strategies start `live`, so nothing about today's behaviour changes.
+
+Once a week (with the scorecard, or on demand with mode `gate`) each strategy is judged on its own live trades:
+- A **live** strategy whose last 50 trades average less than half the edge it was promoted on is **demoted automatically** — alerts carry on, marked paper and unsized, until it earns its way back. Demotion is automatic because it cuts risk.
+- A **candidate or shadow** strategy with 30+ closed trades, a positive average above half its tested edge, and a one-sided bootstrap p<0.05 is **proposed** for promotion. The gate never applies it: raising real size stays your decision, made by editing `nursery.json`.
+
+**Why the asymmetry, and why the bootstrap is honest here.** `research/results*.csv` records **1,063** tested configurations. At a nominal p<0.05 you would expect roughly 53 of those to look good by luck alone, which is why a backtest result on its own earns a candidate slot and nothing more — to clear that search, an idea would need p<0.000047. Live promotion is a different test: the rule was fixed *before* the live data existed, so it is a single pre-registered test with no multiplicity to correct for. That is the whole point of the nursery — it converts a multiple-comparisons problem into one clean out-of-sample test per idea.
+
 ## What it remembers (feature ledger)
 Every hour the bot checks, it writes one row to `data/ledger.csv`: the features it computed (Heikin Ashi geometry on H1, the daily trend and distance from the 50 EMA in ATRs, the 4-hour colour and Ichimoku position, ADX, ATR and its percentile, room to the nearest daily levels, hour, day, session, inside-day flag) plus what it decided and what state it was in. Closed trades go to `data/outcomes.csv`, keyed by `sig_time` so it joins to the ledger's `t_close`.
 

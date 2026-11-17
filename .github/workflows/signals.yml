@@ -11,11 +11,11 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "test = status message, run = normal check, backtest = replay ~2.5 years, scorecard = weekly results, backfill = rebuild the feature ledger from the history file"
+        description: "test = status message, run = normal check, backtest = replay ~2.5 years, scorecard = weekly results, backfill = rebuild the feature ledger from the history file, gate = judge each strategy's live record"
         required: true
         default: test
         type: choice
-        options: [test, run, backtest, scorecard, backfill]
+        options: [test, run, backtest, scorecard, backfill, gate]
 
 permissions:
   contents: write
@@ -44,7 +44,7 @@ jobs:
       - name: Save state, journal and reports
         if: always()
         run: |
-          for f in state.json journal.json backtest.md \
+          for f in state.json journal.json backtest.md nursery.json \
                    data/ledger.csv data/outcomes.csv data/ledger_backfill.csv.gz; do
             [ -f "$f" ] && git add "$f"
           done
