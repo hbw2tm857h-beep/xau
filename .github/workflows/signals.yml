@@ -11,11 +11,11 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "test = status message, run = normal check, backtest = replay ~2.5 years, scorecard = weekly results"
+        description: "test = status message, run = normal check, backtest = replay ~2.5 years, scorecard = weekly results, backfill = rebuild the feature ledger from the history file"
         required: true
         default: test
         type: choice
-        options: [test, run, backtest, scorecard]
+        options: [test, run, backtest, scorecard, backfill]
 
 permissions:
   contents: write
@@ -44,7 +44,10 @@ jobs:
       - name: Save state, journal and reports
         if: always()
         run: |
-          for f in state.json journal.json backtest.md; do [ -f "$f" ] && git add "$f"; done
+          for f in state.json journal.json backtest.md \
+                   data/ledger.csv data/outcomes.csv data/ledger_backfill.csv.gz; do
+            [ -f "$f" ] && git add "$f"
+          done
           if ! git diff --cached --quiet; then
             git config user.name "xau-signals-bot"
             git config user.email "xau-signals-bot@users.noreply.github.com"

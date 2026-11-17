@@ -55,6 +55,15 @@ CONFIG = {
     "h1_bars": 5000,              # live: one API call (~10 months of H1)
     "backtest_pages": 3,          # backtest fallback: 3 x 5000 Twelve Data H1 bars
     "history_csv": "data/xauusd_h1.csv",  # backtest uses this 10-year file if present
+    # the ledger backfill also reads these, so it can cover 2008-2026
+    "history_extra_csv": ["data/xauusd_h1_2008_2015.csv"],
+
+    # Feature ledger: every evaluated hour is written down so a new idea can be
+    # tested against what the bot saw, instead of re-derived from raw candles
+    "ledger": True,
+    "ledger_csv": "data/ledger.csv",
+    "outcomes_csv": "data/outcomes.csv",
+    "ledger_backfill_csv": "data/ledger_backfill.csv.gz",
 
     # Daily direction
     "daily_trend_mode": "ha_and_ema",   # "ha", "ha_and_ema" or "off"
@@ -191,6 +200,20 @@ def fetch_h1_history(api_key, symbol, pages):
             allbars[b["t"]] = b
         end = bars[0]["t"] - H1
     return [allbars[k] for k in sorted(allbars)]
+
+
+def load_history(cfg):
+    """Every history file named in CONFIG, merged and de-duplicated by bar
+    time, so the backtest and the ledger backfill both see 2008-2026."""
+    merged = {}
+    for p in [cfg["history_csv"]] + list(cfg.get("history_extra_csv") or []):
+        if os.path.exists(p):
+            for b in load_history_csv(p):
+                merged[b["t"]] = b
+    if not merged:
+        raise RuntimeError(f"{cfg['history_csv']} not found: "
+                           "run the 'Fetch gold history' workflow first")
+    return [merged[k] for k in sorted(merged)]
 
 
 def load_history_csv(path):
@@ -513,6 +536,7 @@ class Features:
                 "levels": build_levels(sub, sub[-1]["c"], self.cfg),
                 "datr": atr_last(sub, self.cfg["atr_period"]),
                 "ha": heikin_ashi(sub)[-1],
+                "ema": ema_last([b["c"] for b in sub], self.cfg["daily_ema"]),
             }
         return self._dctx[k]
 
@@ -746,7 +770,7 @@ def step(F, i, st, cfg, news=None):
                     "partial": round(s["entry"] + d * cfg["partial_r"] * risk, 2) if cfg["partial_r"] else None,
                     "target": round(s["entry"] + d * cfg["target_r"] * risk, 2) if cfg["target_r"] else None,
                     "sig_time": s["t_close"].isoformat(),
-                    "session": s["checks"]["session"][0], "grade": None,
+                    "session": s["checks"]["session"][0], "grade": s["grade"],
                 }
                 ev.append({"type": "signal", "setup": s, "idea": dict(idea), "t": t_close,
                            "replaced": replaced})
@@ -837,6 +861,244 @@ def _ib_day_close(F, k, st, price, t, cost):
                     "triggered": False, "setup_day_end": day_end_iso, "sig_time": F.daily[k]["end"].isoformat()}
         ev.append({"type": "ib_signal", "idea": dict(st["ib"]), "t": t})
     return ev
+
+
+# --------------------------------------------------------------------------
+# Feature ledger
+#
+# Every hour the bot evaluates is written down: the features it computed, what
+# it decided, and nothing about what happened next. Outcomes go to a separate
+# file keyed by the signal time, so the join is always after the fact. That
+# makes a new idea a query over stored rows instead of a fresh replay of raw
+# candles, and the rows were written before the outcome was known.
+#
+# "source" says live or backfill. A backfilled row is reconstructed from the
+# history file; a live row is what the bot actually saw at the time. Keep them
+# apart when judging anything.
+# --------------------------------------------------------------------------
+LEDGER_COLS = [
+    "t_close", "source", "state_before",
+    "open", "high", "low", "close",
+    "ha_dir", "ha_body", "body_ratio", "lower_wick", "upper_wick", "bars_since_flip",
+    "trigger_dir", "d_trend", "d_ha_dir", "d_close_vs_ema_atr",
+    "h4_ha_dir", "h4_cloud", "atr_h1", "atr_pct", "adx", "datr",
+    "nearest_above", "nearest_below", "room_above_atr", "room_below_atr",
+    "hour_uk", "dow", "in_session", "daily_close", "inside_day",
+    "setup_dir", "grade", "score", "entry", "stop", "risk", "target", "events",
+]
+
+OUTCOME_COLS = ["sig_time", "entry_time", "exit_time", "dir", "grade", "strategy",
+                "entry", "exit", "r", "how"]
+
+
+def _r(v, n=4):
+    return "" if v is None else round(v, n)
+
+
+def trigger_geometry(F, i, cfg):
+    """The H1 Heikin Ashi trigger on its own: colour, no wick against the move,
+    first one since the flip, body growth. None of the higher-timeframe
+    filters. 1, -1 or 0. This is the "something nearly happened" marker, so
+    research can count how often the trigger fires against how often the
+    filters let it through."""
+    tol = cfg["wick_tolerance"]
+    ha = F.ha
+    if i < 1:
+        return 0
+    for d in (1, -1):
+        x = ha[i]
+        if d == 1 and not (bull(x) and no_lower_wick(x, tol)):
+            continue
+        if d == -1 and not (bear(x) and no_upper_wick(x, tol)):
+            continue
+        flip, earlier = False, False
+        for j in range(i - 1, max(-1, i - 1 - cfg["max_bars_since_flip"]), -1):
+            y = ha[j]
+            if (d == 1 and bear(y)) or (d == -1 and bull(y)):
+                flip = True
+                break
+            if (d == 1 and bull(y) and no_lower_wick(y, tol)) or (d == -1 and bear(y) and no_upper_wick(y, tol)):
+                earlier = True
+        if not flip or (cfg["first_no_wick_only"] and earlier):
+            continue
+        b1 = abs(x["c"] - x["o"])
+        b2 = abs(ha[i - 1]["c"] - ha[i - 1]["o"])
+        if b1 < b2 * cfg["min_body_growth"]:
+            continue
+        return d
+    return 0
+
+
+def bars_since_flip(F, i):
+    """Bars since the H1 Heikin Ashi colour last differed from this bar's."""
+    up = bull(F.ha[i])
+    for j in range(i - 1, -1, -1):
+        if bull(F.ha[j]) != up:
+            return i - j
+    return 0
+
+
+def state_label(st):
+    idea = st.get("idea")
+    if not idea:
+        return "flat"
+    return "in_trade" if idea.get("triggered") else "pending"
+
+
+def ledger_row(F, i, cfg, events=(), state_before="flat", source="live"):
+    b, x = F.h1[i], F.ha[i]
+    dc = F.daily_ctx(i)
+    hk = F.h4_idx[i]
+    k = F.d_idx[i]
+    h4c = F.h4_ha[hk] if hk >= 0 else None
+    close = b["c"]
+    levels = dc["levels"] if dc else []
+    datr = dc["datr"] if dc else None
+    above, below = nearest_above(levels, close), nearest_below(levels, close)
+    t_close = F.close_time(i)
+    uk = t_close.astimezone(UK)
+    body = abs(x["c"] - x["o"])
+    prev_body = abs(F.ha[i - 1]["c"] - F.ha[i - 1]["o"]) if i >= 1 else 0.0
+    day_rolled = k >= 0 and (i == 0 or F.d_idx[i - 1] != k)
+    sig = next((e for e in events if e["type"] == "signal"), None)
+    s = sig["setup"] if sig else None
+    row = {
+        "t_close": t_close.isoformat(),
+        "source": source,
+        "state_before": state_before,
+        "open": _r(b["o"], 2), "high": _r(b["h"], 2), "low": _r(b["l"], 2), "close": _r(close, 2),
+        "ha_dir": 1 if bull(x) else (-1 if bear(x) else 0),
+        "ha_body": _r(body, 3),
+        "body_ratio": _r(body / prev_body, 3) if prev_body > 0 else "",
+        "lower_wick": _r(min(x["o"], x["c"]) - x["l"], 3),
+        "upper_wick": _r(x["h"] - max(x["o"], x["c"]), 3),
+        "bars_since_flip": bars_since_flip(F, i),
+        "trigger_dir": trigger_geometry(F, i, cfg),
+        "d_trend": dc["trend"] if dc else "",
+        "d_ha_dir": (1 if bull(dc["ha"]) else (-1 if bear(dc["ha"]) else 0)) if dc else "",
+        "d_close_vs_ema_atr": "",
+        "h4_ha_dir": (1 if bull(h4c) else (-1 if bear(h4c) else 0)) if h4c is not None else "",
+        "h4_cloud": F.h4_cloud[hk] if hk >= 0 else "",
+        "atr_h1": _r(F.hatr[i], 3), "atr_pct": _r(F.atr_pct[i], 1),
+        "adx": _r(F.adx[i], 2), "datr": _r(datr, 3),
+        "nearest_above": _r(above, 2), "nearest_below": _r(below, 2),
+        "room_above_atr": "", "room_below_atr": "",
+        "hour_uk": uk.hour, "dow": t_close.weekday(),
+        "in_session": 1 if cfg["session_start_uk"] <= uk.hour < cfg["session_end_uk"] else 0,
+        "daily_close": _r(F.daily[k]["c"], 2) if k >= 0 else "",
+        "inside_day": (1 if is_inside_day(F.daily, k) else 0) if day_rolled else "",
+        "setup_dir": s["dir"] if s else 0,
+        "grade": s["grade"] if s else "",
+        "score": s["score"] if s else "",
+        "entry": _r(s["entry"], 2) if s else "",
+        "stop": _r(s["stop"], 2) if s else "",
+        "risk": _r(s["risk"], 3) if s else "",
+        "target": _r(s["target"], 2) if s else "",
+        "events": ";".join(e["type"] for e in events),
+    }
+    if dc and dc.get("ema") and datr and k >= 0:
+        row["d_close_vs_ema_atr"] = _r((F.daily[k]["c"] - dc["ema"]) / datr, 3)
+    if datr:
+        if above is not None:
+            row["room_above_atr"] = _r((above - close) / datr, 3)
+        if below is not None:
+            row["room_below_atr"] = _r((close - below) / datr, 3)
+    return row
+
+
+def _csv_last(path, col):
+    """Last value of a column in a csv file, or None."""
+    import csv
+    if not os.path.exists(path):
+        return None
+    last = None
+    with open(path, newline="") as f:
+        for row in csv.DictReader(f):
+            last = row.get(col)
+    return last
+
+
+def ledger_append(path, rows):
+    """Append rows, skipping bars already written. Header on the first write."""
+    import csv
+    if not rows:
+        return 0
+    last = _csv_last(path, "t_close")
+    rows = [r for r in rows if last is None or r["t_close"] > last]
+    if not rows:
+        return 0
+    if os.path.dirname(path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+    new = not os.path.exists(path)
+    with open(path, "a", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=LEDGER_COLS, extrasaction="ignore", lineterminator="\n")
+        if new:
+            w.writeheader()
+        for r in rows:
+            w.writerow(r)
+    return len(rows)
+
+
+def outcomes_append(path, entries):
+    """Closed trades as an append-only csv, keyed by sig_time so it joins to
+    the ledger's t_close."""
+    import csv
+    if not entries:
+        return 0
+    seen = set()
+    if os.path.exists(path):
+        with open(path, newline="") as f:
+            for row in csv.DictReader(f):
+                seen.add((row.get("sig_time"), row.get("exit_time"), row.get("how")))
+    rows = [e for e in entries
+            if (e.get("sig_time"), e.get("exit_time"), e.get("how")) not in seen]
+    if not rows:
+        return 0
+    if os.path.dirname(path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+    new = not os.path.exists(path)
+    with open(path, "a", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=OUTCOME_COLS, extrasaction="ignore", lineterminator="\n")
+        if new:
+            w.writeheader()
+        for r in rows:
+            w.writerow(r)
+    return len(rows)
+
+
+def ledger_backfill(cfg, h1, path):
+    """Replay the history file through the live state machine and write a
+    ledger row for every warm hour. Rows are marked source=backfill."""
+    import csv
+    import gzip
+    import io
+    F = Features(h1, cfg)
+    st, journal, n = {}, [], 0
+    start = next((i for i in range(len(F.h1)) if F.warm(i)), None)
+    if start is None:
+        raise RuntimeError("Not enough history to backfill the ledger")
+    if os.path.dirname(path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+    # mtime=0 so re-running on the same data gives a byte-identical file
+    # instead of a fresh multi-megabyte blob in git every time
+    if path.endswith(".gz"):
+        f = io.TextIOWrapper(gzip.GzipFile(path, "wb", compresslevel=9, mtime=0), newline="")
+    else:
+        f = open(path, "w", newline="")
+    with f:
+        w = csv.DictWriter(f, fieldnames=LEDGER_COLS, extrasaction="ignore", lineterminator="\n")
+        w.writeheader()
+        for i in range(start, len(F.h1)):
+            if not F.warm(i):
+                continue
+            before = state_label(st)
+            evs = step(F, i, st, cfg, None) + ib_step(F, i, st, cfg)
+            for e in evs:
+                if e["type"] in ("exit", "stop", "target", "ib_stop", "ib_close"):
+                    journal_add(journal, e)
+            w.writerow(ledger_row(F, i, cfg, evs, before, "backfill"))
+            n += 1
+    return n, journal
 
 
 # --------------------------------------------------------------------------
@@ -1269,6 +1531,13 @@ def backtest_report(F, cfg, h1, repo):
             "| Year | Trades | Win | Avg R | Total R |", "|---|---|---|---|---|",
         ] + breakdown(lambda t: t["t"].year, lambda v: str(v), base_trades) + [
             "",
+            "Grade is how many of the four context checks passed when the setup appeared "
+            "(A = all four, B = two or three, C = fewer). None of them is a filter, so this "
+            "table says whether the grade is worth anything.",
+            "",
+            "| Grade | Trades | Win | Avg R | Total R |", "|---|---|---|---|---|",
+        ] + breakdown(lambda t: t["grade"], lambda v: str(v), base_trades) + [
+            "",
             "| Direction | Trades | Win | Avg R | Total R |", "|---|---|---|---|---|",
         ] + breakdown(lambda t: t["dir"], lambda v: "Buy" if v == 1 else "Sell", base_trades) + [
             "",
@@ -1387,15 +1656,20 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None):
 
     new_idx = [i for i, b in enumerate(h1) if b["t"].isoformat() > state["last_h1"]]
     news = None
+    led, closed_trades = [], []
     for i in new_idx[-cfg["max_catchup_bars"]:]:
         if not F.warm(i):
             continue
         # fetch news lazily, only when a setup is possible on this bar
         if news is None and news_fn and any(evaluate(F, i, d, dict(cfg, filters={}), None) for d in (1, -1)):
             news = news_fn() or []
-        for e in step(F, i, state, cfg, news) + ib_step(F, i, state, cfg):
+        before = state_label(state)
+        evs = step(F, i, state, cfg, news) + ib_step(F, i, state, cfg)
+        led.append(ledger_row(F, i, cfg, evs, before, "live"))
+        for e in evs:
             if e["type"] in ("exit", "stop", "target", "ib_stop", "ib_close"):
                 journal_add(journal, e)
+                closed_trades.append(journal[-1])
             if e["type"] in ("entry", "ib_entry") and not cfg["alert_entry_hit"]:
                 continue
             msg = fmt_event(e, cfg, sizing)
@@ -1409,6 +1683,13 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None):
     if skipped > 0:
         out.append(f":warning: The bot didn't run for {len(new_idx)} hours, so the oldest {skipped} hour"
                    f"{'s were' if skipped != 1 else ' was'} not checked for setups.")
+    if cfg.get("ledger"):
+        # the ledger must never stop an alert going out
+        try:
+            ledger_append(cfg["ledger_csv"], led)
+            outcomes_append(cfg["outcomes_csv"], closed_trades)
+        except (OSError, ValueError) as e:  # noqa: BLE001
+            print(f"ledger write failed: {e}", file=sys.stderr)
     state["last_h1"] = last_t
     return out
 
@@ -1475,12 +1756,21 @@ def main():
         if mode == "scorecard":
             m = scorecard(journal, now)
             msgs = [m] if m else []
+        elif mode == "backfill":
+            h1 = closed_h1(load_history(CONFIG), now)
+            out_path = CONFIG["ledger_backfill_csv"]
+            n, jr = ledger_backfill(CONFIG, h1, out_path)
+            msgs = [f":books: *Feature ledger backfilled.* {n:,} hours of features written to `{out_path}` "
+                    f"from {len(h1):,} candles, with {len(jr):,} closed trades.\n"
+                    "Rows are marked `source=backfill`: they are reconstructed from the history file, "
+                    "not what the bot saw live. The hourly run appends live rows to "
+                    f"`{CONFIG['ledger_csv']}` from now on."]
         else:
             if not api_key:
                 raise RuntimeError("TWELVEDATA_API_KEY secret is missing")
             if mode == "backtest":
                 if os.path.exists(CONFIG["history_csv"]):
-                    h1 = closed_h1(load_history_csv(CONFIG["history_csv"]), now)
+                    h1 = closed_h1(load_history(CONFIG), now)
                 else:
                     h1 = closed_h1(fetch_h1_history(api_key, CONFIG["symbol"], CONFIG["backtest_pages"]), now)
                 F = Features(h1, CONFIG)

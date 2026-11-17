@@ -25,11 +25,22 @@
 //|  entry, rest at +2R. Order cancelled if the HA colour flips or   |
 //|  12 hours pass. One trade at a time.                             |
 //|                                                                  |
+//|  Catch-up after a gap (v2.30, matches the signals.py fix): if    |
+//|  the terminal was closed or offline, every missed H1 candle is   |
+//|  checked in order, oldest first, up to InpMaxCatchupBars (48).   |
+//|  Rules 1-3 are re-read as they stood at that candle; rule 4      |
+//|  uses today's daily levels and ATR, which are rebuilt once a     |
+//|  day. A setup found more than InpLateAlertHours (2) ago is       |
+//|  marked LATE, and the EA says what became of it: the entry was   |
+//|  already reached while it was away (no late entry is taken),     |
+//|  the setup was cancelled, or it is still waiting - in which      |
+//|  case the order goes in with the hours it has left.              |
+//|                                                                  |
 //|  Second setup (research round 5, separate magic InpMagic + 1):   |
 //|  inside-day breakout on D1 - see OnNewD1(). Half risk by default.|
 //+------------------------------------------------------------------+
 #property copyright "Bradley - Built by Lumn"
-#property version   "2.20"
+#property version   "2.30"
 #property description "Gold H1 Heikin Ashi trend-ride with 4H confirmation. Alerts by default; optional auto-trading."
 
 #include <Trade/Trade.mqh>
@@ -58,6 +69,10 @@ input double InpPartialR         = 1.0;
 input double InpPartialFrac      = 0.5;
 input double InpTargetR          = 2.0;
 input int    InpEntryExpiryBars  = 12;
+
+input group "Catch-up after a gap (terminal closed or offline)"
+input int    InpMaxCatchupBars   = 48;   // Missed H1 candles to re-check (0 = newest only)
+input int    InpLateAlertHours   = 2;    // Older than this is flagged as a late alert
 
 input group "Second setup: inside-day breakout (research round 5)"
 input bool   InpInsideDay        = true;  // Alert/trade the inside-day breakout too
@@ -141,11 +156,12 @@ void Process()
    if(t != 0 && t != g_lastH1)
      {
       bool first = (g_lastH1 == 0);
+      datetime prev = g_lastH1;
       g_lastH1 = t;
-      if(!first)
-         OnNewH1();
-      else
+      if(first)
          BuildLevels();
+      else
+         CatchUpH1(prev);
      }
    ManageIntrabar();
 
@@ -212,14 +228,15 @@ double MidHL(ENUM_TIMEFRAMES tf, int shift, int p)
    return((iHigh(_Symbol, tf, hi) + iLow(_Symbol, tf, lo)) / 2.0);
   }
 
-int CloudDir()
+int CloudDir(int s4 = 1)
   {
-   if(Bars(_Symbol, PERIOD_H4) < 26 + 52 + 2) return(0);
-   int s = 1 + 25;                       // cloud drawn at bar 1 was computed 25 bars earlier
+   if(s4 < 1) s4 = 1;
+   if(Bars(_Symbol, PERIOD_H4) < s4 + 26 + 52 + 2) return(0);
+   int s = s4 + 25;                      // cloud at bar s4 was computed 25 bars earlier
    double ten = MidHL(PERIOD_H4, s, 9), kij = MidHL(PERIOD_H4, s, 26), sb = MidHL(PERIOD_H4, s, 52);
    if(ten == 0 || kij == 0 || sb == 0) return(0);
    double sa = (ten + kij) / 2.0;
-   double c = iClose(_Symbol, PERIOD_H4, 1);
+   double c = iClose(_Symbol, PERIOD_H4, s4);
    if(c > MathMax(sa, sb)) return(1);
    if(c < MathMin(sa, sb)) return(-1);
    return(0);
@@ -229,20 +246,71 @@ string Px(double p) { return(DoubleToString(p, 2)); }
 string Side(int d)  { return(d == 1 ? "BUY" : "SELL"); }
 
 //+------------------------------------------------------------------+
+//| Catch-up helpers                                                 |
+//| ClosedShift: index of the last `tf` candle that had closed when  |
+//| the H1 candle at index b closed, so replaying a missed candle    |
+//| reads the higher timeframes as they were, not as they are now.   |
+//+------------------------------------------------------------------+
+int ClosedShift(ENUM_TIMEFRAMES tf, int b)
+  {
+   datetime bt = iTime(_Symbol, PERIOD_H1, b);
+   if(bt == 0)
+      return(1);
+   datetime done = bt + PeriodSeconds(PERIOD_H1);   // when that H1 candle closed
+   int s = iBarShift(_Symbol, tf, bt, false);
+   if(s < 0)
+      return(1);
+   datetime st = iTime(_Symbol, tf, s);
+   if(st == 0)
+      return(1);
+   if(st + PeriodSeconds(tf) > done)                // it was still forming then
+      s++;
+   return(s < 1 ? 1 : s);
+  }
+
+// hours between the close of the H1 candle at index b and now
+double LateHours(int b)
+  {
+   datetime bt = iTime(_Symbol, PERIOD_H1, b);
+   if(bt == 0)
+      return(0);
+   double hrs = (double)(TimeCurrent() - (bt + PeriodSeconds(PERIOD_H1))) / 3600.0;
+   return(hrs < 0 ? 0 : hrs);
+  }
+
+bool IsLate(int b) { return(LateHours(b) > (double)InpLateAlertHours); }
+
+string BarClose(int b)
+  {
+   return(TimeToString(iTime(_Symbol, PERIOD_H1, b) + PeriodSeconds(PERIOD_H1), TIME_DATE | TIME_MINUTES));
+  }
+
+// prefix for an alert about a candle that closed a while ago
+string LateTag(int b)
+  {
+   if(!IsLate(b))
+      return("");
+   return(":hourglass: _Late alert (" + DoubleToString(LateHours(b), 0) + "h): this happened at "
+          + BarClose(b) + " server time. Check the current price before acting._\n");
+  }
+
+//+------------------------------------------------------------------+
 //| Daily direction: daily HA colour + close vs EMA                  |
 //+------------------------------------------------------------------+
-int DailyTrend()
+int DailyTrend(int ds = 1)
   {
    double o[], h[], l[], c[];
    if(!HA(PERIOD_D1, 400, o, h, l, c))
       return(0);
-   double e = Buf(hEMA, 1);
-   double cl = iClose(_Symbol, PERIOD_D1, 1);
+   if(ds < 1 || ds + 1 >= ArraySize(o))
+      return(0);
+   double e = Buf(hEMA, ds);
+   double cl = iClose(_Symbol, PERIOD_D1, ds);
    if(e == EMPTY_VALUE)
       return(0);
-   if(Bull(o, c, 1) && cl > e)
+   if(Bull(o, c, ds) && cl > e)
       return(1);
-   if(Bear(o, c, 1) && cl < e)
+   if(Bear(o, c, ds) && cl < e)
       return(-1);
    return(0);
   }
@@ -341,7 +409,38 @@ double NearestBelow(double p)
 //+------------------------------------------------------------------+
 //| New closed H1 candle                                             |
 //+------------------------------------------------------------------+
-void OnNewH1()
+//+------------------------------------------------------------------+
+//| Every H1 candle that has closed since `prev` was the forming     |
+//| candle, oldest first. Normally that is exactly one; after the    |
+//| terminal was closed or offline it is the whole gap.              |
+//+------------------------------------------------------------------+
+void CatchUpH1(datetime prev)
+  {
+   int p = iBarShift(_Symbol, PERIOD_H1, prev, false);
+   if(p < 1)
+      p = 1;
+   if(InpMaxCatchupBars <= 0)
+      p = 1;
+   else if(p > InpMaxCatchupBars)
+     {
+      int skipped = p - InpMaxCatchupBars;
+      Notify(":warning: *Gold EA missed " + (string)p + " hours* (terminal closed or offline). The oldest "
+             + (string)skipped + " hour" + (skipped == 1 ? " was" : "s were") + " not checked for setups.",
+             "Gold EA missed " + (string)p + " hours; oldest " + (string)skipped + " not checked");
+      p = InpMaxCatchupBars;
+     }
+   if(p > 1)
+      Print("GoldTrendEA: catching up ", p, " H1 candles");
+   for(int b = p; b >= 1; b--)
+      OnNewH1(b);
+   SaveState();   // record how far the hourly checks got, trade open or not
+  }
+
+//+------------------------------------------------------------------+
+//| One closed H1 candle: b = 1 is the newest, b > 1 is a replay of  |
+//| a candle missed while the EA was not running.                    |
+//+------------------------------------------------------------------+
+void OnNewH1(int b = 1)
   {
    static int lastDay = -1;
    MqlDateTime dt;
@@ -355,18 +454,18 @@ void OnNewH1()
    double o[], h[], l[], c[];
    if(!HA(PERIOD_H1, 400, o, h, l, c))
       return;
-
-   bool closedThisBar = false;
+   if(b < 1 || b + 1 >= ArraySize(o))
+      return;
 
    // pending order: cancel on colour flip or expiry
    if(g.dir != 0 && !g.triggered)
      {
       g.age++;
-      bool flip = (g.dir == 1) ? Bear(o, c, 1) : Bull(o, c, 1);
+      bool flip = (g.dir == 1) ? Bear(o, c, b) : Bull(o, c, b);
       if(flip || g.age >= InpEntryExpiryBars)
         {
          string why = flip ? "the candles changed colour" : (string)InpEntryExpiryBars + " hours passed";
-         Notify(":heavy_minus_sign: *Setup cancelled: Gold " + Side(g.dir) + "*. " + why + " before price reached " + Px(g.entry) + ". No trade.",
+         Notify(LateTag(b) + ":heavy_minus_sign: *Setup cancelled: Gold " + Side(g.dir) + "*. " + why + " before price reached " + Px(g.entry) + ". No trade.",
                 "Gold " + Side(g.dir) + " setup cancelled (" + why + ")");
          CancelOrder();
          Reset();
@@ -379,55 +478,62 @@ void OnNewH1()
    for(int d = 1; d >= -1; d -= 2)
      {
       string why;
-      if(CheckSignal(d, o, h, l, c, why))
+      if(CheckSignal(d, o, h, l, c, why, b))
         {
-         FireSignal(d, why);
+         FireSignal(d, why, b);
          break;
         }
      }
    SaveState();
   }
 
-bool CheckSignal(int d, const double &o[], const double &h[], const double &l[], const double &c[], string &why)
+bool CheckSignal(int d, const double &o[], const double &h[], const double &l[], const double &c[], string &why, int b = 1)
   {
+   if(b < 1 || b + 1 >= ArraySize(o))
+      return(false);
+
    // 1-hour trigger: colour + no wick against the move
-   if(d == 1 && !(Bull(o, c, 1) && NoLowerWick(o, l, c, 1))) return(false);
-   if(d == -1 && !(Bear(o, c, 1) && NoUpperWick(o, h, c, 1))) return(false);
+   if(d == 1 && !(Bull(o, c, b) && NoLowerWick(o, l, c, b))) return(false);
+   if(d == -1 && !(Bear(o, c, b) && NoUpperWick(o, h, c, b))) return(false);
 
    // first no-wick candle since the colour flip, flip recent
    bool flip = false, earlier = false;
    int since = 0;
-   for(int j = 2; j <= InpMaxBarsSinceFlip + 1 && j < ArraySize(o); j++)
+   for(int j = b + 1; j <= b + InpMaxBarsSinceFlip && j < ArraySize(o); j++)
      {
       bool opp = (d == 1) ? Bear(o, c, j) : Bull(o, c, j);
-      if(opp) { flip = true; since = j - 1; break; }
+      if(opp) { flip = true; since = j - b; break; }
       bool nw = (d == 1) ? (Bull(o, c, j) && NoLowerWick(o, l, c, j)) : (Bear(o, c, j) && NoUpperWick(o, h, c, j));
       if(nw) earlier = true;
      }
    if(!flip || earlier)
       return(false);
 
-   double b1 = MathAbs(c[1] - o[1]), b2 = MathAbs(c[2] - o[2]);
+   double b1 = MathAbs(c[b] - o[b]), b2 = MathAbs(c[b + 1] - o[b + 1]);
    if(b1 < b2 * InpMinBodyGrowth)
       return(false);
 
-   // daily trend
-   if(DailyTrend() != d)
+   // daily trend, as it stood when this candle closed
+   int ds = ClosedShift(PERIOD_D1, b);
+   if(DailyTrend(ds) != d)
       return(false);
 
-   // 4-hour Heikin Ashi agrees
+   // 4-hour Heikin Ashi agrees, as it stood when this candle closed
+   int s4 = ClosedShift(PERIOD_H4, b);
    double o4[], h4[], l4[], c4[];
    if(!HA(PERIOD_H4, 400, o4, h4, l4, c4))
       return(false);
-   if((d == 1 && !Bull(o4, c4, 1)) || (d == -1 && !Bear(o4, c4, 1)))
+   if(s4 + 1 >= ArraySize(o4))
+      return(false);
+   if((d == 1 && !Bull(o4, c4, s4)) || (d == -1 && !Bear(o4, c4, s4)))
       return(false);
 
    // 4-hour close beyond the Ichimoku cloud
-   if(InpRequireCloud && CloudDir() != d)
+   if(InpRequireCloud && CloudDir(s4) != d)
       return(false);
 
-   // room to the next daily level
-   double close1 = iClose(_Symbol, PERIOD_H1, 1);
+   // room to the next daily level (levels and daily ATR are today's)
+   double close1 = iClose(_Symbol, PERIOD_H1, b);
    double datr = Buf(hATRd, 1);
    double nxt = (d == 1) ? NearestAbove(close1) : NearestBelow(close1);
    if(InpRequireRoom && nxt != 0 && datr != EMPTY_VALUE && MathAbs(nxt - close1) < InpMinRoomATR * datr)
@@ -442,27 +548,70 @@ bool CheckSignal(int d, const double &o[], const double &h[], const double &l[],
   }
 
 //+------------------------------------------------------------------+
-void FireSignal(int d, string why)
+void FireSignal(int d, string why, int b = 1)
   {
-   double hatr = Buf(hATRh, 1);
+   double hatr = Buf(hATRh, b);
    if(hatr == EMPTY_VALUE) hatr = 0;
-   double hi1 = iHigh(_Symbol, PERIOD_H1, 1), lo1 = iLow(_Symbol, PERIOD_H1, 1);
+   double hi1 = iHigh(_Symbol, PERIOD_H1, b), lo1 = iLow(_Symbol, PERIOD_H1, b);
    double entry, stop;
    if(d == 1)
      {
       entry = hi1 + InpEntryBuffer;
-      int li = iLowest(_Symbol, PERIOD_H1, MODE_LOW, InpStopSwingBars, 1);
+      int li = iLowest(_Symbol, PERIOD_H1, MODE_LOW, InpStopSwingBars, b);
       stop = iLow(_Symbol, PERIOD_H1, li) - InpStopBufferATR * hatr;
      }
    else
      {
       entry = lo1 - InpEntryBuffer;
-      int hi = iHighest(_Symbol, PERIOD_H1, MODE_HIGH, InpStopSwingBars, 1);
+      int hi = iHighest(_Symbol, PERIOD_H1, MODE_HIGH, InpStopSwingBars, b);
       stop = iHigh(_Symbol, PERIOD_H1, hi) + InpStopBufferATR * hatr;
      }
    double risk = MathAbs(entry - stop);
    if(risk <= 0)
       return;
+
+   // Replayed candle: work out what became of this setup while the EA was away
+   int aged = 0;
+   bool already = false, expired = false;
+   string goneWhy = "";
+   if(b > 1)
+     {
+      double ro[], rh[], rl[], rc[];
+      bool haok = HA(PERIOD_H1, 400, ro, rh, rl, rc);
+      for(int j = b - 1; j >= 1; j--)
+        {
+         aged++;
+         double hiJ = iHigh(_Symbol, PERIOD_H1, j), loJ = iLow(_Symbol, PERIOD_H1, j);
+         if((d == 1 && hiJ >= entry) || (d == -1 && loJ <= entry))
+           { already = true; break; }
+         bool fl = haok ? ((d == 1) ? Bear(ro, rc, j) : Bull(ro, rc, j)) : false;
+         if(fl)
+           { expired = true; goneWhy = "the candles changed colour"; break; }
+         if(aged >= InpEntryExpiryBars)
+           { expired = true; goneWhy = (string)InpEntryExpiryBars + " hours passed"; break; }
+        }
+      if(!already && !expired)
+        {
+         double px = (d == 1) ? SymbolInfoDouble(_Symbol, SYMBOL_ASK) : SymbolInfoDouble(_Symbol, SYMBOL_BID);
+         double hi0 = iHigh(_Symbol, PERIOD_H1, 0), lo0 = iLow(_Symbol, PERIOD_H1, 0);
+         if((d == 1 && (hi0 >= entry || px >= entry)) || (d == -1 && (lo0 <= entry || px <= entry)))
+            already = true;
+        }
+      if(already)
+        {
+         Notify(":hourglass: *Missed Gold " + Side(d) + " setup* from " + BarClose(b) + " server time. Price reached the "
+                + Px(entry) + " entry while the EA was not running, so this one has been and gone. No order placed.",
+                "Gold " + Side(d) + " setup " + Px(entry) + " triggered while the EA was offline - not entered");
+         return;
+        }
+      if(expired)
+        {
+         Notify(":hourglass: *Gold " + Side(d) + " setup from " + BarClose(b) + " server time is already void*: "
+                + goneWhy + " before price reached " + Px(entry) + ", while the EA was not running. No trade.",
+                "Gold " + Side(d) + " setup from " + BarClose(b) + " void (" + goneWhy + ")");
+         return;
+        }
+     }
 
    bool replaced = (g.dir != 0 && !g.triggered);
    if(replaced)
@@ -471,14 +620,15 @@ void FireSignal(int d, string why)
    g.dir = d; g.entry = NormalizeDouble(entry, _Digits); g.stop = NormalizeDouble(stop, _Digits);
    g.risk = risk; g.partial = NormalizeDouble(entry + d * InpPartialR * risk, _Digits);
    g.target = NormalizeDouble(entry + d * InpTargetR * risk, _Digits);
-   g.triggered = false; g.partialDone = false; g.age = 0;
-   g.sigTime = iTime(_Symbol, PERIOD_H1, 1); g.orderTicket = 0;
+   g.triggered = false; g.partialDone = false; g.age = aged;
+   g.sigTime = iTime(_Symbol, PERIOD_H1, b); g.orderTicket = 0;
 
    double lots = Lots(risk);
    string sizeTxt = (lots > 0) ? DoubleToString(lots, 2) + " lots (" + DoubleToString(InpRiskPercent, 2) + "% risk)" : "below minimum lot for this risk";
    string icon = (d == 1) ? ":large_green_circle:" : ":red_circle:";
    int pct = (int)MathRound(InpPartialFrac * 100);
-   string slack = icon + " *" + Side(d) + " SETUP: Gold (" + _Symbol + ")*" + (InpAutoTrade ? " | auto-trading" : "") + "\n"
+   int left = InpEntryExpiryBars - aged;
+   string slack = LateTag(b) + icon + " *" + Side(d) + " SETUP: Gold (" + _Symbol + ")*" + (InpAutoTrade ? " | auto-trading" : "") + "\n"
                   + (replaced ? "_Replaces the earlier setup that had not triggered._\n" : "")
                   + "*The plan*\n"
                   + "• *Entry:* " + (d == 1 ? "buy" : "sell") + "-stop at *" + Px(g.entry) + "*\n"
@@ -486,7 +636,7 @@ void FireSignal(int d, string why)
                   + "• *Size:* " + sizeTxt + "\n"
                   + "• *Take profit 1:* close " + (string)pct + "% at *" + Px(g.partial) + "* (+" + DoubleToString(InpPartialR, 1) + "R), stop to entry\n"
                   + "• *Take profit 2:* *" + Px(g.target) + "* (+" + DoubleToString(InpTargetR, 1) + "R)\n"
-                  + "• *Cancelled if:* the colour flips or " + (string)InpEntryExpiryBars + " hours pass first\n"
+                  + "• *Cancelled if:* the colour flips or " + (string)left + " more hour" + (left == 1 ? "" : "s") + " pass first\n"
                   + "*Why it qualifies*\n" + why + "\n"
                   + "_Tested 2008-2026: 715 trades, 60% winners, +0.18R per trade after costs. Not financial advice._";
    string push = "Gold " + Side(d) + " setup | entry " + Px(g.entry) + " SL " + Px(g.stop) + " TP1 " + Px(g.partial) + " TP2 " + Px(g.target);
@@ -711,12 +861,22 @@ void SaveState()
    GlobalVariableSet(GV + "pdone", g.partialDone ? 1 : 0);
    GlobalVariableSet(GV + "age", g.age);
    GlobalVariableSet(GV + "sig", (double)g.sigTime);
+   GlobalVariableSet(GV + "lasth1", (double)g_lastH1);
   }
 
 void LoadState()
   {
    Reset();
-   if(MQLInfoInteger(MQL_TESTER) || !GlobalVariableCheck(GV + "dir"))
+   if(MQLInfoInteger(MQL_TESTER))
+      return;
+   // where the hourly checks left off, so a restart replays the gap
+   if(GlobalVariableCheck(GV + "lasth1"))
+     {
+      datetime savedH1 = (datetime)GlobalVariableGet(GV + "lasth1");
+      if(savedH1 != 0 && savedH1 != iTime(_Symbol, PERIOD_H1, 0))
+         g_lastH1 = savedH1;
+     }
+   if(!GlobalVariableCheck(GV + "dir"))
       return;
    g.dir = (int)GlobalVariableGet(GV + "dir");
    g.entry = GlobalVariableGet(GV + "entry");
@@ -743,6 +903,12 @@ void LoadState()
 //+------------------------------------------------------------------+
 void OnNewD1()
   {
+   // the EA may have been off when the day closed, so say how late this is
+   double lateD = (double)(TimeCurrent() - iTime(_Symbol, PERIOD_D1, 0)) / 3600.0;
+   string dtag = (lateD > (double)InpLateAlertHours)
+                 ? ":hourglass: _Late by " + DoubleToString(lateD, 0) + "h: the EA was not running at the daily close, so this uses the price now._\n"
+                 : "";
+
    // the previous trade day has closed: settle whatever is left
    if(ib.state == 2)
      {
@@ -750,14 +916,14 @@ void OnNewD1()
       if(InpAutoTrade)
          IBCloseAll();
       double r = (px - ib.entry) * ib.dir / MathAbs(ib.entry - ib.stop);
-      Notify(":checkered_flag: *Inside-day trade: close the Gold " + Side(ib.dir) + " now* (daily close, " + Px(px) + "). Result about " + DoubleToString(r, 2) + "R.",
+      Notify(dtag + ":checkered_flag: *Inside-day trade: close the Gold " + Side(ib.dir) + " now* (daily close, " + Px(px) + "). Result about " + DoubleToString(r, 2) + "R.",
              "Gold inside-day " + Side(ib.dir) + ": close now at the daily close, about " + DoubleToString(r, 2) + "R");
      }
    else if(ib.state == 1)
      {
       if(InpAutoTrade)
          IBCloseAll();
-      Notify(":heavy_minus_sign: *Inside-day setup cancelled: Gold*. Price stayed between " + Px(ib.lo) + " and " + Px(ib.hi) + ". No trade.",
+      Notify(dtag + ":heavy_minus_sign: *Inside-day setup cancelled: Gold*. Price stayed between " + Px(ib.lo) + " and " + Px(ib.hi) + ". No trade.",
              "Gold inside-day cancelled: no breakout");
      }
    IBReset();
