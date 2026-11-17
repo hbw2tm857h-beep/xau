@@ -129,7 +129,10 @@ CONFIG = {
     "verdict_min_trades": 30,     # ...with at least this many test trades
 
     "fail_alert_after": 3,
-    "max_catchup_bars": 6,
+    # GitHub's scheduler often runs hours late or skips runs, so every missed
+    # hour is replayed (up to 2 days) and alerts more than 2 hours old say so.
+    "max_catchup_bars": 48,
+    "late_alert_hours": 2,
 }
 
 NY = ZoneInfo("America/New_York")
@@ -1397,7 +1400,15 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None):
                 continue
             msg = fmt_event(e, cfg, sizing)
             if msg:
+                lag_h = (now - e["t"]).total_seconds() / 3600
+                if lag_h > cfg["late_alert_hours"]:
+                    msg = (f":hourglass: _Late alert ({lag_h:.0f}h): this happened at {uk_day(e['t'])} UK. "
+                           "The bot's scheduled run was delayed. Check the current price before acting._\n" + msg)
                 out.append(msg)
+    skipped = len(new_idx) - cfg["max_catchup_bars"]
+    if skipped > 0:
+        out.append(f":warning: The bot didn't run for {len(new_idx)} hours, so the oldest {skipped} hour"
+                   f"{'s were' if skipped != 1 else ' was'} not checked for setups.")
     state["last_h1"] = last_t
     return out
 
