@@ -39,7 +39,7 @@ There's no take-profit. The trade closes at the next daily close whatever happen
 
 None of these improved results by a meaningful amount in both test periods, so none of them is a filter. Any of them can be switched on in `CONFIG["filters"]`.
 
-Every setup also gets a grade: A when all four checks pass, B for two or three, C for fewer. It is information only, and `backtest.md` shows why — over 2008–2026 grade A averages **+0.12R across 235 trades** while grade B averages **+0.20R across 475**. More checks passing has been slightly *worse*, not better, so do not treat an A as a reason to size up.
+Every setup also gets a grade: A when all four checks pass, B for two or three, C for fewer. It is information only, and `backtest.md` shows why — over 2008–2026 grade A averages **+0.12R across 235 trades** while grade B averages **+0.20R across 475**. More checks passing has been slightly *worse*, not better, so do not treat an A as a reason to size up. The reason is arithmetic rather than mysterious: the 4-hour check is a hard filter, so it always passes and the grade is really out of three, with an A needing session, ADX and volatility all to pass — and the backtest says requiring session or ADX *hurts*. Round 6 tested the complements of both and they failed too, so these checks carry little information in either direction.
 
 ## Backtest
 Open the *Actions* tab and choose *XAU signals*, then *Run workflow*, with mode set to `backtest`. It replays the 10-year history file through the same code the live bot uses. It compares the video's rules with each quality check added, splits the history into a training period and a test period, and writes the results to `backtest.md` with a summary in Slack.

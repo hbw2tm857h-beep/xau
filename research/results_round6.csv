@@ -1,0 +1,8 @@
+test,n_all,avgR_all,n_2008_15,avgR_2008_15,n_tune,avgR_tune,n_val,avgR_val,n_2025_26,avgR_2025_26,d_tune,d_val,kept,p,alpha_corrected,consistent,passed
+BASELINE live rules,721,0.1811,312,0.1675,250,0.1561,74,0.1559,85,0.3264,0.0,0.0,1.0,,0.00833,True,False
+H1 outside-hours only (20-07 UK),439,0.1965,201,0.2061,147,0.1899,40,-0.0202,51,0.3479,0.0338,-0.176,0.609,0.10322,0.00833,True,False
+H2 quiet trend only (H1 ADX < 20),244,0.2218,112,0.205,80,0.1291,25,0.1872,27,0.5979,-0.027,0.0314,0.338,0.06698,0.00833,True,False
+H3 room-aware target (1R if room < 1.5 daily ATR),749,0.1683,324,0.1646,259,0.1392,77,0.1098,89,0.3165,-0.0169,-0.0461,1.039,1.0,0.00833,False,False
+H4 skip the setup after a losing trade,623,0.1914,262,0.1838,220,0.1442,60,0.2522,81,0.2996,-0.0119,0.0964,0.864,0.09523,0.00833,False,False
+H5 stop beyond the signal candle (swing=1),935,0.0127,409,-0.0222,313,0.0415,105,-0.0955,108,0.1669,-0.1146,-0.2514,1.297,1.0,0.00833,False,False
+H6 stop beyond two candles (swing=2),777,0.1383,340,0.1008,263,0.1599,83,0.0629,91,0.2844,0.0038,-0.0929,1.078,1.0,0.00833,False,False
