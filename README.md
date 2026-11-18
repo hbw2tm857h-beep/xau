@@ -101,6 +101,12 @@ The calculation assumes 1 lot = 100 oz, which is standard but not universal — 
 1. Add the repository secrets `SLACK_WEBHOOK_URL` (an Incoming Webhook for #gold-signals) and `TWELVEDATA_API_KEY` (from the free plan).
 2. Open *Actions* and run the workflow with mode `test`. A status message should appear in Slack.
 
+### Getting push notifications
+Slack sends no push for a webhook message that mentions nobody, because almost everyone's per-channel setting is *mentions and keywords only*. Messages still arrive in the channel; phones stay silent. Two ways to fix it:
+
+- **Per person:** in the channel, open its name → *Notifications* → *All new messages*, and check the mobile section of that dialog separately, since it can differ from desktop. Each member has to do this for their own account.
+- **For everyone, once:** set the `SLACK_MENTION` secret to `<!channel>`, `<!here>`, or a user group such as `<!subteam^S0123|@traders>`. It is prefixed to the trading alerts — setups, entries, take-profits, stops, cancellations — and never to the weekly scorecard, the nursery gate or a test run, so the routine posts stay quiet. This is the one that keeps working as people join.
+
 ## Notes
 - Prices come from Twelve Data's XAU/USD feed, not OANDA's. Candles can differ by a few points, so compare each setup with your MT5 chart.
 - GitHub can start scheduled runs several minutes late.
