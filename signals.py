@@ -139,6 +139,21 @@ CONFIG = {
     "verdict_min_gain_r": 0.10,   # a filter must add this much avg R in both periods
     "verdict_min_trades": 30,     # ...with at least this many test trades
 
+    # Third setup, research round 9 E2: the same trigger read on the 4-hour
+    # Heikin Ashi candle instead of the hourly one, daily trend still required.
+    # 526 trades 2008-2026 at +0.143R, positive in all four periods, but +0.395
+    # correlated with the trend setup, so it starts as a nursery candidate:
+    # journalled and in the ledger, never alerted. See research/README.md.
+    "h4_trigger": True,
+    "h4_entry_buffer": 0.30,
+    "h4_stop_buffer": 0.30,
+    "h4_swing_bars": 5,            # 4-hour candles behind the stop
+    "h4_max_bars_since_flip": 6,   # 4-hour candles
+    "h4_expiry_bars": 12,          # H1 bars the stop order stays live
+    "h4_partial_r": 1.0,
+    "h4_partial_frac": 0.5,
+    "h4_target_r": 2.0,
+
     # Nursery (layer 2): which strategies are traded, which are only watched,
     # and what it takes to move between tiers. See nursery.json.
     "nursery_file": "nursery.json",
@@ -150,7 +165,7 @@ CONFIG = {
     "gate_bootstrap": 2000,
     # Recorded test rows in research/results*.csv. Used only to report how
     # strict a backtest search would have to be; see gate().
-    "hypotheses_tested": 1063,
+    "hypotheses_tested": 1074,
 
     "fail_alert_after": 3,
     # GitHub's scheduler often runs hours late or skips runs, so every missed
@@ -1117,6 +1132,146 @@ def ledger_backfill(cfg, h1, path):
 
 
 # --------------------------------------------------------------------------
+# Third setup: the trigger read on the 4-hour candle (round 9 E2)
+#
+# Identical mechanism to the hourly trend setup, one timeframe up: the first
+# 4-hour Heikin Ashi candle of a new colour, no wick against the move, body at
+# least as big as the one before, with the daily trend agreeing. Entry and
+# management still happen on H1 bars, because that is where fills resolve.
+#
+# research/round9_entries.py calls these same functions, so the backtest and
+# the live bot cannot drift apart.
+# --------------------------------------------------------------------------
+def h4_setup(F, i, k, d, cfg):
+    """A setup on the closed 4-hour candle k, acted on at H1 bar i, or None."""
+    ha4, h4 = F.h4_ha, F.h4
+    if k < 1 or k >= len(ha4):
+        return None
+    tol = cfg["wick_tolerance"]
+    x = ha4[k]
+    if d == 1 and not (bull(x) and no_lower_wick(x, tol)):
+        return None
+    if d == -1 and not (bear(x) and no_upper_wick(x, tol)):
+        return None
+
+    # the first candle of the new colour: an opposite candle must come before
+    # any earlier no-wick candle of our own colour
+    flip = False
+    for j in range(k - 1, max(-1, k - 1 - cfg["h4_max_bars_since_flip"]), -1):
+        y = ha4[j]
+        if (d == 1 and bear(y)) or (d == -1 and bull(y)):
+            flip = True
+            break
+        nw = (bull(y) and no_lower_wick(y, tol)) if d == 1 else (bear(y) and no_upper_wick(y, tol))
+        if nw:
+            flip = False
+            break
+    if not flip:
+        return None
+
+    if abs(x["c"] - x["o"]) < abs(ha4[k - 1]["c"] - ha4[k - 1]["o"]):
+        return None
+
+    dc = F.daily_ctx(i)
+    if dc is None or dc["trend"] != d:
+        return None
+
+    sw = h4[max(0, k - cfg["h4_swing_bars"] + 1):k + 1]
+    buf, sbuf = cfg["h4_entry_buffer"], cfg["h4_stop_buffer"]
+    if d == 1:
+        entry = h4[k]["h"] + buf
+        stop = min(z["l"] for z in sw) - sbuf
+    else:
+        entry = h4[k]["l"] - buf
+        stop = max(z["h"] for z in sw) + sbuf
+    risk = abs(entry - stop)
+    if risk <= 0:
+        return None
+    return {"dir": d, "k": k, "entry": entry, "stop": stop, "risk": risk,
+            "t_close": F.close_time(i)}
+
+
+def h4_step(F, i, st, cfg):
+    """Advance the 4-hour setup by one closed H1 bar. State lives in st["h4"].
+
+    Mirrors step(): on the fill bar only the stop is checked; afterwards the
+    stop first, then the partial, then the target.
+    """
+    if not cfg.get("h4_trigger"):
+        return []
+    ev = []
+    b = F.h1[i]
+    t_close = F.close_time(i)
+    idea = st.get("h4")
+    cost = cfg["cost_per_trade"]
+    closed = False
+
+    def hit(level, d, side):
+        if side == "favour":
+            return b["h"] >= level if d == 1 else b["l"] <= level
+        return b["l"] <= level if d == 1 else b["h"] >= level
+
+    if idea:
+        d = idea["dir"]
+        if not idea["triggered"]:
+            idea["age"] = idea.get("age", 0) + 1
+            if hit(idea["entry"], d, "favour"):
+                idea["triggered"] = True
+                idea["entry_time"] = t_close.isoformat()
+                ev.append({"type": "h4_entry", "idea": dict(idea), "t": t_close})
+                if hit(idea["stop"], d, "against"):
+                    ev.append({"type": "h4_stop", "idea": dict(idea), "t": t_close,
+                               "r": _close_r(idea, idea["stop"], cost), "price": idea["stop"]})
+                    st["h4"] = idea = None
+                    closed = True
+            elif idea["age"] >= cfg["h4_expiry_bars"]:
+                ev.append({"type": "h4_cancel", "idea": dict(idea), "t": t_close,
+                           "why": "expired"})
+                st["h4"] = idea = None
+                closed = True
+        else:
+            if hit(idea["stop"], d, "against"):
+                ev.append({"type": "h4_stop", "idea": dict(idea), "t": t_close,
+                           "r": _close_r(idea, idea["stop"], cost), "price": idea["stop"]})
+                st["h4"] = idea = None
+                closed = True
+            else:
+                if idea.get("partial") and not idea.get("done") and hit(idea["partial"], d, "favour"):
+                    idea["done"] = cfg["h4_partial_frac"]
+                    idea["booked"] = idea["done"] * cfg["h4_partial_r"]
+                    idea["stop"] = idea["entry"]
+                    ev.append({"type": "h4_partial", "idea": dict(idea), "t": t_close})
+                if idea.get("target") and hit(idea["target"], d, "favour"):
+                    ev.append({"type": "h4_target", "idea": dict(idea), "t": t_close,
+                               "r": _close_r(idea, idea["target"], cost), "price": idea["target"]})
+                    st["h4"] = idea = None
+                    closed = True
+
+    # one evaluation per closed 4-hour candle, acted on only when flat
+    k = F.h4_idx[i]
+    new_k = k >= 1 and st.get("h4_last_k") != k
+    if new_k:
+        st["h4_last_k"] = k
+    if not closed and not st.get("h4") and new_k:
+        for d in (1, -1):
+            s = h4_setup(F, i, k, d, cfg)
+            if not s:
+                continue
+            risk = s["risk"]
+            st["h4"] = {
+                "dir": d, "entry": round(s["entry"], 2), "stop": round(s["stop"], 2),
+                "risk": round(risk, 4), "triggered": False, "age": 0,
+                "partial": round(s["entry"] + d * cfg["h4_partial_r"] * risk, 2),
+                "target": round(s["entry"] + d * cfg["h4_target_r"] * risk, 2),
+                "sig_time": s["t_close"].isoformat(), "strategy": "h4_trend",
+                "grade": None, "session": None,
+            }
+            ev.append({"type": "h4_signal", "idea": dict(st["h4"]), "t": t_close, "setup": s})
+            break
+    return ev
+
+
+# --------------------------------------------------------------------------
 # Plain-English Slack messages
 # --------------------------------------------------------------------------
 def px(v):
@@ -1263,10 +1418,45 @@ def fmt_ib_event(e, cfg, sizing):
     return None
 
 
+def fmt_h4_event(e, cfg, sizing):
+    """Messages for the 4-hour trigger strategy.
+
+    Only the setup needs its own wording: h4_setup returns the levels, not the
+    context checks that fmt_signal reads, so routing h4_signal there would
+    raise. The entry, partial, target, stop and cancel messages reuse the trend
+    wording, which touches only the idea's own fields.
+    """
+    t = e["type"]
+    tag = ":clock4: _4-hour trigger: a separate strategy from the hourly setups._\n"
+    if t != "h4_signal":
+        msg = fmt_event(dict(e, type=t[3:]), cfg, sizing)
+        return None if msg is None else tag + msg
+    idea = e["idea"]
+    d = idea["dir"]
+    risk = idea["risk"]
+    lots = lot_size(risk, sizing, cfg) if sizing else None
+    size = (f"\n• *Size:* {lots[0]:.2f} lots ({ccy_sym(sizing['ccy'])}{lots[1]:,.0f} at risk)"
+            if lots else "")
+    icon = ":large_green_circle:" if d == 1 else ":red_circle:"
+    pct = int(cfg["h4_partial_frac"] * 100)
+    return (tag + f"{icon} *{side_word(d)} SETUP: Gold (4-hour trigger)*\n"
+            f"• *Entry:* {'buy' if d == 1 else 'sell'}-stop at *{px(idea['entry'])}*\n"
+            f"• *Stop:* *{px(idea['stop'])}* ({risk:.2f} = 1R)" + size + "\n"
+            f"• *Take profit 1:* close {pct}% at *{px(idea['partial'])}* "
+            f"(+{cfg['h4_partial_r']:g}R), stop to entry\n"
+            f"• *Take profit 2:* *{px(idea['target'])}* (+{cfg['h4_target_r']:g}R)\n"
+            f"• *Cancelled if:* price hasn't reached the entry within "
+            f"{cfg['h4_expiry_bars']} hours\n"
+            "_Research round 9: 526 trades 2008-2026, +0.14R per trade after costs. "
+            "Rule-based alert, not financial advice._")
+
+
 def fmt_event(e, cfg, sizing):
     t = e["type"]
     if t.startswith("ib_"):
         return fmt_ib_event(e, cfg, sizing)
+    if t.startswith("h4_"):
+        return fmt_h4_event(e, cfg, sizing)
     if t == "signal":
         return fmt_signal(e, cfg, sizing)
     idea = e["idea"]
@@ -1405,6 +1595,15 @@ def default_nursery(cfg):
                 "tier": "live", "label": "Trend setups",
                 "expected_avg_r": 0.18, "expected_win": 60, "expected_n": 720,
                 "note": "Rounds 1-4: Heikin Ashi trend-ride, 4H agreement + Ichimoku cloud",
+                "history": [],
+            },
+            "h4_trend": {
+                "tier": "candidate", "label": "4-hour trigger",
+                "expected_avg_r": 0.143, "expected_win": 0, "expected_n": 526,
+                "note": "Round 9 E2: the trigger on the 4-hour candle. Candidate: "
+                        "journalled and in the ledger, never alerted. +0.395 "
+                        "correlated with the trend setup, so promotion needs live "
+                        "evidence, not the backtest.",
                 "history": [],
             },
             "inside_day": {
@@ -1813,16 +2012,18 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
         if news is None and news_fn and any(evaluate(F, i, d, dict(cfg, filters={}), None) for d in (1, -1)):
             news = news_fn() or []
         before = state_label(state)
-        evs = step(F, i, state, cfg, news) + ib_step(F, i, state, cfg)
+        evs = (step(F, i, state, cfg, news) + ib_step(F, i, state, cfg)
+               + h4_step(F, i, state, cfg))
         led.append(ledger_row(F, i, cfg, evs, before, "live"))
         for e in evs:
-            if e["type"] in ("exit", "stop", "target", "ib_stop", "ib_close"):
+            if e["type"] in ("exit", "stop", "target", "ib_stop", "ib_close",
+                             "h4_stop", "h4_target"):
                 journal_add(journal, e)
                 closed_trades.append(journal[-1])
             tier = tier_of(nursery, (e.get("idea") or {}).get("strategy", "trend"))
             if tier == "candidate":
                 continue   # tracked in the journal and the ledger, never alerted
-            if e["type"] in ("entry", "ib_entry") and not cfg["alert_entry_hit"]:
+            if e["type"] in ("entry", "ib_entry", "h4_entry") and not cfg["alert_entry_hit"]:
                 continue
             # shadow tier gets no size: it is being watched, not traded
             msg = fmt_event(e, cfg, sizing if tier == "live" else None)

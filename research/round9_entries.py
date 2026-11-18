@@ -112,52 +112,26 @@ def e1_inside_bar(lab):
 
 
 def e2_h4_trigger(lab):
-    """The adopted trigger, read on the 4-hour Heikin Ashi candle instead."""
-    F = lab.F
-    h4, ha4 = F.h4, F.h4_ha
+    """The adopted trigger read on the 4-hour Heikin Ashi candle.
+
+    Calls signals.h4_setup, the live implementation, so this test and the
+    production bot cannot drift apart. The same arrangement lab.py already
+    uses for the hourly rules via signals.evaluate.
+    """
+    F, cfg = lab.F, lab.cfg
     seen = -1
     for i in range(len(lab.b)):
         if not F.warm(i):
             continue
         k = F.h4_idx[i]
-        if k < 7 or k == seen:
+        if k < 1 or k == seen:
             continue
         seen = k                      # act once per closed 4H candle
-        x, prev = ha4[k], ha4[k - 1]
         for d in (1, -1):
-            if d == 1 and not (S.bull(x) and S.no_lower_wick(x, 0.0)):
-                continue
-            if d == -1 and not (S.bear(x) and S.no_upper_wick(x, 0.0)):
-                continue
-            flip = False
-            for j in range(k - 1, max(-1, k - 1 - 6), -1):
-                y = ha4[j]
-                if (d == 1 and S.bear(y)) or (d == -1 and S.bull(y)):
-                    flip = True
-                    break
-                nw = (S.bull(y) and S.no_lower_wick(y, 0.0)) if d == 1 else (S.bear(y) and S.no_upper_wick(y, 0.0))
-                if nw:
-                    flip = False
-                    break
-            if not flip:
-                continue
-            b1 = abs(x["c"] - x["o"])
-            b2 = abs(ha4[k - 1]["c"] - ha4[k - 1]["o"])
-            if b1 < b2:
-                continue
-            if lab.trend(i) != d:
-                continue
-            sw = h4[max(0, k - 4):k + 1]
-            if d == 1:
-                entry = h4[k]["h"] + BUF
-                stop = min(z["l"] for z in sw) - BUF
-            else:
-                entry = h4[k]["l"] - BUF
-                stop = max(z["h"] for z in sw) + BUF
-            if abs(entry - stop) <= 0:
-                continue
-            yield i, d, entry, stop, 12
-            break
+            s = S.h4_setup(F, i, k, d, cfg)
+            if s:
+                yield i, d, s["entry"], s["stop"], cfg["h4_expiry_bars"]
+                break
 
 
 def e3_squeeze(lab, win=12, look=200, pct=0.25):

@@ -1,6 +1,15 @@
 {
   "hypotheses_tested": 1063,
   "strategies": {
+    "h4_trend": {
+      "expected_avg_r": 0.143,
+      "expected_n": 526,
+      "expected_win": 0,
+      "history": [],
+      "label": "4-hour trigger",
+      "note": "Round 9 E2: the trigger on the 4-hour candle. Candidate: journalled and in the ledger, never alerted. +0.395 correlated with the trend setup, so promotion needs live evidence, not the backtest.",
+      "tier": "candidate"
+    },
     "inside_day": {
       "expected_avg_r": 0.1,
       "expected_n": 722,
