@@ -53,6 +53,13 @@ Two things it handles that the Python bot gets for free:
 - **Gaps.** If the terminal is closed or offline, every missed H1 candle is re-checked in order (up to `InpMaxCatchupBars`), reading the higher timeframes as they stood at the time. A setup found more than two hours late is marked, and the EA says whether its entry was already reached while it was away — it never enters late.
 - **The broker's idea of a day.** Everything daily — trend, 50 EMA, daily ATR, the levels and the inside-day test — reads the *broker's* D1 candles, while the research builds its own days in New York time rolling at 17:00 NY. Those agree only if your broker's day rolls there too. Most gold brokers on GMT+2/+3 server time do, but the US and EU change clocks on different dates, so the boundary can slip by an hour for a few weeks each spring and autumn, and some brokers never use that convention. On the first tick the EA works out the broker's actual boundary and warns if it differs, naming the offset. It is a warning, not a block: hourly setups are unaffected, but treat the daily context and the inside-day setup as approximate until you have checked. Turn it off with `InpCheckDailyRoll`.
 
+## Third setup: 4-hour trigger (candidate, silent)
+The same trigger as the trend setups, read on the 4-hour Heikin Ashi candle instead of the hourly one, with the daily trend still required. Research round 9 found it the only survivor of four new entry mechanisms: 526 trades over 2008–2026 at +0.14R, positive in all four test periods.
+
+It runs at tier `candidate`, which means it is **journalled and written to the ledger but never alerted**. That is deliberate. Its monthly returns correlate **+0.395** with the trend setups — not a duplicate, since 87% of its signals fire at other times, but both require the daily trend so they can never take opposite sides. Compare the inside-day setup's +0.09, which is what made running two strategies genuinely additive. Its per-trade edge is also below the trend setups' +0.18R, and all of its evidence is in-sample, which round 8 showed is worth little on its own. So it collects live out-of-sample evidence at no risk until the gate has 30 closed trades to judge it on. `"h4_trigger": False` in `CONFIG` turns it off.
+
+`research/round9_entries.py` calls the live `h4_setup` directly, so the backtest and the bot cannot drift apart. Both report 526 trades at +0.1434R.
+
 ## Tiers: what gets traded, what only gets watched
 Each strategy in `nursery.json` sits in one of three tiers:
 
