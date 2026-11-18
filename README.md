@@ -111,6 +111,8 @@ Only the events that need you to **touch your platform** ping everyone: a new se
 
 Every alert opens with one compact line — direction, entry, stop, lot size, take-profits — because a phone preview shows about that much, and a title like "SELL SETUP: Gold" is not something you can trade from. The detail follows underneath.
 
+A new setup also carries an **open risk** line, so you can see what you are already holding before adding to it, and the `test` status check shows the same thing. It reports *current* risk rather than the risk a trade opened with: once take-profit 1 moves the stop to entry, that position reads `0.00R (stop at entry)`, because the remainder cannot lose. Two positions at full risk read `trend SELL 1.00R · inside-day SELL 0.50R · total 1.50R, about 1.50% of the account`. A candidate strategy never appears, because it is tracked and never traded.
+
 ## Notes
 - Prices come from Twelve Data's XAU/USD feed, not OANDA's. Candles can differ by a few points, so compare each setup with your MT5 chart.
 - GitHub can start scheduled runs several minutes late.
