@@ -167,6 +167,14 @@ CONFIG = {
     # strict a backtest search would have to be; see gate().
     "hypotheses_tested": 1074,
 
+    # Slack pushes nothing for a webhook message that mentions nobody: most
+    # people's per-channel setting is "mentions and keywords only". Set the
+    # SLACK_MENTION secret to "<!channel>", "<!here>" or a user group such as
+    # "<!subteam^S0123|@traders>" and it is prefixed to the trading alerts -
+    # setups, entries, take-profits, stops - but never to the weekly scorecard,
+    # the gate report or a test message.
+    "slack_mention": "",
+
     "fail_alert_after": 3,
     # GitHub's scheduler often runs hours late or skips runs, so every missed
     # hour is replayed (up to 2 days) and alerts more than 2 hours old say so.
@@ -2035,6 +2043,9 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                 if lag_h > cfg["late_alert_hours"]:
                     msg = (f":hourglass: _Late alert ({lag_h:.0f}h): this happened at {uk_day(e['t'])} UK. "
                            "The bot's scheduled run was delayed. Check the current price before acting._\n" + msg)
+                # the mention goes first, so Slack pushes it and a reader sees why
+                if cfg.get("slack_mention"):
+                    msg = cfg["slack_mention"] + " " + msg
                 out.append(msg)
     skipped = len(new_idx) - cfg["max_catchup_bars"]
     if skipped > 0:
@@ -2088,6 +2099,7 @@ def sizing_from_env(api_key):
     except ValueError:
         return None
     ccy = (os.environ.get("ACCOUNT_CCY", "") or "USD").strip().upper()
+
     risk = float(os.environ.get("RISK_PCT", "") or CONFIG["default_risk_pct"])
     # brokers differ: 100 oz a lot is standard, but micro and cent accounts are
     # not. A wrong contract size silently misstates every lot size we post.
@@ -2113,6 +2125,9 @@ def main():
     state_path = os.environ.get("STATE_FILE", "state.json")
     journal_path = os.environ.get("JOURNAL_FILE", "journal.json")
     repo = os.environ.get("GITHUB_REPOSITORY", "")
+    mention = os.environ.get("SLACK_MENTION", "").strip()
+    if mention:
+        CONFIG["slack_mention"] = mention
     state = load_json(state_path, {})
     journal = load_json(journal_path, [])
     now = datetime.now(UTC)
