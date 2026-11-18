@@ -19,15 +19,23 @@ A. SHUFFLE TEST (real gold). Take the real H1 bars, keep each bar's shape and
    serial structure. This is the single most direct test of whether the
    strategy reads anything at all, and it has never been run on this project.
 
-B. RANDOM-WALK TEST (a stand-in for a synthetic index). Generate a driftless
-   geometric Brownian motion at 75% annualised volatility - the figure Deriv
-   publishes for its Volatility 75 Index - ticking 24/7, with intrabar highs
-   and lows built from sub-steps so the candles have realistic shape. Run the
-   same rules. This is NOT Deriv's actual generator and makes no claim to be;
-   the proxy here cannot reach their WebSocket API. It tests the structural
-   point: what these rules do on a series whose increments are independent.
-   Run at zero cost as well as at a gold-equivalent cost, so the result cannot
-   be dismissed as "it is just the spread".
+B. RANDOM-WALK CONTROL - KEPT, BUT INCONCLUSIVE. Generate geometric Brownian
+   motion at 75% annualised volatility, 24/7, intrabar highs and lows from
+   sub-steps. The intent was a series with no structure to read.
+
+   It does not work as a null, and the reason is worth recording. A GBM cannot
+   be driftless in both measures at once:
+     - a martingale in PRICE (px *= 1 + e) has log drift -sigma^2/2, which over
+       113k hours is a ~97% decline: a real downtrend, shorted for +0.091R
+     - a martingale in LOG price (px *= exp(e), what this file now does) has
+       arithmetic drift +sigma^2/2 by Jensen, an uptrend over the same span,
+       which measures +0.034R at zero cost and +0.026R with cost
+   One artifact for its mirror image. A trend follower reads price levels, so
+   whichever measure is pinned, the other one drifts and the rules pick it up.
+
+   Test A has no such problem: it uses gold's own returns and destroys only
+   their order, assuming nothing about drift. A is the null that counts; B is
+   kept only to show what a parametric control does and why it is not usable.
 
 Run: python3 research/round7_synthetic.py [n_shuffles] [n_walks]
 """
@@ -176,8 +184,10 @@ def main():
         summarise(f"   random walk, {label}", vals2)
         print(f"   trades per run: median {statistics.median(counts2):.0f}")
 
-    print("\nRead this as: test A says whether the rules read real structure in gold.")
-    print("Test B says what the same rules do on a series with no structure to read.")
+    print("\nTest A is the null that counts: gold's own returns, order destroyed.")
+    print("Test B is a parametric control and is inconclusive by construction - a GBM")
+    print("pinned as a martingale in one measure drifts in the other, and a trend")
+    print("follower reads that drift. See this file's docstring.")
 
 
 if __name__ == "__main__":

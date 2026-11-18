@@ -201,6 +201,30 @@ Sharpe sits on a flat plateau from 0.5 to 1.0 and peaks at 0.75 by **0.011**, wh
 ### Where that leaves things
 All the gold data has been seen, so nothing here can be adopted on backtest evidence. Round 6 produced no candidate, and round 6b produced no change. The remaining honest routes to more edge are (1) forward live evidence, which the `nursery.json` tiers and `gate()` now collect, (2) the feature ledger, which from now on stores every hour the bot evaluates so later questions are answered from recorded features rather than re-derived, and (3) execution quality, which H1 data cannot measure.
 
+## Round 7: does the edge read structure, or the return distribution? (18 Nov 2026)
+
+`round7_synthetic.py`, `results_round7.csv`
+
+A backtest can look good because a strategy genuinely reads market structure, or because its payoff shape happens to suit the return distribution. Rounds 1–6 never separated those. This does.
+
+**The shuffle test.** Take the real 113,133 hourly candles, keep each candle's shape and its exact return, and replay them in random order. Trends, daily levels, session effects and every sequence the rules are supposed to read are destroyed; the return distribution, each bar's own volatility and the cost model are untouched. Then run the live rules.
+
+| | Trades | Avg R |
+|---|---|---|
+| Real history | 721 | **+0.181** |
+| 30 shuffled histories | median 819 | mean **−0.036** (sd 0.038, best +0.079) |
+
+**None of the thirty reached the real result** (p = 0.032), and the real figure sits **5.7 standard deviations** above the shuffled mean. Destroying the order of the candles destroys the edge, and the shuffles land slightly *negative* — which is what a cost-paying strategy should do on a structureless series. This is the strongest evidence in the project that the rules read genuine sequence rather than exploiting the shape of gold's returns.
+
+Note the trade count rises under shuffling (819 vs 721): with the sequence broken, more candles pass the trigger and fewer setups get cancelled by a colour flip. The real market produces *fewer but better* setups.
+
+**The random-walk control, and why it does not work.** The intent was a second null: generate GBM at 75% annualised volatility and run the same rules on a series with nothing to read. It cannot do that job, and the reason is worth recording so nobody repeats it. A GBM cannot be driftless in both measures at once:
+
+- a martingale in **price** (`px *= 1 + e`) carries log drift −σ²/2, which over 113k hours is a ~97% decline. That is a real downtrend, and the rules shorted it for **+0.091R**.
+- a martingale in **log price** (`px *= exp(e)`) carries arithmetic drift +σ²/2 by Jensen, an uptrend over the same span, which measures **+0.034R** at zero cost and **+0.026R** with cost.
+
+One artifact for its mirror image. A trend follower reads price levels, so whichever measure you pin, the other drifts and the rules pick it up. The shuffle test has no such problem, because it uses gold's own returns and assumes nothing about drift. **Test A is the null that counts; test B is kept only as a record of why a parametric control is the wrong tool here.**
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -218,4 +242,5 @@ python3 research/round5_standalone.py  # 10 well-known standalone strategies
 python3 research/round5_insideday_checks.py # robustness of the one that passed
 python3 research/round6.py              # 6 pre-registered ideas, Bonferroni-corrected
 python3 research/round6b_allocation.py  # inside-day risk weight sweep
+python3 research/round7_synthetic.py   # shuffle test + random-walk control
 ```
