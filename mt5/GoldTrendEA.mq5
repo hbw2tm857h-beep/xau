@@ -56,7 +56,7 @@
 //|  first tick and warns if it differs. It does not stop trading.   |
 //+------------------------------------------------------------------+
 #property copyright "Bradley - Built by Lumn"
-#property version   "2.33"
+#property version   "2.34"
 #property description "Gold H1 Heikin Ashi trend-ride with 4H confirmation. Alerts by default; optional auto-trading."
 
 #include <Trade/Trade.mqh>
@@ -109,6 +109,7 @@ struct Idea
    int      dir;        // 1 buy, -1 sell, 0 none
    double   entry, stop, risk, partial, target;
    bool     triggered, partialDone;
+   double   riskMoney;   // what 1R actually cost at entry, in account currency
    int      age;
    datetime sigTime;
    ulong    orderTicket;
@@ -696,6 +697,7 @@ void FireSignal(int d, string why, int b = 1)
    g.sigTime = iTime(_Symbol, PERIOD_H1, b); g.orderTicket = 0;
 
    double lots = Lots(risk);
+   g.riskMoney = MoneyAtRisk(risk, lots);
    string sizeTxt = (lots > 0) ? DoubleToString(lots, 2) + " lots (" + DoubleToString(InpRiskPercent, 2) + "% risk)" : "below minimum lot for this risk";
    string icon = (d == 1) ? ":large_green_circle:" : ":red_circle:";
    int pct = (int)MathRound(InpPartialFrac * 100);
@@ -741,6 +743,21 @@ double Lots(double riskPrice, double riskPct = -1)
    if(lots < vmin)
       return(0);
    return(MathMin(lots, vmax));
+  }
+
+//+------------------------------------------------------------------+
+//| What 1R is worth in account currency for a given lot size.        |
+//| Lots() floors to the broker's volume step, so the money actually  |
+//| at risk is usually less than balance x risk%. Dividing realised   |
+//| profit by the intended figure understates every result.           |
+//+------------------------------------------------------------------+
+double MoneyAtRisk(double riskPrice, double lots)
+  {
+   double tv = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
+   double ts = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+   if(tv <= 0 || ts <= 0 || lots <= 0 || riskPrice <= 0)
+      return(0);
+   return(riskPrice / ts * tv * lots);
   }
 
 //+------------------------------------------------------------------+
@@ -908,13 +925,16 @@ double LastClosedR()
       if(HistoryDealGetInteger(t, DEAL_MAGIC) == InpMagic && HistoryDealGetString(t, DEAL_SYMBOL) == _Symbol)
          profit += HistoryDealGetDouble(t, DEAL_PROFIT) + HistoryDealGetDouble(t, DEAL_SWAP) + HistoryDealGetDouble(t, DEAL_COMMISSION);
      }
-   double riskMoney = AccountInfoDouble(ACCOUNT_BALANCE) * InpRiskPercent / 100.0;
+   // what was actually risked, not what we meant to risk; the estimate is
+   // only a fallback for alerts-only mode, where no lot size was ever chosen
+   double riskMoney = (g.riskMoney > 0) ? g.riskMoney
+                      : AccountInfoDouble(ACCOUNT_BALANCE) * InpRiskPercent / 100.0;
    return(riskMoney > 0 ? profit / riskMoney : 0);
   }
 
 void Reset()
   {
-   g.dir = 0; g.entry = g.stop = g.risk = g.partial = g.target = 0;
+   g.dir = 0; g.entry = g.stop = g.risk = g.partial = g.target = g.riskMoney = 0;
    g.triggered = g.partialDone = false; g.age = 0; g.sigTime = 0; g.orderTicket = 0;
   }
 
@@ -935,6 +955,7 @@ void SaveState()
    GlobalVariableSet(GV + "pdone", g.partialDone ? 1 : 0);
    GlobalVariableSet(GV + "age", g.age);
    GlobalVariableSet(GV + "sig", (double)g.sigTime);
+   GlobalVariableSet(GV + "riskm", g.riskMoney);
    GlobalVariableSet(GV + "lasth1", (double)g_lastH1);
   }
 
@@ -962,6 +983,7 @@ void LoadState()
    g.partialDone = GlobalVariableGet(GV + "pdone") > 0;
    g.age = (int)GlobalVariableGet(GV + "age");
    g.sigTime = (datetime)GlobalVariableGet(GV + "sig");
+   g.riskMoney = GlobalVariableCheck(GV + "riskm") ? GlobalVariableGet(GV + "riskm") : 0;
    if(g.dir != 0)
       Print("GoldTrendEA: restored ", Side(g.dir), " idea, entry ", Px(g.entry), (g.triggered ? " (in trade)" : " (pending)"));
   }
