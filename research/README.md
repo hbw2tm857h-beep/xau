@@ -256,6 +256,50 @@ One caveat cuts the strategy's way and is not resolved: V[SR] is the *observed* 
 
 **The practical consequence** is the nursery (`nursery.json`) and the gate, which were already built on exactly this reasoning: a backtest result earns a candidate slot and nothing more, and promotion requires live out-of-sample trades. Round 8 is the number that justifies that policy.
 
+## Round 9: four new entry mechanisms (18 Nov 2026)
+
+`round9_entries.py`, `results_round9.csv`
+
+### What was already ruled out
+
+"Try other entries" had largely been done, and it is worth stating before proposing anything: **672 of the 1,070 recorded trials were non-Heikin-Ashi entries, and both families lost money.**
+
+- `asia`, 336 configs, mean tune avg R **−0.085**: Asia-range breakout at London *and* fade mode, which is a failed-breakout reversal, across range filters, trend filters and stop placements.
+- `pullback`, 336 configs, mean tune avg R **−0.063**: daily trend + the right side of EMA50 + dip to EMA20 + Heikin Ashi confirmation.
+
+Round 5 then ran ten well-known standalone systems and nine failed: Turtle 1 and 2, Connors RSI-2, Bollinger reversion, NR7 breakout, Turtle Soup, golden/death cross, London opening-range breakout, Eastern-hours long. Only the inside-day breakout passed.
+
+So **mean reversion, failed breakouts, opening-range, channel breakout and moving-average crosses are tested and dead on this instrument.** Proposing them again would re-run a failed experiment and add to the multiple-testing bill.
+
+### The four ideas and the results
+
+| Test | Trades | Avg R | All four periods positive | p | Verdict |
+|---|---|---|---|---|---|
+| E1 H1 inside bar | 11,558 | **−0.200** | no | 1.000 | no |
+| **E2 4H Heikin Ashi trigger** | **526** | **+0.143** | **yes** | **0.0017** | **PASS** |
+| E3 rolling 12h squeeze breakout | 2,636 | −0.010 | no | 1.000 | no |
+| E4 Sunday gap fill | 81 | −0.224 | no | 1.000 | no |
+
+**E1 is the informative failure.** The inside-day setup is a volatility contraction on D1 and it works; the identical mechanism on H1 loses 0.2R per trade across 11,558 trades. The mechanism does not survive the timeframe change, which is a useful constraint on how it is understood: the daily inside bar is probably about the *daily* decision cycle, not about compression in general.
+
+**E2 passed**: the project's own trigger, read on the 4-hour candle instead of the hourly one, with the daily trend still required. Positive in all four periods, strongest in the two most recent, 526 trades at +0.143R.
+
+### How much E2 is actually worth
+
+It had to be checked against the obvious objection — that it is the live strategy in slow motion:
+
+| | E2 vs the live trend rules |
+|---|---|
+| Monthly return correlation | **+0.395** |
+| Signals within 4 hours of a live signal | 13% |
+| Same calendar day | 21%, and **always the same direction** |
+
+It is not a duplicate: 87% of its signals fire at times the live rules do not. But it is not independent either. Both require the daily trend to agree, so the two can never take opposite sides, and +0.395 is far from the inside-day's +0.09 that made running two strategies worthwhile. Its per-trade edge is also slightly below the live rules' +0.181R.
+
+Two further cautions. Both E2 and the live rules show their strongest results in 2025–26, when gold trended hard; that flatters any trend follower and is a regime, not a skill. And per round 8, the in-sample figure carries little weight on its own with 1,070 trials recorded — the four-period consistency is the only in-sample evidence worth anything.
+
+**Conclusion: E2 earns a nursery candidate slot and nothing more.** It is a real, distinct trade stream with a positive expectation across every period tested, selected under a pre-registered Bonferroni-corrected rule. It is also correlated with something already live, so its portfolio contribution is modest, and all its evidence is in-sample. Tracking it silently on live data is exactly what the candidate tier exists for.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -275,4 +319,5 @@ python3 research/round6.py              # 6 pre-registered ideas, Bonferroni-cor
 python3 research/round6b_allocation.py  # inside-day risk weight sweep
 python3 research/round7_synthetic.py   # shuffle test + random-walk control
 python3 research/round8_multiple_testing.py # deflated Sharpe / multiple-testing haircut
+python3 research/round9_entries.py      # four new entry mechanisms
 ```
