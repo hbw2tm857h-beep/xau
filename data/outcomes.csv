@@ -1,0 +1,2 @@
+sig_time,entry_time,exit_time,dir,grade,strategy,entry,exit,r,how
+2026-11-17T22:00:00+00:00,2026-11-18T01:00:00+00:00,2026-11-18T22:00:00+00:00,-1,,inside_day,3837.09,3725.23,2.032,ib_close

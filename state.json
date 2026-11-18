@@ -1,21 +1,7 @@
 {
   "fail_count": 0,
-  "h4_last_k": 888,
-  "ib": {
-    "dir": -1,
-    "entry": 3837.09,
-    "entry_time": "2026-11-18T01:00:00+00:00",
-    "hi": 3891.96,
-    "lo": 3837.09,
-    "prev_hi": 3901.18,
-    "prev_lo": 3833.62,
-    "risk": 54.87,
-    "setup_day_end": "2026-11-17T22:00:00+00:00",
-    "sig_time": "2026-11-17T22:00:00+00:00",
-    "stop": 3891.96,
-    "strategy": "inside_day",
-    "triggered": true
-  },
+  "h4_last_k": 889,
+  "ib": null,
   "idea": {
     "age": 1,
     "booked": 0.5,
@@ -32,6 +18,6 @@
     "target": 3692.77,
     "triggered": true
   },
-  "last_daily_k_end": "2026-11-17T22:00:00+00:00",
-  "last_h1": "2026-11-18T20:00:00+00:00"
+  "last_daily_k_end": "2026-11-18T22:00:00+00:00",
+  "last_h1": "2026-11-18T21:00:00+00:00"
 }
