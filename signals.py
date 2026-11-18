@@ -2017,6 +2017,48 @@ def backtest_report(F, cfg, h1, repo):
 # --------------------------------------------------------------------------
 # Live run
 # --------------------------------------------------------------------------
+def open_risk(state, cfg, sizing=None, nursery=None):
+    """What is actually on the table right now, across strategies.
+
+    Reports CURRENT risk, not the risk the trade opened with: once take-profit
+    1 moves the stop to entry the remainder cannot lose, so it counts as zero.
+    That is the number worth knowing before taking another setup. A candidate
+    strategy is excluded because it is tracked and never traded, and a shadow
+    one counts as zero because it carries no size.
+    """
+    rows = (("idea", "trend", "trend", 1.0),
+            ("ib", "inside_day", "inside-day", cfg.get("inside_day_risk_mult", 1.0)),
+            ("h4", "h4_trend", "4-hour", 1.0))
+    parts, total, pending = [], 0.0, 0
+    for key, name, label, mult in rows:
+        p = state.get(key)
+        if not p or not p.get("dir"):
+            continue
+        tier = tier_of(nursery, name) if nursery else "live"
+        if tier == "candidate":
+            continue
+        if tier == "shadow":
+            mult = 0.0
+        side = side_word(p["dir"])
+        if not p.get("triggered"):
+            pending += 1
+            parts.append(f"{label} {side} order pending")
+            continue
+        risk = p.get("risk") or 0
+        rem = 0.0
+        if risk:
+            rem = (1 - p.get("done", 0.0)) * abs(p["entry"] - p["stop"]) / risk * mult
+        total += rem
+        parts.append(f"{label} {side} {rem:.2f}R" + (" (stop at entry)" if rem < 0.005 else ""))
+    if not parts:
+        return None
+    pct = ""
+    if total and sizing and sizing.get("risk_pct"):
+        pct = f", about {total * sizing['risk_pct']:.2f}% of the account"
+    tail = f" · total *{total:.2f}R*{pct}" if total or not pending else ""
+    return f"_Open now: {' · '.join(parts)}{tail}_"
+
+
 def status_message(F, st, cfg, now):
     i = len(F.h1) - 1
     last = F.h1[i]
@@ -2048,7 +2090,8 @@ def status_message(F, st, cfg, now):
             f"Daily levels: {lv}\n"
             f"Active trend setup: {idea_txt}\n"
             f"Active inside-day setup: {ib_txt}\n"
-            "Data and Slack are working.")
+            + ((open_risk(st, cfg) or "_Open now: nothing_") + "\n")
+            + "Data and Slack are working.")
 
 
 def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nursery=None):
@@ -2108,6 +2151,13 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                 head = headline(e, cfg, size_for)
                 if head:
                     lead.append(head)
+                extra = []
+                if e["type"] in ("signal", "ib_signal", "h4_signal"):
+                    # a new setup is the moment you need to know what you are
+                    # already carrying, before adding to it
+                    risk_line = open_risk(state, cfg, sizing, nursery)
+                    if risk_line:
+                        extra.append(risk_line)
                 notes = []
                 if tier == "shadow":
                     notes.append(":microscope: _Shadow (paper): this strategy is being tracked "
@@ -2117,12 +2167,14 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                     notes.append(f":hourglass: _Late alert ({lag_h:.0f}h): this happened at "
                                  f"{uk_day(e['t'])} UK. The bot's scheduled run was delayed. "
                                  "Check the current price before acting._")
-                msg = "\n".join(([" ".join(lead)] if lead else []) + notes + [msg])
+                msg = "\n".join(([" ".join(lead)] if lead else []) + extra + notes + [msg])
                 out.append(msg)
     skipped = len(new_idx) - cfg["max_catchup_bars"]
     if skipped > 0:
-        out.append(f":warning: The bot didn't run for {len(new_idx)} hours, so the oldest {skipped} hour"
-                   f"{'s were' if skipped != 1 else ' was'} not checked for setups.")
+        warn = (f":warning: The bot didn't run for {len(new_idx)} hours, so the oldest {skipped} "
+                f"hour{'s were' if skipped != 1 else ' was'} not checked for setups.")
+        # missed hours can mean missed setups, so this one does ping
+        out.append((cfg["slack_mention"] + " " + warn) if cfg.get("slack_mention") else warn)
     if cfg.get("ledger"):
         # the ledger must never stop an alert going out
         try:
