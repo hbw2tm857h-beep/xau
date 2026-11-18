@@ -39,6 +39,14 @@
 //|  Second setup (research round 5, separate magic InpMagic + 1):   |
 //|  inside-day breakout on D1 - see OnNewD1(). Half risk by default.|
 //|                                                                  |
+//|  Broker setup (v2.32): the EA reads the broker's own symbol spec |
+//|  instead of assuming one. On start it prints the full spec, sets |
+//|  the order filling mode the symbol actually supports, and picks  |
+//|  a pending-order expiry the broker accepts (falling back to GTC, |
+//|  which is safe because the EA cancels at InpEntryExpiryBars by   |
+//|  itself). Checked against Deriv and Weltrade naming, but it is   |
+//|  read from the terminal, so any MT5 broker works the same way.   |
+//|                                                                  |
 //|  Broker daily candles (v2.31): everything daily here - trend,    |
 //|  50 EMA, daily ATR, the support/resistance levels and the        |
 //|  inside-day test - reads the BROKER's D1 candles, while the      |
@@ -48,7 +56,7 @@
 //|  first tick and warns if it differs. It does not stop trading.   |
 //+------------------------------------------------------------------+
 #property copyright "Bradley - Built by Lumn"
-#property version   "2.31"
+#property version   "2.32"
 #property description "Gold H1 Heikin Ashi trend-ride with 4H confirmation. Alerts by default; optional auto-trading."
 
 #include <Trade/Trade.mqh>
@@ -92,6 +100,7 @@ input bool   InpSlack            = false; // Post to Slack (add hooks.slack.com 
 input string InpSlackWebhook     = "";
 input bool   InpDrawLevels       = true;
 input bool   InpCheckDailyRoll   = true;  // Warn if the broker's daily candles don't roll at 17:00 New York
+input int    InpSlippagePoints   = 50;    // Max slippage for market-order fallbacks (points)
 
 //--- trade idea / position state (persisted in terminal global variables)
 struct Idea
@@ -125,7 +134,10 @@ string   GV;
 //+------------------------------------------------------------------+
 int OnInit()
   {
-   if(StringFind(_Symbol, "XAU") < 0)
+   // Brokers name gold differently: XAUUSD, GOLD, GOLD.m, XAUUSD.v ...
+   string sym = _Symbol;
+   StringToUpper(sym);
+   if(StringFind(sym, "XAU") < 0 && StringFind(sym, "GOLD") < 0)
       Print("GoldTrendEA: tested on gold only. Attached to ", _Symbol, " - results unknown.");
    hEMA  = iMA(_Symbol, PERIOD_D1, InpDailyEMA, 0, MODE_EMA, PRICE_CLOSE);
    hATRd = iATR(_Symbol, PERIOD_D1, InpATRPeriod);
@@ -134,6 +146,13 @@ int OnInit()
       return(INIT_FAILED);
    trade.SetExpertMagicNumber(InpMagic);
    ibTrade.SetExpertMagicNumber(InpMagic + 1);
+   // take the filling mode from the symbol: sending one the broker does not
+   // support is rejected with "Unsupported filling mode" and no trade happens
+   trade.SetTypeFillingBySymbol(_Symbol);
+   ibTrade.SetTypeFillingBySymbol(_Symbol);
+   trade.SetDeviationInPoints(InpSlippagePoints);
+   ibTrade.SetDeviationInPoints(InpSlippagePoints);
+   BrokerReport();
    GV = "GTE_" + _Symbol + "_" + (string)InpMagic + "_";
    LoadState();
    LoadIB();
@@ -700,7 +719,9 @@ void PlaceOrder(double lots)
      }
    double ask = SymbolInfoDouble(_Symbol, SYMBOL_ASK), bid = SymbolInfoDouble(_Symbol, SYMBOL_BID);
    double minDist = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL) * _Point;
-   datetime exp = TimeCurrent() + InpEntryExpiryBars * 3600;
+   bool useExp = ExpirySupported();
+   datetime exp = useExp ? TimeCurrent() + InpEntryExpiryBars * 3600 : 0;
+   ENUM_ORDER_TYPE_TIME tt = useExp ? ORDER_TIME_SPECIFIED : ORDER_TIME_GTC;
    bool ok;
    if(g.dir == 1)
      {
@@ -710,7 +731,7 @@ void PlaceOrder(double lots)
          ok = trade.Buy(lots, _Symbol, ask, g.stop, g.target, "GTE");
         }
       else
-         ok = trade.BuyStop(lots, g.entry, _Symbol, g.stop, g.target, ORDER_TIME_SPECIFIED, exp, "GTE");
+         ok = trade.BuyStop(lots, g.entry, _Symbol, g.stop, g.target, tt, exp, "GTE");
      }
    else
      {
@@ -720,7 +741,7 @@ void PlaceOrder(double lots)
          ok = trade.Sell(lots, _Symbol, bid, g.stop, g.target, "GTE");
         }
       else
-         ok = trade.SellStop(lots, g.entry, _Symbol, g.stop, g.target, ORDER_TIME_SPECIFIED, exp, "GTE");
+         ok = trade.SellStop(lots, g.entry, _Symbol, g.stop, g.target, tt, exp, "GTE");
      }
    if(!ok)
       Notify(":warning: Gold order failed: " + trade.ResultRetcodeDescription(), "Gold order failed: " + trade.ResultRetcodeDescription());
@@ -1096,6 +1117,48 @@ void LoadIB()
    // restarted on a later day: let OnNewD1 settle it on the first tick
    datetime saved = (datetime)GlobalVariableGet(GV + "ib_day");
    g_lastD1 = (saved != 0 && saved != iTime(_Symbol, PERIOD_D1, 0)) ? saved : 0;
+  }
+
+//+------------------------------------------------------------------+
+//| Pending-order expiry the broker actually accepts.                 |
+//| SYMBOL_EXPIRATION_MODE is a bitmask; a broker that does not allow |
+//| SPECIFIED rejects the order outright with "invalid expiration".   |
+//| GTC is a safe fallback here because OnNewH1() cancels the order   |
+//| itself once InpEntryExpiryBars hours have passed.                 |
+//+------------------------------------------------------------------+
+bool ExpirySupported()
+  {
+   long modes = SymbolInfoInteger(_Symbol, SYMBOL_EXPIRATION_MODE);
+   return((modes & SYMBOL_EXPIRATION_SPECIFIED) != 0);
+  }
+
+//+------------------------------------------------------------------+
+//| What this broker actually offers. Printed once on start so the    |
+//| numbers the EA is working from are visible, rather than assumed.  |
+//+------------------------------------------------------------------+
+void BrokerReport()
+  {
+   double cs    = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_CONTRACT_SIZE);
+   double tv    = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_VALUE);
+   double ts    = SymbolInfoDouble(_Symbol, SYMBOL_TRADE_TICK_SIZE);
+   double vmin  = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MIN);
+   double vstep = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_STEP);
+   double vmax  = SymbolInfoDouble(_Symbol, SYMBOL_VOLUME_MAX);
+   long   stops = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL);
+   long   frz   = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_FREEZE_LEVEL);
+   long   spread = SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
+   Print("GoldTrendEA broker spec for ", _Symbol, ": contract ", DoubleToString(cs, 2),
+         " per lot, tick ", DoubleToString(ts, _Digits), " worth ", DoubleToString(tv, 5),
+         ", lots ", DoubleToString(vmin, 2), "-", DoubleToString(vmax, 2),
+         " step ", DoubleToString(vstep, 2),
+         ", stops level ", stops, " points, freeze ", frz,
+         ", spread now ", spread, " points, digits ", _Digits,
+         ", pending expiry ", (ExpirySupported() ? "SPECIFIED ok" : "GTC only (EA cancels its own orders)"));
+   if(cs > 0 && MathAbs(cs - 100.0) > 0.5)
+      Print("GoldTrendEA: this symbol is ", DoubleToString(cs, 2),
+            " oz per lot, not the 100 the research assumed. Position sizing reads the"
+            " broker's own tick value so lots stay correct, but set contract_oz in the"
+            " Python bot's CONFIG to ", DoubleToString(cs, 2), " so its Slack lot sizes match.");
   }
 
 //+------------------------------------------------------------------+

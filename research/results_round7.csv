@@ -1,0 +1,5 @@
+test,runs,avg_r,sd,min,max,median_trades,note
+"REAL gold, live rules",1,0.1811,,,,721,"2008-2026, cost $0.35/oz"
+A. shuffled history (order destroyed),30,-0.036,0.038,-0.1067,0.0787,819,0/30 reached the real result; p=0.0323; real is +5.7 sd above
+"B. random walk, zero cost",10,0.0339,0.0191,-0.0011,0.0677,882,INCONCLUSIVE: log-martingale GBM has +sigma^2/2 arithmetic drift
+"B. random walk, cost $0.35",10,0.0261,0.028,-0.0157,0.0715,879,INCONCLUSIVE: see above; a price-martingale GBM drifts the other way
