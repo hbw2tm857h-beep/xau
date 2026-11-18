@@ -47,6 +47,8 @@ Open the *Actions* tab and choose *XAU signals*, then *Run workflow*, with mode 
 ## MT5 Expert Advisor (`mt5/GoldTrendEA.mq5`)
 The same rules as an EA for MetaTrader 5, **alerts only by default** (MT5 push plus optional Slack); set `InpAutoTrade = true` to place and manage orders, and test on a demo account first. All 19 strategy parameters match `CONFIG`, so it trades what was backtested. Compile it in MetaEditor (F7) before use.
 
+**Any MT5 broker.** The EA reads the symbol specification rather than assuming one, so it works the same on Deriv, Weltrade or anything else: it accepts gold under any name (`XAUUSD`, `GOLD`, `GOLD.m`, `XAUUSD.v`), takes the order filling mode from the symbol, sizes from the broker's own tick value and lot step, and picks a pending-order expiry the broker accepts — falling back to good-till-cancelled, which is safe because the EA cancels its own orders after `InpEntryExpiryBars`. On start it prints the full spec it is working from (contract size, tick value, lot limits, stops and freeze levels, current spread, expiry support) so the numbers are visible instead of assumed. If the contract size is not the standard 100 oz per lot, it says so and tells you what to set on the Python side.
+
 Two things it handles that the Python bot gets for free:
 - **Gaps.** If the terminal is closed or offline, every missed H1 candle is re-checked in order (up to `InpMaxCatchupBars`), reading the higher timeframes as they stood at the time. A setup found more than two hours late is marked, and the EA says whether its entry was already reached while it was away — it never enters late.
 - **The broker's idea of a day.** Everything daily — trend, 50 EMA, daily ATR, the levels and the inside-day test — reads the *broker's* D1 candles, while the research builds its own days in New York time rolling at 17:00 NY. Those agree only if your broker's day rolls there too. Most gold brokers on GMT+2/+3 server time do, but the US and EU change clocks on different dates, so the boundary can slip by an hour for a few weeks each spring and autumn, and some brokers never use that convention. On the first tick the EA works out the broker's actual boundary and warns if it differs, naming the offset. It is a warning, not a block: hourly setups are unaffected, but treat the daily context and the inside-day setup as approximate until you have checked. Turn it off with `InpCheckDailyRoll`.
@@ -84,8 +86,9 @@ Add these repository secrets to show a lot size on every setup:
 - `ACCOUNT_SIZE`, for example `5000`
 - `ACCOUNT_CCY`: `GBP`, `USD` or `EUR`
 - `RISK_PCT`, for example `1`
+- `CONTRACT_OZ`, only if your broker is not the standard 100 oz per lot
 
-The calculation assumes 1 lot = 100 oz. Check the contract size in your MT5 symbol specification and change `contract_oz` in `CONFIG` if it differs.
+The calculation assumes 1 lot = 100 oz, which is standard but not universal — micro and cent accounts often are not. Attach the EA and read the contract size it prints, or open the symbol specification in MT5, and set the `CONTRACT_OZ` secret if it differs. A wrong contract size misstates every lot size the bot posts, which is a risk number you would act on.
 
 ## Setup
 1. Add the repository secrets `SLACK_WEBHOOK_URL` (an Incoming Webhook for #gold-signals) and `TWELVEDATA_API_KEY` (from the free plan).

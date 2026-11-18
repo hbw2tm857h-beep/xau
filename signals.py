@@ -128,7 +128,9 @@ CONFIG = {
     "inside_day_track_record": "Tested 2008-2026: 726 trades, 49% winners, +0.10R per trade after costs",
 
     # Position size (only if ACCOUNT_SIZE secret is set)
-    "contract_oz": 100,           # oz per 1.00 lot - check MT5 symbol spec
+    "contract_oz": 100,           # oz per 1.00 lot; override with the CONTRACT_OZ
+                                  # secret if your broker differs (the EA prints
+                                  # the real figure from the symbol spec on start)
     "default_risk_pct": 1.0,
 
     # Backtest
@@ -1886,6 +1888,15 @@ def sizing_from_env(api_key):
         return None
     ccy = (os.environ.get("ACCOUNT_CCY", "") or "USD").strip().upper()
     risk = float(os.environ.get("RISK_PCT", "") or CONFIG["default_risk_pct"])
+    # brokers differ: 100 oz a lot is standard, but micro and cent accounts are
+    # not. A wrong contract size silently misstates every lot size we post.
+    oz = os.environ.get("CONTRACT_OZ", "").strip()
+    if oz:
+        try:
+            if float(oz) > 0:
+                CONFIG["contract_oz"] = float(oz)
+        except ValueError:
+            print(f"CONTRACT_OZ not a number: {oz!r}, using {CONFIG['contract_oz']}", file=sys.stderr)
     try:
         rate = fetch_usd_rate(api_key, ccy)
     except Exception as e:  # noqa: BLE001
