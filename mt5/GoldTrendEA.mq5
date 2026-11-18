@@ -56,13 +56,14 @@
 //|  first tick and warns if it differs. It does not stop trading.   |
 //+------------------------------------------------------------------+
 #property copyright "Bradley - Built by Lumn"
-#property version   "2.32"
+#property version   "2.33"
 #property description "Gold H1 Heikin Ashi trend-ride with 4H confirmation. Alerts by default; optional auto-trading."
 
 #include <Trade/Trade.mqh>
 
 input group "Mode"
 input bool   InpAutoTrade        = false; // Place and manage trades (false = alerts only)
+input bool   InpDemoOnly         = true;  // Refuse to auto-trade anything but a demo account
 input double InpRiskPercent      = 1.0;   // Risk per trade (% of balance)
 input long   InpMagic            = 261114;
 
@@ -144,6 +145,27 @@ int OnInit()
    hATRh = iATR(_Symbol, PERIOD_H1, InpATRPeriod);
    if(hEMA == INVALID_HANDLE || hATRd == INVALID_HANDLE || hATRh == INVALID_HANDLE)
       return(INIT_FAILED);
+   // A compiled EA gets attached to the wrong chart sooner or later. If
+   // auto-trading is on and this is not a demo account, stop rather than
+   // quietly trade real money - and stop loudly rather than fall back to
+   // alerts, which is easy not to notice.
+   long mode = AccountInfoInteger(ACCOUNT_TRADE_MODE);
+   if(InpAutoTrade && InpDemoOnly && mode != ACCOUNT_TRADE_MODE_DEMO)
+     {
+      string kind = (mode == ACCOUNT_TRADE_MODE_REAL) ? "a REAL-money" : "a contest";
+      Print("GoldTrendEA: refusing to start. Auto-trading is on and this is ", kind,
+            " account (", AccountInfoInteger(ACCOUNT_LOGIN), " at ",
+            AccountInfoString(ACCOUNT_COMPANY), "). Attach it to a demo account, or set",
+            " InpDemoOnly = false if you really mean to trade this account.");
+      return(INIT_FAILED);
+     }
+   if(InpAutoTrade && !(TerminalInfoInteger(TERMINAL_TRADE_ALLOWED)
+                        && MQLInfoInteger(MQL_TRADE_ALLOWED)
+                        && AccountInfoInteger(ACCOUNT_TRADE_EXPERT)))
+      Print("GoldTrendEA: auto-trading is ON but the terminal is not allowing it. Turn on the",
+            " Algo Trading button, and allow algo trading for this EA. Until then it places",
+            " nothing and only alerts.");
+
    trade.SetExpertMagicNumber(InpMagic);
    ibTrade.SetExpertMagicNumber(InpMagic + 1);
    // take the filling mode from the symbol: sending one the broker does not
@@ -159,6 +181,21 @@ int OnInit()
    EventSetTimer(10);
    Print("GoldTrendEA started: ", (InpAutoTrade ? "AUTO-TRADING" : "alerts only"),
          ", risk ", DoubleToString(InpRiskPercent, 2), "%");
+   if(InpAutoTrade)
+     {
+      long m2 = AccountInfoInteger(ACCOUNT_TRADE_MODE);
+      string k2 = (m2 == ACCOUNT_TRADE_MODE_DEMO) ? "demo"
+                  : (m2 == ACCOUNT_TRADE_MODE_REAL) ? "REAL MONEY" : "contest";
+      Notify(StringFormat(":robot_face: *Gold EA is now placing trades* on the %s account %I64d "
+                          "at %s, %s per trade, inside-day at %s of that. It manages the stop, "
+                          "take-profit 1 and the orders itself; the Slack alerts carry on as "
+                          "before. Stop it by setting InpAutoTrade back to false.",
+                          k2, AccountInfoInteger(ACCOUNT_LOGIN), AccountInfoString(ACCOUNT_COMPANY),
+                          DoubleToString(InpRiskPercent, 2) + "%",
+                          DoubleToString(InpInsideDayRisk * 100, 0) + "%"),
+             StringFormat("Gold EA auto-trading ON (%s, risk %s%%)", k2,
+                          DoubleToString(InpRiskPercent, 2)));
+     }
    return(INIT_SUCCEEDED);
   }
 
@@ -1147,6 +1184,16 @@ void BrokerReport()
    long   stops = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_STOPS_LEVEL);
    long   frz   = SymbolInfoInteger(_Symbol, SYMBOL_TRADE_FREEZE_LEVEL);
    long   spread = SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
+   long mode = AccountInfoInteger(ACCOUNT_TRADE_MODE);
+   string kind = (mode == ACCOUNT_TRADE_MODE_DEMO) ? "DEMO"
+                 : (mode == ACCOUNT_TRADE_MODE_REAL) ? "REAL MONEY" : "contest";
+   Print("GoldTrendEA account: ", kind, " ", AccountInfoInteger(ACCOUNT_LOGIN), " at ",
+         AccountInfoString(ACCOUNT_COMPANY), ", balance ",
+         DoubleToString(AccountInfoDouble(ACCOUNT_BALANCE), 2), " ",
+         AccountInfoString(ACCOUNT_CURRENCY), ", leverage 1:", AccountInfoInteger(ACCOUNT_LEVERAGE),
+         ", algo trading ", (TerminalInfoInteger(TERMINAL_TRADE_ALLOWED)
+                             && MQLInfoInteger(MQL_TRADE_ALLOWED)
+                             && AccountInfoInteger(ACCOUNT_TRADE_EXPERT) ? "allowed" : "BLOCKED"));
    Print("GoldTrendEA broker spec for ", _Symbol, ": contract ", DoubleToString(cs, 2),
          " per lot, tick ", DoubleToString(ts, _Digits), " worth ", DoubleToString(tv, 5),
          ", lots ", DoubleToString(vmin, 2), "-", DoubleToString(vmax, 2),
