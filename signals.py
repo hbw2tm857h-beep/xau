@@ -175,6 +175,13 @@ CONFIG = {
     # manual test run, which exists to prove delivery, but never to the weekly
     # scorecard or the nursery gate, so the routine posts stay quiet.
     "slack_mention": "<!channel>",
+    # Which events ping everyone. Not "important" ones - the ones where you
+    # have to go and touch your platform. A fill or a stop-out needs no
+    # action (the broker already did it); a take-profit 1 does, because you
+    # close half and move the stop, and an inside-day entry does, because the
+    # other side of the pair has to be deleted by hand.
+    "mention_events": ["signal", "ib_signal", "h4_signal", "partial", "cancel",
+                       "ib_entry", "ib_cancel", "ib_close"],
 
     "fail_alert_after": 3,
     # GitHub's scheduler often runs hours late or skips runs, so every missed
@@ -1427,6 +1434,61 @@ def fmt_ib_event(e, cfg, sizing):
     return None
 
 
+def headline(e, cfg, sizing):
+    """One compact line with the numbers, put first so the phone's preview is
+    enough to act on. Slack shows roughly the first line of a message, and a
+    title like "SELL SETUP: Gold" tells you nothing you can trade from."""
+    t = e["type"]
+    idea = e.get("idea") or {}
+    d = idea.get("dir")
+    sw = side_word(d) if d else ""
+    base = t[3:] if t.startswith("h4_") else t
+    tag = "4H " if t.startswith("h4_") else ""
+
+    def lots_bit(risk):
+        got = lot_size(risk, sizing, cfg) if sizing else None
+        return f" · {got[0]:.2f} lots" if got else ""
+
+    if base == "ib_signal":
+        hi, lo = idea.get("hi"), idea.get("lo")
+        if hi is None or lo is None:
+            return None
+        return (f"*Gold inside day* · buy-stop {px(hi)} / sell-stop {px(lo)} · "
+                f"stop the other side{lots_bit(abs(hi - lo))} · closes at the daily close")
+    if base == "signal":
+        tps = ""
+        if idea.get("partial") and idea.get("target"):
+            tps = f" · TP {px(idea['partial'])} / {px(idea['target'])}"
+        elif idea.get("target"):
+            tps = f" · TP {px(idea['target'])}"
+        return (f"*{tag}{sw} Gold {px(idea['entry'])}* · stop {px(idea['stop'])}"
+                f"{lots_bit(idea.get('risk', 0))}{tps}")
+    if base in ("entry", "ib_entry"):
+        extra = ""
+        if base == "ib_entry":
+            extra = " · delete the other order"
+        elif idea.get("partial") and idea.get("target"):
+            extra = f" · TP {px(idea['partial'])} / {px(idea['target'])}"
+        return f"*{tag}{sw} Gold filled {px(idea['entry'])}* · stop {px(idea['stop'])}{extra}"
+    if base == "partial":
+        pct = int(cfg["partial_frac"] * 100)
+        return (f"*{tag}TP1 {px(idea['partial'])} hit* · close {pct}% · "
+                f"stop to entry {px(idea['entry'])} · TP2 {px(idea['target'])}")
+    if base == "target":
+        return f"*{tag}TP2 {px(e['price'])} hit* · closed *{e['r']:+.2f}R*"
+    if base in ("stop", "ib_stop"):
+        where = "at entry" if idea.get("done") else "stopped"
+        return f"*{tag}Gold {sw} {where} {px(e['price'])}* · *{e['r']:+.2f}R*"
+    if base == "ib_close":
+        return f"*Inside-day close now* {px(e['price'])} · about *{e['r']:+.2f}R* · daily close"
+    if base in ("cancel", "ib_cancel"):
+        lvl = f" {px(idea['entry'])}" if idea.get("entry") else ""
+        return f"*{tag}Setup cancelled{lvl}* · delete the pending order · no trade"
+    if base == "exit":
+        return f"*{tag}Close the Gold {sw}* {px(e['price'])} · *{e['r']:+.2f}R*"
+    return None
+
+
 def fmt_h4_event(e, cfg, sizing):
     """Messages for the 4-hour trigger strategy.
 
@@ -2035,18 +2097,27 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
             if e["type"] in ("entry", "ib_entry", "h4_entry") and not cfg["alert_entry_hit"]:
                 continue
             # shadow tier gets no size: it is being watched, not traded
-            msg = fmt_event(e, cfg, sizing if tier == "live" else None)
-            if msg and tier == "shadow":
-                msg = (":microscope: _Shadow (paper): this strategy is being tracked for evidence, "
-                       "not traded. No size given._\n" + msg)
+            size_for = sizing if tier == "live" else None
+            msg = fmt_event(e, cfg, size_for)
             if msg:
+                # first line: mention (so it pushes) then the numbers (so the
+                # preview is enough to act on). Notes and detail follow.
+                lead = []
+                if cfg.get("slack_mention") and e["type"] in cfg["mention_events"]:
+                    lead.append(cfg["slack_mention"])
+                head = headline(e, cfg, size_for)
+                if head:
+                    lead.append(head)
+                notes = []
+                if tier == "shadow":
+                    notes.append(":microscope: _Shadow (paper): this strategy is being tracked "
+                                 "for evidence, not traded. No size given._")
                 lag_h = (now - e["t"]).total_seconds() / 3600
                 if lag_h > cfg["late_alert_hours"]:
-                    msg = (f":hourglass: _Late alert ({lag_h:.0f}h): this happened at {uk_day(e['t'])} UK. "
-                           "The bot's scheduled run was delayed. Check the current price before acting._\n" + msg)
-                # the mention goes first, so Slack pushes it and a reader sees why
-                if cfg.get("slack_mention"):
-                    msg = cfg["slack_mention"] + " " + msg
+                    notes.append(f":hourglass: _Late alert ({lag_h:.0f}h): this happened at "
+                                 f"{uk_day(e['t'])} UK. The bot's scheduled run was delayed. "
+                                 "Check the current price before acting._")
+                msg = "\n".join(([" ".join(lead)] if lead else []) + notes + [msg])
                 out.append(msg)
     skipped = len(new_idx) - cfg["max_catchup_bars"]
     if skipped > 0:
