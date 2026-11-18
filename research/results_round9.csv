@@ -1,0 +1,5 @@
+test,n_all,avgR_all,n_2008_15,avgR_2008_15,n_tune,avgR_tune,n_val,avgR_val,n_2025_26,avgR_2025_26,all_four_positive,p,alpha,passed
+E1 H1 inside bar,11558,-0.2002,5087,-0.2722,4258,-0.1743,1104,-0.0778,1109,-0.0909,False,1.0,0.0125,False
+E2 4H Heikin Ashi trigger,526,0.1434,215,0.0902,199,0.0468,52,0.378,60,0.4513,True,0.00175,0.0125,True
+E3 rolling 12h squeeze breakout,2636,-0.0095,1154,0.0061,954,-0.0459,298,-0.0411,230,0.1041,False,1.0,0.0125,False
+E4 Sunday gap fill,81,-0.2244,18,-0.1018,39,-0.1897,10,-1.0315,14,0.0979,False,1.0,0.0125,False
