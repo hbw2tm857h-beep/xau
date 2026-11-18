@@ -15,7 +15,19 @@
     "strategy": "inside_day",
     "triggered": true
   },
-  "idea": null,
+  "idea": {
+    "age": 0,
+    "dir": -1,
+    "entry": 3805.59,
+    "grade": "B",
+    "partial": 3749.18,
+    "risk": 56.4103,
+    "session": false,
+    "sig_time": "2026-11-18T02:00:00+00:00",
+    "stop": 3862.0,
+    "target": 3692.77,
+    "triggered": false
+  },
   "last_daily_k_end": "2026-11-17T22:00:00+00:00",
-  "last_h1": "2026-11-18T00:00:00+00:00"
+  "last_h1": "2026-11-18T01:00:00+00:00"
 }
