@@ -225,6 +225,37 @@ Note the trade count rises under shuffling (819 vs 721): with the sequence broke
 
 One artifact for its mirror image. A trend follower reads price levels, so whichever measure you pin, the other drifts and the rules pick it up. The shuffle test has no such problem, because it uses gold's own returns and assumes nothing about drift. **Test A is the null that counts; test B is kept only as a record of why a parametric control is the wrong tool here.**
 
+## Round 8: the multiple-testing haircut (18 Nov 2026)
+
+`round8_multiple_testing.py`, `results_round8.csv`
+
+Round 6 noted that 1,063 recorded configurations means ~53 would look good by luck at a nominal 5% threshold. That was an argument; this measures it, using the Deflated Sharpe Ratio (Bailey & López de Prado, *Journal of Portfolio Management* 40(5)) and the equivalent haircut in Harvey & Liu, *Backtesting* (SSRN 2345489).
+
+The False Strategy Theorem: run N skill-free backtests and the best still posts a respectable Sharpe, purely from the spread of the trials. Its expected value is `sqrt(V[SR]) · [(1-γ)·Z(1-1/N) + γ·Z(1-1/(Ne))]`. That, not zero, is the bar a real strategy must clear.
+
+V[SR] is normally the input nobody has, because failed backtests get deleted. This project logged **1,070** of them, so it is measured rather than assumed. Each trial's tune-period average R is divided by the live per-trade standard deviation, which is fair because every trial shares the same 1R-stop / 2R-target payoff shape.
+
+**Compared on a like basis.** The trials were all scored on the tune period, so the candidate is too: tune-period per-trade Sharpe **0.1464** on 250 trades. (Whole period: 0.1694 per trade, ~1.05 annualised. Comparing that against the spread of 250-trade trials would pit a precise estimate against noisy ones and is wrong.)
+
+| N independent trials | E[max SR] under no skill | as a share of the observed 0.1464 | DSR |
+|---|---|---|---|
+| no selection | 0.0000 | 0% | 0.989 |
+| 10 | 0.2445 | 167% | 0.061 |
+| 50 | 0.3535 | 241% | 0.001 |
+| 100 | 0.3930 | 268% | 0.000 |
+| 1,070 | 0.5085 | 347% | 0.000 |
+
+**The in-sample Sharpe does not survive.** At just ten independent trials, the expected best result under no skill already exceeds what the rules actually achieved on the tune period. At the full trial count, luck alone would be expected to produce three and a half times the observed figure. Restricting V[SR] to variants of the adopted rules (dropping the unrelated `asia` and `pullback` sweeps) makes it harsher still, because rounds 4–5's indicator variants scatter more widely than those tightly clustered sweeps.
+
+**What this does and does not say.** It says the backtest's in-sample Sharpe is worth approximately nothing as evidence, and that any future idea selected on in-sample performance should be assumed worthless until confirmed out of sample. It does not say the strategy has no edge, because two pieces of evidence of an entirely different kind sit outside a selection-bias calculation:
+
+- the **sealed 2008–15 lockbox**, opened once, where the adopted rules held (345 trades, 58% winners, +0.10R) and a competing candidate was rejected
+- **round 7's shuffle test**, where destroying the candle order destroyed the edge (0 of 30, 5.7 standard deviations). Selection bias cannot explain why the order of the bars matters.
+
+One caveat cuts the strategy's way and is not resolved: V[SR] is the *observed* spread, which mixes estimation noise with real differences in strategy quality, while the theorem wants the spread under no skill. To the extent some trials were genuinely better or worse, V[SR] is overstated here.
+
+**The practical consequence** is the nursery (`nursery.json`) and the gate, which were already built on exactly this reasoning: a backtest result earns a candidate slot and nothing more, and promotion requires live out-of-sample trades. Round 8 is the number that justifies that policy.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -243,4 +274,5 @@ python3 research/round5_insideday_checks.py # robustness of the one that passed
 python3 research/round6.py              # 6 pre-registered ideas, Bonferroni-corrected
 python3 research/round6b_allocation.py  # inside-day risk weight sweep
 python3 research/round7_synthetic.py   # shuffle test + random-walk control
+python3 research/round8_multiple_testing.py # deflated Sharpe / multiple-testing haircut
 ```

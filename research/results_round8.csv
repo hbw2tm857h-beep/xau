@@ -1,0 +1,13 @@
+scenario,n_trials,trial_sd_r,v_sr,expected_max_sr,luck_share_of_observed,dsr,verdict
+all trials,1,0.16557,0.024118,0.0,0.0,0.9894,survives
+all trials,10,0.16557,0.024118,0.24453,1.6704,0.06119,not significant
+all trials,50,0.16557,0.024118,0.35351,2.4148,0.00056,not significant
+all trials,100,0.16557,0.024118,0.393,2.6846,5e-05,not significant
+all trials,250,0.16557,0.024118,0.44069,3.0104,0.0,not significant
+all trials,1070,0.16557,0.024118,0.50849,3.4736,0.0,not significant
+same-family only,1,0.23306,0.047786,0.0,0.0,0.9894,survives
+same-family only,10,0.23306,0.047786,0.34421,2.3513,0.00092,not significant
+same-family only,50,0.23306,0.047786,0.4976,3.3992,0.0,not significant
+same-family only,100,0.23306,0.047786,0.55319,3.7789,0.0,not significant
+same-family only,250,0.23306,0.047786,0.62032,4.2375,0.0,not significant
+same-family only,398,0.23306,0.047786,0.65214,4.4549,0.0,not significant
