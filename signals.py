@@ -169,11 +169,12 @@ CONFIG = {
 
     # Slack pushes nothing for a webhook message that mentions nobody: most
     # people's per-channel setting is "mentions and keywords only". Set the
-    # SLACK_MENTION secret to "<!channel>", "<!here>" or a user group such as
-    # "<!subteam^S0123|@traders>" and it is prefixed to the trading alerts -
-    # setups, entries, take-profits, stops - but never to the weekly scorecard,
-    # the gate report or a test message.
-    "slack_mention": "",
+    # SLACK_MENTION secret overrides this with "<!here>", a user group such as
+    # "<!subteam^S0123|@traders>", or "" for no mention at all. It is prefixed
+    # to the trading alerts - setups, entries, take-profits, stops - and to a
+    # manual test run, which exists to prove delivery, but never to the weekly
+    # scorecard or the nursery gate, so the routine posts stay quiet.
+    "slack_mention": "<!channel>",
 
     "fail_alert_after": 3,
     # GitHub's scheduler often runs hours late or skips runs, so every missed
@@ -2069,7 +2070,7 @@ def post_slack(url, text):
     if not url:
         print("[no SLACK_WEBHOOK_URL] " + text)
         return
-    body = json.dumps({"text": text}).encode()
+    body = json.dumps({"text": text, "link_names": 1}).encode()
     req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=20) as r:
         if r.status != 200:
@@ -2125,9 +2126,8 @@ def main():
     state_path = os.environ.get("STATE_FILE", "state.json")
     journal_path = os.environ.get("JOURNAL_FILE", "journal.json")
     repo = os.environ.get("GITHUB_REPOSITORY", "")
-    mention = os.environ.get("SLACK_MENTION", "").strip()
-    if mention:
-        CONFIG["slack_mention"] = mention
+    if "SLACK_MENTION" in os.environ:          # "" switches mentions off
+        CONFIG["slack_mention"] = os.environ["SLACK_MENTION"].strip()
     state = load_json(state_path, {})
     journal = load_json(journal_path, [])
     now = datetime.now(UTC)
@@ -2170,7 +2170,10 @@ def main():
                 h1_raw = fetch_h1(api_key, CONFIG["symbol"], CONFIG["h1_bars"])
                 if mode == "test":
                     h1 = closed_h1(h1_raw, now)
-                    msgs = [status_message(Features(h1, CONFIG), state, CONFIG, now)]
+                    m = status_message(Features(h1, CONFIG), state, CONFIG, now)
+                    if CONFIG.get("slack_mention"):
+                        m = CONFIG["slack_mention"] + " " + m
+                    msgs = [m]
                 else:
                     sizing = sizing_from_env(api_key) if os.environ.get("ACCOUNT_SIZE") else None
                     msgs = run_live(state, journal, h1_raw, now, CONFIG, sizing, fetch_news,
