@@ -160,6 +160,12 @@ CONFIG = {
     # How setups like the current one did in the past (research/similar_setups.py).
     # Each new-setup alert gets one line from it; a missing file just drops the line.
     "similar_file": "data/similar_setups.json",
+    # Research round 19: risk-parity risk per R for each stream (inverse monthly
+    # volatility, held out of sample), and the fraction of it suggested on shadow
+    # setup alerts until the gate has judged the strategy on live trades.
+    "parity_risk_pct": {"trend": 0.98, "inside_day": 1.36, "btc_trend": 1.20,
+                        "eth_inside_day": 1.05, "us_ibs": 0.41},
+    "shadow_risk_fraction": 0.25,
     "gate_promote_min_trades": 30,   # live closed trades before promotion is considered
     "gate_demote_min_trades": 30,    # ...and before a live strategy can be demoted
     "gate_trailing": 50,             # recent live trades used to judge a live strategy
@@ -2423,6 +2429,10 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
     if tier == "shadow":
         notes.append(":microscope: _Shadow (paper): this strategy is being tracked "
                      "for evidence, not traded. No size given._")
+        if kind == "entry":
+            hint = sizing_hint(cfg["ibs"]["strategy"], cfg, t.get("ar"))
+            if hint:
+                notes.append(hint)
     happened = t["t"] if kind == "entry" else t["t_exit"]
     lag_h = (now - happened).total_seconds() / 3600
     if lag_h > 1:
@@ -2462,6 +2472,24 @@ def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
         msgs.append(ibs_alert("entry", open_t, symbol, tier, now, cfg))
         st["alerted"] = open_t["t"].isoformat()
     return msgs
+
+
+def sizing_hint(strategy, cfg=None, r_points=None):
+    """Suggested risk for a shadow setup: a fraction of its round 19
+    risk-parity size, so trading it before the gate has judged it stays small.
+    None if the strategy has no parity weight."""
+    cfg = cfg or CONFIG
+    full = (cfg.get("parity_risk_pct") or {}).get(strategy)
+    if full is None:
+        return None
+    f = cfg.get("shadow_risk_fraction", 0.25)
+    line = (f":scales: _If you trade it: about {full * f:.2f}% of the account per 1R, "
+            f"{'a quarter' if f == 0.25 else f'{f:g}x'} of its risk-parity size ({full:.2f}%, research round 19), "
+            "until 30 live trades back it.")
+    if r_points:
+        line += (f" Here 1R = {px(r_points)} points, the 25-day average daily range. There is no stop, "
+                 "so a crash can cost several R.")
+    return line + "_"
 
 
 _SIMILAR = {}
@@ -2607,6 +2635,10 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                 if tier == "shadow":
                     notes.append(":microscope: _Shadow (paper): this strategy is being tracked "
                                  "for evidence, not traded. No size given._")
+                    if e["type"] in ("signal", "ib_signal"):
+                        hint = sizing_hint((e.get("idea") or {}).get("strategy", "trend"), cfg)
+                        if hint:
+                            notes.append(hint)
                 lag_h = (now - e["t"]).total_seconds() / 3600
                 if lag_h > cfg["late_alert_hours"]:
                     notes.append(f":hourglass: _Late alert ({lag_h:.0f}h): this happened at "
