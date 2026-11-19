@@ -160,6 +160,18 @@ CONFIG = {
     # How setups like the current one did in the past (research/similar_setups.py).
     # Each new-setup alert gets one line from it; a missing file just drops the line.
     "similar_file": "data/similar_setups.json",
+    # One Slack channel per strategy. Each route names the GitHub secret that
+    # holds that channel's incoming webhook; a route whose secret is not set
+    # falls back to SLACK_WEBHOOK_URL, so nothing moves until a webhook exists.
+    # "reports" takes everything that is not a trade alert: the weekly
+    # scorecard, the nursery gate, status checks, backtests and failure warnings.
+    "slack_routes": {
+        "trend": "SLACK_WEBHOOK_TREND", "h4_trend": "SLACK_WEBHOOK_TREND",
+        "inside_day": "SLACK_WEBHOOK_INSIDE_DAY",
+        "btc_trend": "SLACK_WEBHOOK_BTC", "eth_inside_day": "SLACK_WEBHOOK_ETH",
+        "us_ibs": "SLACK_WEBHOOK_US_IBS", "ndx_noise": "SLACK_WEBHOOK_NDX",
+        "reports": "SLACK_WEBHOOK_REPORTS",
+    },
     # Research round 19: risk-parity risk per R for each stream (inverse monthly
     # volatility, held out of sample), and the fraction of it suggested on shadow
     # setup alerts until the gate has judged the strategy on live trades.
@@ -2439,7 +2451,7 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
         notes.append(f":hourglass: _This is the {uk_day(happened)} UK close, checked {lag_h:.0f}h later "
                      "(each ETF is checked every few hours). Index CFDs trade after hours, so check the "
                      "current price before acting._")
-    return "\n".join([" ".join(lead)] + notes + [body])
+    return Msg("\n".join([" ".join(lead)] + notes + [body]), cfg["ibs"]["strategy"])
 
 
 def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
@@ -2561,6 +2573,24 @@ def run_markets(state, journal, now, api_key, sizing, nursery, fetch=None):
     return out
 
 
+class Msg(str):
+    """A Slack message that knows which strategy it belongs to, so main() can
+    post it to that strategy's channel. Behaves as a plain string everywhere else."""
+
+    def __new__(cls, text, route=None):
+        m = str.__new__(cls, text)
+        m.route = route
+        return m
+
+
+def webhook_for(msg, default, cfg=None, env=None):
+    """The incoming webhook for a message's channel, or the default one."""
+    cfg, env = cfg or CONFIG, os.environ if env is None else env
+    route = getattr(msg, "route", None) or "reports"
+    name = (cfg.get("slack_routes") or {}).get(route) or (cfg.get("slack_routes") or {}).get("reports")
+    return (env.get(name) or "").strip() or default if name else default
+
+
 def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nursery=None):
     out = []
     if nursery is None:
@@ -2583,7 +2613,7 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
     if last_k >= 0 and state.get("last_daily_k_end") != F.daily[last_k]["end"].isoformat():
         e = daily_hold(F, last_k, state.get("idea"), cfg)
         if e:
-            out.append(fmt_event(e, cfg, sizing))
+            out.append(Msg(fmt_event(e, cfg, sizing), cfg.get("trend_strategy", "trend")))
         state["last_daily_k_end"] = F.daily[last_k]["end"].isoformat()
 
     new_idx = [i for i, b in enumerate(h1) if b["t"].isoformat() > state["last_h1"]]
@@ -2645,7 +2675,7 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                                  f"{uk_day(e['t'])} UK. The bot's scheduled run was delayed. "
                                  "Check the current price before acting._")
                 msg = "\n".join(([" ".join(lead)] if lead else []) + extra + notes + [msg])
-                out.append(relabel(msg, cfg))
+                out.append(Msg(relabel(msg, cfg), (e.get("idea") or {}).get("strategy", "trend")))
     skipped = len(new_idx) - cfg["max_catchup_bars"]
     if skipped > 0 and not cfg.get("market_name"):   # gold's warning covers the other markets
         warn = (f":warning: The bot didn't run for {len(new_idx)} hours, so the oldest {skipped} "
@@ -2817,14 +2847,14 @@ def main():
         save_json(state_path, state)
         for m in msgs:
             try:
-                post_slack(webhook, m)
+                post_slack(webhook_for(m, webhook), m)
             except Exception as se:  # noqa: BLE001
                 print(f"Slack post failed: {se}", file=sys.stderr)
         sys.exit(1)
 
     for m in msgs:
         print(m + "\n")
-        post_slack(webhook, m)
+        post_slack(webhook_for(m, webhook), m)
     save_json(state_path, state)
     save_json(journal_path, journal)
 
