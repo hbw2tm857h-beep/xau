@@ -22,5 +22,17 @@
     "r": 1.494,
     "sig_time": "2026-11-18T02:00:00+00:00",
     "strategy": "trend"
+  },
+  {
+    "dir": -1,
+    "entry": 650.84,
+    "entry_time": "2026-11-19T19:30:00+00:00",
+    "exit": 645.1,
+    "exit_time": "2026-11-19T21:00:00+00:00",
+    "grade": null,
+    "how": "noise_exit",
+    "r": 0.727,
+    "sig_time": "2026-11-19T19:30:00+00:00",
+    "strategy": "ndx_noise"
   }
 ]
