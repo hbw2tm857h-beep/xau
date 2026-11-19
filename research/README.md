@@ -589,6 +589,31 @@ Fitted on the first half and judged on the second (52 months): gold only 1.41, e
 - **The drawdown rises with the size.** All five at risk parity have a 22.6R worst drop against gold's 7.6R, mostly from US IBS in crash months. Scaled to gold's volatility the worst drop is about 9.7R. Size the whole book to the drawdown you can sit through, not the Sharpe.
 - **Caveats:** in-sample history only. The three new streams have no live record yet (shadow tier). US IBS excludes financing (roughly −6 bp a trade) and has no stop. Bitcoin's live config takes a few more signals than its research version.
 
+## Round 20: tail protection, gold macro filters, sizing (19 Nov 2026)
+
+`round20_risk_macro_sizing.py`, `results_round20_risk_macro_sizing.json`, data in `data/macro/` (FRED real yields DFII10, broad dollar DTWEXBGS, gold volatility GVZCLS; CFTC disaggregated COT files). Nine tests, committed (bbc4677) before any macro data was downloaded. FRED and the CFTC site refuse scripted downloads from this machine, so the files were fetched through a browser; the CFTC loader reads the local zips.
+
+**0 of 9 passed.**
+
+| Test | Result | |
+|---|---|---|
+| Base: US index rebounds | 616 trades, +0.478R, worst trade −10.2R, worst run 36.4R | |
+| A1 10-session time stop | +0.456R, worst run 46.7R | worse: trades cut at the bottom instead of recovering |
+| A2 3R catastrophe stop | +0.368R, worst run 77.8R | much worse: the stop sells the dips the strategy buys |
+| A3 only above the 200-day average | 396 trades, +0.541R, worst trade −9.5R, worst run 23.2R | fail, near miss: the run of losses fell 36% and both halves improved, but the worst single trade only 6% (25% required) |
+| B1 real yields agree with the trade | +0.168R vs +0.210R, p 0.69 | no |
+| B2 the dollar agrees with the trade | +0.183R vs +0.180R, p 0.49 | no |
+| B3 not with an extreme futures crowd | +0.178R vs +0.223R, p 0.68 | no |
+| B4 gold volatility above its median | +0.191R vs +0.189R, p 0.98 | no |
+| Base: five-strategy risk parity | Sharpe 1.82, worst drop 22.4R | |
+| C1 volatility targeting | Sharpe 1.60, worst drop 25.4R | worse |
+| C2 drawdown brake | Sharpe 1.81, worst drop 22.4R | no change |
+
+**What it says:**
+- **Stops and time limits hurt a rebound strategy.** Its losers recover; cutting them early locks the loss in. The only protection that helped was not entering at all in a downtrend (A3), and that one is worth a decision even though it missed the pre-set bar: it gives up a third of the trades for a shallower worst run and a higher average.
+- **Gold's macro drivers add nothing to the trend rules.** Real yields, the dollar, positioning and volatility all leave the average unchanged, which suggests the multi-timeframe agreement already reflects them.
+- **Constant risk-parity sizing is hard to beat** with simple volatility or drawdown rules on this portfolio.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -625,5 +650,6 @@ python3 research/round17_more_fx_indices.py # gold strategies on 30 more markets
 python3 research/round18_volume.py         # five volume tests (Dukascopy volume)
 python3 research/similar_setups.py         # build data/similar_setups.json (alert history line)
 python3 research/round19_portfolio.py      # the five strategies as one portfolio
+python3 research/round20_risk_macro_sizing.py # tail protection, macro filters, sizing
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```

@@ -1,0 +1,118 @@
+{
+ "A": [
+  {
+   "test": "base",
+   "n": 616,
+   "avg": 0.478,
+   "worst": -10.19,
+   "dd": 36.449,
+   "dd_h1": 30.1,
+   "dd_h2": 25.7,
+   "verdict": ""
+  },
+  {
+   "test": "A1",
+   "n": 622,
+   "avg": 0.456,
+   "worst": -10.387,
+   "dd": 46.734,
+   "dd_h1": 40.4,
+   "dd_h2": 25.7,
+   "verdict": "fail"
+  },
+  {
+   "test": "A2",
+   "n": 657,
+   "avg": 0.368,
+   "worst": -6.589,
+   "dd": 77.768,
+   "dd_h1": 35.5,
+   "dd_h2": 50.5,
+   "verdict": "fail"
+  },
+  {
+   "test": "A3",
+   "n": 396,
+   "avg": 0.541,
+   "worst": -9.544,
+   "dd": 23.191,
+   "dd_h1": 23.0,
+   "dd_h2": 18.8,
+   "verdict": "fail"
+  }
+ ],
+ "B": [
+  {
+   "test": "B1 real yields agree",
+   "n_fav": 481,
+   "avg_fav": 0.168,
+   "n_rest": 239,
+   "avg_rest": 0.21,
+   "t": -0.51,
+   "p": "0.69",
+   "verdict": "fail"
+  },
+  {
+   "test": "B2 dollar agrees",
+   "n_fav": 454,
+   "avg_fav": 0.183,
+   "n_rest": 266,
+   "avg_rest": 0.18,
+   "t": 0.03,
+   "p": "0.49",
+   "verdict": "fail"
+  },
+  {
+   "test": "B3 not with an extreme crowd",
+   "n_fav": 487,
+   "avg_fav": 0.178,
+   "n_rest": 180,
+   "avg_rest": 0.223,
+   "t": -0.47,
+   "p": "0.68",
+   "verdict": "fail"
+  },
+  {
+   "test": "B4 gold volatility high",
+   "n_fav": 335,
+   "avg_fav": 0.191,
+   "n_rest": 332,
+   "avg_rest": 0.189,
+   "t": 0.03,
+   "p": "0.98",
+   "verdict": "fail"
+  }
+ ],
+ "C": [
+  {
+   "test": "base (risk parity)",
+   "sharpe": 1.82,
+   "sharpe_h1": 1.83,
+   "sharpe_h2": 1.8,
+   "maxdd": 22.4,
+   "dd_h1": 7.4,
+   "dd_h2": 22.4,
+   "verdict": ""
+  },
+  {
+   "test": "C1 volatility targeting",
+   "sharpe": 1.6,
+   "sharpe_h1": 1.42,
+   "sharpe_h2": 1.77,
+   "maxdd": 25.4,
+   "dd_h1": 14.4,
+   "dd_h2": 25.4,
+   "verdict": "fail"
+  },
+  {
+   "test": "C2 drawdown brake",
+   "sharpe": 1.81,
+   "sharpe_h1": 1.83,
+   "sharpe_h2": 1.77,
+   "maxdd": 22.4,
+   "dd_h1": 7.4,
+   "dd_h2": 22.4,
+   "verdict": "fail"
+  }
+ ]
+}
