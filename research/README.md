@@ -413,6 +413,38 @@ It still passes at realistic costs (0.5–1 bp), with buys at +5.8 bp and sells 
 2. **Data.** The research used Dukascopy's Nasdaq 100 CFD with candles on the hour. A live feed (Twelve Data's NDX, or QQQ, whose candles start at :30) has to be matched to that, or the rules re-checked on it.
 3. **Portfolio.** Gold, Bitcoin and an index trade are different risks. How it should be sized next to the gold setups is your decision.
 
+## Round 12: documented edges beyond gold (19 Nov 2026)
+
+`round12_beyond_gold.py`, `results_round12_beyond_gold.csv`, `round12_ibs_checks.py`
+
+**Why:** the Slack system should cover more than gold. Rounds 3 and 10 showed the gold rules don't travel, so this round started from edges documented *on each market*, in the literature or in the Reddit catalogue (`reddit_catalogue.md`), and tested them on the hourly data already in `data/`. All nine rules, the costs, CFD financing for index positions held overnight, and the pass mark were committed (5b800b2) before anything ran. Pass: 150+ observations, positive in every period with 10+, one-sided p < 0.05/9 = 0.0056.
+
+| Test | Source | n | Net bp | 2008–15 | 2016–22 | 2023–24 | 2025–26 | Years + | p | |
+|---|---|---|---|---|---|---|---|---|---|---|
+| M1 Time-series momentum, 22 markets (monthly, vol-scaled) | Moskowitz, Ooi & Pedersen 2012 | 214 | +9.3 | +6.8 | +6.6 | +7.1 | +30.2 | 10/18 | 0.17 | no |
+| M2 FX: home currency weakens 08–12 local | Breedon & Ranaldo 2013 | 4,901 | −0.8 | −0.2 | −1.3 | −1.0 | −1.4 | 4/19 | 1 | no |
+| M3 FX: dollar weakens 08–12 New York | same | 4,900 | −1.1 | −1.2 | −0.8 | −1.8 | −0.6 | 4/19 | 0.99 | no |
+| M4 FX month-end hedge flows | Melvin & Prins 2015 | 158 | −2.3 | +1.2 | −4.4 | −3.8 | +2.8 | 5/14 | 0.89 | no |
+| M5 Turn of the month, 6 indices | Lakonishok & Smidt; McConnell & Xu | 172 | +10.8 | +23.4 | +7.6 | −28.2 | +41.5 | 7/15 | 0.24 | no |
+| M6 US overnight drift (after financing) | Cliff, Cooper & Gulen; Reddit #6 | 3,236 | +0.3 | +1.2 | +0.1 | −0.3 | +0.7 | 11/14 | 0.41 | no |
+| M7 European-open drift, US indices | Boyarchenko, Larsen & Whelan 2023 | 3,346 | +0.1 | +1.1 | −0.1 | −1.0 | +0.8 | 7/14 | 0.43 | no |
+| **M8 IBS band reversion, 6 indices** | **Reddit #1; Pagonidis 2013** | **1,060** | **+36.6** | **+46.7** | **+32.1** | **+31.4** | **+40.2** | **13/15** | **2.6e-07** | **PASS** |
+| M9 USDJPY into the Tokyo fix | Ito & Yamada 2017 | 1,359 | −0.3 | +0.1 | −0.1 | −0.8 | −1.9 | 8/19 | 0.71 | no |
+
+(Index data starts in 2011–13, so "2008–15" means 2011–15 for M5–M8.)
+
+**What failed and why it matters:** the FX time-of-day effects are now slightly *negative* after costs, and so is the month-end hedge-flow trade. US overnight drift is real before financing but a long CFD position pays roughly 2 bp a night, which takes all of it. Time-series momentum is positive in every period but far too noisy at monthly frequency to clear the bar.
+
+**IBS stress tests (`round12_ibs_checks.py`):**
+- **Random entries** with the same holding periods on the same indices make +10.6 bp, which is the indices' upward drift. **None of 300 random runs reached +36.6 bp** (z = 3.8). The edge is the timing, not just being long.
+- **Execution:** entering at the next session's open instead of the signal close gives +34.9 bp. Double costs give +35.3 bp. Without financing it would be +42.9 bp.
+- **Clustering:** trades on different indices often fire in the same sell-off. On weekly averages it's still t = 5.1.
+- **Where it works:** the three US indices carry it: S&P 500 +55 bp (p 5e-05), Nasdaq +70 bp (p 2e-05), Dow +46 bp (p 0.0003). DAX, FTSE and Nikkei are positive (+14 to +22 bp) but not significant on their own.
+- **No stop, so the tail is real:** worst trades were DAX −31% (Feb 2020, held 19 sessions), FTSE −22% and Nikkei −17% (Mar 2020). Median hold 3 sessions. About 70 trades a year across six indices.
+- **Correlation, monthly:** −0.03 with the gold trend setups, −0.05 with inside-day, −0.07 with `ndx_noise`. A genuinely separate stream.
+
+**Verdict:** a nursery candidate on the three US indices, where it passes on each one alone. It stays journal-only until live trades back it. Before it could ever carry size it needs a decision on the tail: the rule as published has no stop, and the 2020 trades show what that costs.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -437,4 +469,6 @@ python3 research/round10_markets.py     # the three strategies on 21 other marke
 python3 research/round10_btc_checks.py  # Bitcoin: costs, weekends, shuffle test
 python3 research/round11_literature.py  # nine published anomalies (SSRN etc.)
 python3 research/round11_noise_checks.py # stress tests on the Nasdaq noise-area pass
+python3 research/round12_beyond_gold.py   # nine documented edges on other markets
+python3 research/round12_ibs_checks.py    # stress tests on the IBS index pass
 ```
