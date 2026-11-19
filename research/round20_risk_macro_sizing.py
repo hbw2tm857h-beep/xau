@@ -102,9 +102,13 @@ def cot_gold():
         files = ["fut_disagg_txt_hist_2006_2016.zip"] + [f"fut_disagg_txt_{y}.zip" for y in range(2017, 2027)]
         rows = {}
         for fn in files:
-            req = urllib.request.Request("https://www.cftc.gov/files/dea/history/" + fn,
-                                         headers={"User-Agent": "xau-research/1.0"})
-            z = zipfile.ZipFile(io.BytesIO(urllib.request.urlopen(req, timeout=120).read()))
+            local = os.path.join(MACRO, "cot", fn)       # the CFTC site drops scripted downloads; fetch by browser
+            if os.path.exists(local):
+                z = zipfile.ZipFile(local)
+            else:
+                req = urllib.request.Request("https://www.cftc.gov/files/dea/history/" + fn,
+                                             headers={"User-Agent": "xau-research/1.0"})
+                z = zipfile.ZipFile(io.BytesIO(urllib.request.urlopen(req, timeout=120).read()))
             for name in z.namelist():
                 rd = csv.DictReader(io.TextIOWrapper(z.open(name), encoding="latin-1"))
                 for r in rd:
