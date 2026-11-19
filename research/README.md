@@ -354,6 +354,51 @@ Two further cautions. Both E2 and the live rules show their strongest results in
 
 Not done: the MT5 EA still trades gold only.
 
+## Round 11: published anomalies from SSRN and the literature (19 Nov 2026)
+
+`round11_literature.py`, `results_round11_literature.csv`, `round11_noise_checks.py`
+
+**Sources:** SSRN, journals and quant-research sites (Quantpedia, Concretum, QuantifiedStrategies, university repositories). Reddit could not be read: it blocks this tool's crawler and returns 403 to direct requests, and getting around that would break its access terms. Every idea found was checked against the 1,137 configurations already tested.
+
+**Not tested, with reasons:**
+- **Gold in September and November (Baur 2013):** monthly seasonality that failed the original study's own data-snooping test (Quantpedia, SSRN 3202658).
+- **Monthly gold moving-average and momentum timing:** no new signals, and it overlaps the trend rules.
+- **Pre-FOMC drift (Lucca & Moench):** shown for stocks, with no solid evidence for gold.
+- **London-fix price pressure (Caminschi & Heaney):** needs minute data, and the fix method changed in 2015.
+- **Every Reddit and TradingView "gold strategy" the searches surfaced:** no testable rules or track record.
+
+**Nine pre-registered tests** (rules as published, adapted to hourly candles; results in basis points after costs; p < 0.05/9 = 0.0056):
+
+| Test | Source | Per week | Net bp | 2008–15 | 2016–22 | 2023–24 | 2025–26 | Years + | p | |
+|---|---|---|---|---|---|---|---|---|---|---|
+| L1 Gold intraday momentum | Gao, Han, Li & Zhou (JFE 2018) | 3.9 | −2.2 | −2.5 | −2.3 | −0.9 | −2.0 | 1/19 | 1 | no |
+| L2 Bitcoin intraday momentum | Shen, Urquhart & Wang | 6.0 | −4.9 | | −5.6 | −4.6 | −3.7 | 1/10 | 1 | no |
+| L3 Bitcoin 21–23 UTC long | Padyšák & Vojtko | 6.3 | +2.2 | | +2.6 | +4.1 | **−1.0** | 7/10 | 0.098 | no, faded after publication |
+| L4 Bitcoin Monday Asia open | Concretum (2025) | 1.0 | +37.7 | | +40.8 | +41.1 | +25.2 | 8/10 | 0.019 | near miss |
+| L5 Gold long between the London fixes | Bell (SSRN 6077836) | 5.0 | +3.3 | +2.5 | +2.4 | +6.9 | +5.9 | 12/19 | 0.007 | near miss |
+| L6 Noise-area momentum, gold | Zarattini, Aziz & Barbon (SSRN 4824172) | 10.1 | −2.1 | −3.2 | −1.7 | −0.6 | +0.3 | 4/19 | 1 | no |
+| L7 Noise-area momentum, Bitcoin | same | 11.9 | −1.0 | | −1.4 | +0.7 | −1.8 | 5/10 | 0.66 | no |
+| **L8 Noise-area momentum, Nasdaq 100** | **same** | **3.0** | **+5.7** | **+5.8** | **+5.4** | **+5.2** | **+7.5** | **14/15** | **0.000008** | **PASS** |
+| L9 Bitcoin at a 20-day high or low | Padyšák & Vojtko (SSRN 4081000) | 1.6 | +26.4 | | +36.7 | +27.3 | −3.1 | 7/10 | 0.032 | no |
+
+**What the round says:**
+- **Gold and Bitcoin show no edge in any of these intraday mechanisms.** Intraday momentum and the noise-area breakout both lose on gold and Bitcoin, though both are documented on stock indices. Nothing here argues against the existing gold rules: it says gold's edge is multi-timeframe trend, not intraday flow.
+- **Published edges fade.** The Bitcoin 21–23 UTC effect is negative in 2025–26, the main period after its 2022 publication.
+- **The pass replicates the paper's own claim.** The noise-area method was published on US index ETFs, and on the Nasdaq it holds on hourly candles in every period.
+
+**Nasdaq noise-area stress tests (`round11_noise_checks.py`):**
+- **Costs:** +4.7 bp at 2 bp costs and +3.7 bp at 3 bp, still positive in every period.
+- **Direction:** buys +7.2 bp (15 of 15 years positive), sells +4.1 bp.
+- **Shuffle test:** 0 of 20 shuffles reached it, about 9 standard deviations below the real result.
+- **Risk:** daily Sharpe 1.59 a year, worst drop 650 bp.
+- **S&P 500 (the paper's original market):** +2.6 bp, positive every period, p 0.0075.
+- **Dow:** fails (−0.4 bp).
+
+**Status: research only, not in the bot.** It's a genuine candidate, but three things stand between it and alerts:
+1. **Timing.** It acts within the hour during the US cash session. GitHub's scheduler has been running the bot hours late, and a late alert is worthless for an intraday trade. It needs the external hourly trigger first.
+2. **Data.** The research used Dukascopy's Nasdaq 100 CFD with candles on the hour. A live feed (Twelve Data's NDX, or QQQ, whose candles start at :30) has to be matched to that, or the rules re-checked on it.
+3. **Portfolio.** Gold, Bitcoin and an index trade are different risks. How it should be sized next to the gold setups is your decision.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -376,4 +421,6 @@ python3 research/round8_multiple_testing.py # deflated Sharpe / multiple-testing
 python3 research/round9_entries.py      # four new entry mechanisms
 python3 research/round10_markets.py     # the three strategies on 21 other markets
 python3 research/round10_btc_checks.py  # Bitcoin: costs, weekends, shuffle test
+python3 research/round11_literature.py  # nine published anomalies (SSRN etc.)
+python3 research/round11_noise_checks.py # stress tests on the Nasdaq noise-area pass
 ```
