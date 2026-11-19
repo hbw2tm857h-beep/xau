@@ -1277,15 +1277,15 @@ void DailyRollCheck()
       return;
    int srvOff = (int)MathRound((double)(TimeCurrent() - TimeGMT()) / 3600.0);
    datetime d1gmt = (datetime)((long)d1 - (long)srvOff * 3600);
-   MqlDateTime g;
-   TimeToStruct(d1gmt, g);
+   MqlDateTime gmt;
+   TimeToStruct(d1gmt, gmt);
    int want = (17 + NyOffsetHours(d1gmt)) % 24;  // 22:00 GMT in winter, 21:00 in summer
-   int diff = g.hour - want;
+   int diff = gmt.hour - want;
    if(diff > 12)  diff -= 24;
    if(diff < -12) diff += 24;
 
    string where = StringFormat("server GMT%+d, daily candles open %02d:00 GMT, 17:00 New York is %02d:00 GMT",
-                               srvOff, g.hour, want);
+                               srvOff, gmt.hour, want);
    if(diff == 0)
      {
       Print("GoldTrendEA: broker daily candles roll at 17:00 New York, as the tested rules assume (", where, ").");

@@ -1,0 +1,13 @@
+
+
+MQL5\Experts\xau_build\GoldTrendEA.mq5 : information: compiling MQL5\Experts\xau_build\GoldTrendEA.mq5
+MQL5\Experts\xau_build\GoldTrendEA.mq5 : information: including C:\Program Files\MetaTrader 5\MQL5\Include\Trade\Trade.mqh
+C:\Program Files\MetaTrader 5\MQL5\Include\Trade\Trade.mqh : information: including C:\Program Files\MetaTrader 5\MQL5\Include\Object.mqh
+C:\Program Files\MetaTrader 5\MQL5\Include\Object.mqh : information: including C:\Program Files\MetaTrader 5\MQL5\Include\StdLibErr.mqh
+C:\Program Files\MetaTrader 5\MQL5\Include\Trade\Trade.mqh : information: including C:\Program Files\MetaTrader 5\MQL5\Include\Trade\OrderInfo.mqh
+C:\Program Files\MetaTrader 5\MQL5\Include\Trade\Trade.mqh : information: including C:\Program Files\MetaTrader 5\MQL5\Include\Trade\HistoryOrderInfo.mqh
+C:\Program Files\MetaTrader 5\MQL5\Include\Trade\Trade.mqh : information: including C:\Program Files\MetaTrader 5\MQL5\Include\Trade\PositionInfo.mqh
+C:\Program Files\MetaTrader 5\MQL5\Include\Trade\Trade.mqh : information: including C:\Program Files\MetaTrader 5\MQL5\Include\Trade\DealInfo.mqh
+ : information: generating code
+ : information: code generated
+Result: 0 errors, 0 warnings, 4745 ms elapsed, cpu='X64 Regular'
