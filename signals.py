@@ -2243,7 +2243,7 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                 msg = "\n".join(([" ".join(lead)] if lead else []) + extra + notes + [msg])
                 out.append(relabel(msg, cfg))
     skipped = len(new_idx) - cfg["max_catchup_bars"]
-    if skipped > 0:
+    if skipped > 0 and not cfg.get("market_name"):   # gold's warning covers the other markets
         warn = (f":warning: The bot didn't run for {len(new_idx)} hours, so the oldest {skipped} "
                 f"hour{'s were' if skipped != 1 else ' was'} not checked for setups.")
         # missed hours can mean missed setups, so this one does ping
