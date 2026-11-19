@@ -445,6 +445,58 @@ It still passes at realistic costs (0.5–1 bp), with buys at +5.8 bp and sells 
 
 **Verdict:** a nursery candidate on the three US indices, where it passes on each one alone. It stays journal-only until live trades back it. Before it could ever carry size it needs a decision on the tail: the rule as published has no stop, and the 2020 trades show what that costs.
 
+## Round 13: does the IBS edge travel? (19 Nov 2026)
+
+`round13_more_markets.py`, `results_round13_more_markets.csv`. Seven tests, committed before running, bar p < 0.05/7 = 0.0071.
+
+| Test | n | Net bp | 2008–15 | 2016–22 | 2023–24 | 2025–26 | p | |
+|---|---|---|---|---|---|---|---|---|
+| N1 IBS band, 11 FX pairs, both sides | 4,450 | −0.8 | −4.0 | −1.3 | −3.2 | +16.5 | 0.64 | no |
+| N2 IBS band, gold/silver/WTI/Brent, both sides | 1,457 | −23.2 | −34.6 | −32.9 | +37.7 | −26.2 | 0.96 | no |
+| N3 IBS band, Bitcoin, long only | 118 | +120.8 | | +156.4 | +80.7 | +50.8 | 0.053 | too few trades |
+| N4 Nasdaq intraday momentum (Gao et al. 2018) | 3,659 | −0.9 | +0.5 | −1.1 | −2.0 | −1.3 | 0.94 | no |
+| N5 Bitcoin weekly momentum (Liu & Tsyvinski 2021) | 489 | +35.6 | | +53.1 | +4.7 | +15.3 | 0.21 | no |
+| N6 Lower-low/high reversal, US indices (Reddit #3) | 1,704 | +3.3 | +0.6 | +6.2 | +3.2 | −2.8 | 0.051 | no |
+| N7 Daily gap fill, US indices (Reddit #12) | 263 | +24.9 | +45.1 | +6.7 | +51.1 | +38.3 | 0.041 | no |
+
+IBS reversion is not a general mean-reversion edge: it is flat on FX and loses on commodities, gold included. Bitcoin is promising but has only 118 trades.
+
+## Round 14: relative value and cross-sectional (19 Nov 2026)
+
+`round14_relative_value.py`, `results_round14_relative_value.csv`. Six tests, bar p < 0.05/6 = 0.0083.
+
+| Test | n | Net bp | p | |
+|---|---|---|---|---|
+| P1 FX cross-sectional momentum (Menkhoff et al. 2012) | 225 | −16.3 | 0.97 | no |
+| P2 Pairs: Brent vs WTI (z = 2, 20 days) | 106 | +12.9 | 0.20 | no |
+| P3 Pairs: AUDUSD vs NZDUSD | 169 | −3.9 | 0.75 | no |
+| P4 Pairs: Nasdaq 100 vs Dow | 116 | −16.4 | 0.86 | no |
+| P5 Pairs: gold vs silver | 168 | −32.8 | 0.91 | no |
+| P6 Weekly reversal across six indices | 419 | +4.8 | 0.22 | no |
+
+No relative-value edge on these markets at textbook settings.
+
+## Round 15: IBS on ten indices it had never seen (19 Nov 2026)
+
+`round15_ibs_new_indices.py`, `results_round15_ibs_new_indices.csv`. Ten more indices were downloaded from Dukascopy for this test only (`data/markets/*idx*`). CAC 40, SMI and South Africa 40 fail in the downloader. One confirmatory test of the unchanged round 12 rule, bar p < 0.05.
+
+**It failed.** Pooled: 1,495 trades, +1.75 bp, p 0.41, and 110 of 300 random-entry runs did as well.
+
+| Index | From | n | Net bp | p |
+|---|---|---|---|---|
+| Russell 2000 | 2018 | 109 | +43.0 | 0.096 |
+| Euro Stoxx 50 | 2014 | 175 | +30.8 | 0.079 |
+| FTSE MIB | 2016 | 119 | +8.5 | 0.41 |
+| Hang Seng | 2013 | 247 | +5.7 | 0.36 |
+| WIG 20 | 2018 | 109 | +0.0 | 0.50 |
+| ASX 200 | 2014 | 189 | −3.5 | 0.57 |
+| AEX | 2018 | 111 | −8.3 | 0.61 |
+| IBEX 35 | 2014 | 159 | −9.0 | 0.65 |
+| Singapore | 2018 | 146 | −24.1 | 0.83 |
+| China A50 | 2017 | 131 | −25.6 | 0.87 |
+
+**What it means:** the IBS edge is not a property of stock indices in general. It is a US effect. All four US indices tested are positive, by +43 to +70 bp: S&P 500, Nasdaq 100 and Dow in round 12, each significant on its own, plus Russell 2000 here, the only new US index. Outside the US it is mostly flat or negative, and round 12's DAX, FTSE and Nikkei were not significant either. That fits the explanation usually given for it, persistent buying of US index dips. **So the candidate covers the US indices only**, and a non-US version is ruled out.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -471,4 +523,7 @@ python3 research/round11_literature.py  # nine published anomalies (SSRN etc.)
 python3 research/round11_noise_checks.py # stress tests on the Nasdaq noise-area pass
 python3 research/round12_beyond_gold.py   # nine documented edges on other markets
 python3 research/round12_ibs_checks.py    # stress tests on the IBS index pass
+python3 research/round13_more_markets.py  # IBS on FX/commodities/Bitcoin + four more
+python3 research/round14_relative_value.py # pairs and cross-sectional tests
+python3 research/round15_ibs_new_indices.py # IBS on ten unseen indices
 ```
