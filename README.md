@@ -69,6 +69,9 @@ Research round 10 ran all three strategies, unchanged, on 21 other markets: 11 F
 
 So each run also fetches BTC/USD and runs the same trend code on it, with its own saved state (`state.json` under `markets.btc`). Bitcoin setups start in the **shadow** tier: they're alerted in Slack as paper trades with no size. If they earn it on live trades, the weekly gate proposes promotion, and you decide. They add roughly **0.75 setups a week**. The settings are under `CONFIG["markets"]["btc"]`: weekday signals only, $7.50 entry buffer, $30 costs. Delete that entry to switch it off. The MT5 EA is still gold-only.
 
+## Nasdaq noise-area momentum (candidate, silent)
+Research round 11 found one published edge that survives this project's tests: Zarattini, Aziz & Barbon's intraday "noise area" momentum on the Nasdaq 100. Over 2011–2026, on the 09:30 cash-session candles a live feed provides, that's about 3 trades a week at +4.4 bp each after costs (p = 0.0004). Each run fetches QQQ's hourly candles and journals the trades the rules would have made, as `ndx_noise` at tier `candidate`. It never alerts: the trades have to be acted on within the hour, and the scheduler runs late. The weekly gate judges it on these live trades. Set `CONFIG["noise"]["enabled"]` to `False` to turn it off.
+
 ## Tiers: what gets traded, what only gets watched
 Each strategy in `nursery.json` sits in one of three tiers:
 
