@@ -135,12 +135,10 @@ Each strategy posts to its own channel through its own incoming webhook. A route
 
 | Channel | Strategy | Secret |
 |---|---|---|
-| #signals-gold-trend | gold trend setups (and the 4-hour trigger, if promoted) | `SLACK_WEBHOOK_TREND` |
-| #signals-gold-inside-day | gold inside-day setups | `SLACK_WEBHOOK_INSIDE_DAY` |
 | #signals-bitcoin | Bitcoin trend setups | `SLACK_WEBHOOK_BTC` |
 | #signals-ether | Ether inside-day setups | `SLACK_WEBHOOK_ETH` |
 | #signals-us-indices | US index IBS dips | `SLACK_WEBHOOK_US_IBS` |
-| #gold-signals | scorecard, nursery gate, status checks, backtests, failure warnings | `SLACK_WEBHOOK_REPORTS`, or `SLACK_WEBHOOK_URL` if unset |
+| #gold-signals | gold trend and inside-day setups (and the 4-hour trigger, if promoted), plus the scorecard, nursery gate, status checks, backtests and failure warnings | `SLACK_WEBHOOK_URL` (`SLACK_WEBHOOK_TREND`, `SLACK_WEBHOOK_INSIDE_DAY` and `SLACK_WEBHOOK_REPORTS` are left unset, so they fall back to it) |
 
 To add one: in your Slack app's *Incoming Webhooks* page, click *Add New Webhook to Workspace*, pick the channel and copy the URL. Then add it as a repository secret under the name above (*Settings → Secrets and variables → Actions*). The routes live in `CONFIG["slack_routes"]`.
 
