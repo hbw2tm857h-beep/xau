@@ -172,6 +172,18 @@ CONFIG = {
         "us_ibs": "SLACK_WEBHOOK_US_IBS", "ndx_noise": "SLACK_WEBHOOK_NDX",
         "reports": "SLACK_WEBHOOK_REPORTS",
     },
+    # The same alerts, mirrored to the StarkFX Discord server. Each route names
+    # the GitHub secret holding that channel's Discord webhook; a route with no
+    # secret is simply not posted to Discord (no fallback, unlike Slack).
+    "discord_routes": {
+        "trend": "DISCORD_WEBHOOK_GOLD", "h4_trend": "DISCORD_WEBHOOK_GOLD",
+        "inside_day": "DISCORD_WEBHOOK_GOLD",
+        "btc_trend": "DISCORD_WEBHOOK_BTC", "eth_inside_day": "DISCORD_WEBHOOK_ETH",
+        "us_ibs": "DISCORD_WEBHOOK_US_IBS", "ndx_noise": "DISCORD_WEBHOOK_US_IBS",
+        "reports": "DISCORD_WEBHOOK_REPORTS",
+    },
+    "discord_username": "StarkFX",
+    "discord_avatar_url": "https://cdn.discordapp.com/icons/1573090531838402742/3913855cf014060eab3ede6640bde75d.png?size=256",
     # Research round 19: risk-parity risk per R for each stream (inverse monthly
     # volatility, held out of sample), and the fraction of it suggested on shadow
     # setup alerts until the gate has judged the strategy on live trades.
@@ -1904,7 +1916,7 @@ def gate(nursery, journal, cfg, now):
                     "why": f"last {t['n']} trades avg {t['avg']:+.3f}R, below {floor:+.3f}R"})
                 lines.append(head + f"\n   :arrow_down: *Demoted to shadow.* The last {t['n']} trades average "
                              f"{t['avg']:+.2f}R, under half the {exp:+.2f}R it was promoted on. Alerts carry on, "
-                             "marked paper and without a size, until it earns its way back.")
+                             "without a size, until it earns its way back.")
             else:
                 lines.append(head + " — holding.")
             continue
@@ -2012,7 +2024,7 @@ def edge_note(s):
     if s["avg"] >= 0.2 and s["pf"] >= 1.5:
         verdict = "*Verdict:* a real edge so far."
     elif s["avg"] >= 0.05:
-        verdict = "*Verdict:* a thin edge after costs. Trade it small or paper-trade it while live results build up."
+        verdict = "*Verdict:* a thin edge after costs. Trade it small, or watch it while live results build up."
     elif s["avg"] > -0.05:
         verdict = "*Verdict:* roughly break-even after costs. No proven edge yet."
     else:
@@ -2438,9 +2450,10 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
     lines = [" ".join(lead)]
     if kind == "entry":
         lines.append(f"_Exit level moves each day: the previous day's high. 1R = {px(t['ar'])} ETF points._")
-    if tier == "shadow":
-        sug = short_size(cfg["ibs"]["strategy"], cfg) if kind == "entry" else ""
-        lines.append(":microscope: _Paper trade" + (f" · suggested risk {sug} per 1R" if sug else "") + "_")
+    if tier == "shadow" and kind == "entry":
+        sug = short_size(cfg["ibs"]["strategy"], cfg)
+        if sug:
+            lines.append(f"_Suggested risk {sug} per 1R_")
     happened = t["t"] if kind == "entry" else t["t_exit"]
     lag_h = (now - happened).total_seconds() / 3600
     if lag_h > 1:
@@ -2753,9 +2766,10 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                     risk_line = open_risk(state, cfg, sizing, nursery)
                     if risk_line:
                         lines.append(risk_line)
-                if tier == "shadow":
-                    sug = short_size(strategy, cfg) if e["type"] in ("signal", "ib_signal") else ""
-                    lines.append(":microscope: _Paper trade" + (f" · suggested risk {sug}" if sug else "") + "_")
+                if tier == "shadow" and e["type"] in ("signal", "ib_signal"):
+                    sug = short_size(strategy, cfg)
+                    if sug:
+                        lines.append(f"_Suggested risk {sug}_")
                 lag_h = (now - e["t"]).total_seconds() / 3600
                 if lag_h > cfg["late_alert_hours"]:
                     lines.append(f":hourglass: _Late: from {uk_day(e['t'])} UK. Check the price first._")
@@ -2788,6 +2802,68 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
 # --------------------------------------------------------------------------
 # IO
 # --------------------------------------------------------------------------
+DISCORD_EMOJI = {
+    "abacus": "\U0001F9EE", "arrow_down": "\u2B07\uFE0F", "arrow_up": "\u2B06\uFE0F", "bar_chart": "\U0001F4CA",
+    "books": "\U0001F4DA", "calendar": "\U0001F4C5", "checkered_flag": "\U0001F3C1", "clock4": "\U0001F553",
+    "dart": "\U0001F3AF", "fast_forward": "\u23E9", "heavy_minus_sign": "\u2796", "hourglass": "\u231B",
+    "large_green_circle": "\U0001F7E2", "microscope": "\U0001F52C", "moneybag": "\U0001F4B0",
+    "octagonal_sign": "\U0001F6D1", "package": "\U0001F4E6", "red_circle": "\U0001F534",
+    "rotating_light": "\U0001F6A8", "satellite_antenna": "\U0001F4E1", "seedling": "\U0001F331",
+    "shield": "\U0001F6E1\uFE0F", "test_tube": "\U0001F9EA", "trophy": "\U0001F3C6", "warning": "\u26A0\uFE0F",
+    "white_check_mark": "\u2705", "chart_with_downwards_trend": "\U0001F4C9", "scales": "\u2696\uFE0F",
+}
+
+
+def to_discord(text):
+    """Slack mrkdwn to Discord markdown: *bold* -> **bold**, <!channel> ->
+    @everyone, <url|label> -> [label](url), :emoji: -> the emoji itself
+    (Discord does not expand shortcodes in webhook posts)."""
+    import re
+    # The owner's position sizes and account risk stay private: Discord is for members.
+    t = re.sub(r" · [\d.]+ lots", "", text)
+    t = re.sub(r", about [\d.]+% of the account", "", t)
+    t = "\n".join(line for line in t.split("\n") if "at risk)" not in line)
+    t = t.replace("<!channel>", "@everyone").replace("<!here>", "@here")
+    t = re.sub(r"<(https?://[^|>]+)\|([^>]+)>", r"[\2](\1)", t)
+    t = re.sub(r"<(https?://[^>]+)>", r"\1", t)
+    t = re.sub(r"(?<![*A-Za-z0-9])\*([^*\n]+?)\*(?![*A-Za-z0-9])", r"**\1**", t)
+    t = re.sub(r":([a-z0-9_]+):", lambda m: DISCORD_EMOJI.get(m.group(1), m.group(0)), t)
+    return t
+
+
+def discord_url_for(msg, cfg=None, env=None):
+    """The Discord webhook for a message's route, or None if not set up."""
+    cfg, env = cfg or CONFIG, os.environ if env is None else env
+    route = getattr(msg, "route", None) or "reports"
+    name = (cfg.get("discord_routes") or {}).get(route)
+    return (env.get(name) or "").strip() or None if name else None
+
+
+def post_discord(url, text, cfg=None):
+    """Post to a Discord webhook, split into 2,000-character pieces."""
+    cfg = cfg or CONFIG
+    body = to_discord(text)
+    parts, cur = [], ""
+    for line in body.split("\n"):
+        if len(cur) + len(line) + 1 > 1900 and cur:
+            parts.append(cur); cur = ""
+        cur += ("\n" if cur else "") + line
+    parts.append(cur)
+    for i, part in enumerate(parts):
+        payload = {"content": part, "username": cfg.get("discord_username") or "StarkFX",
+                   "allowed_mentions": {"parse": ["everyone"]}}
+        if cfg.get("discord_avatar_url"):
+            payload["avatar_url"] = cfg["discord_avatar_url"]
+        req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={
+            "Content-Type": "application/json",
+            "User-Agent": "DiscordBot (https://github.com/hbw2tm857h-beep/xau, 1.0)"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            if r.status not in (200, 204):
+                raise RuntimeError(f"Discord returned HTTP {r.status}")
+        if i < len(parts) - 1:
+            time.sleep(0.5)
+
+
 def post_slack(url, text):
     if not url:
         print("[no SLACK_WEBHOOK_URL] " + text)
@@ -2866,6 +2942,8 @@ def main():
             text = CONFIG["slack_mention"] + " " + text
         print(text)
         post_slack(webhook_for(Msg(text, "reports"), webhook), text)
+        if discord_url_for(Msg(text, "reports")):
+            post_discord(discord_url_for(Msg(text, "reports")), text)
         return
     run_record = {"started": now.isoformat(), "mode": mode}
 
@@ -2943,6 +3021,8 @@ def main():
         for m in msgs:
             try:
                 post_slack(webhook_for(m, webhook), m)
+                if discord_url_for(m):
+                    post_discord(discord_url_for(m), m)
             except Exception as se:  # noqa: BLE001
                 print(f"Slack post failed: {se}", file=sys.stderr)
         sys.exit(1)
@@ -2955,6 +3035,14 @@ def main():
         except Exception as e:  # noqa: BLE001 - one failed post must not stop the others
             print(f"Slack post failed: {e}", file=sys.stderr)
             failed.append(f"{getattr(m, 'route', None) or 'reports'}: {str(e)[:80]}")
+        durl = discord_url_for(m)
+        if durl:
+            try:
+                post_discord(durl, m)
+                time.sleep(0.3)
+            except Exception as e:  # noqa: BLE001 - Discord must never block Slack
+                print(f"Discord post failed: {e}", file=sys.stderr)
+                failed.append(f"discord {getattr(m, 'route', None) or 'reports'}: {str(e)[:80]}")
     if mode == "run":
         state["last_run"] = dict(run_record, posts=len(msgs), failed=failed,
                                  late=sum(":hourglass:" in m for m in msgs),

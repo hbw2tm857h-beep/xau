@@ -142,6 +142,19 @@ Each strategy posts to its own channel through its own incoming webhook. A route
 
 To add one: in your Slack app's *Incoming Webhooks* page, click *Add New Webhook to Workspace*, pick the channel and copy the URL. Then add it as a repository secret under the name above (*Settings → Secrets and variables → Actions*). The routes live in `CONFIG["slack_routes"]`.
 
+### Discord (StarkFX)
+Every alert is mirrored to the StarkFX Discord server, converted to Discord's formatting (bold, `@everyone`, links, emoji). Routes are in `CONFIG["discord_routes"]`; a route without its secret is simply not posted to Discord.
+
+| Discord channel | Gets | Secret |
+|---|---|---|
+| #gold | gold trend and breakout alerts | `DISCORD_WEBHOOK_GOLD` |
+| #bitcoin | Bitcoin trend alerts | `DISCORD_WEBHOOK_BTC` |
+| #ether | Ether breakout alerts | `DISCORD_WEBHOOK_ETH` |
+| #us-indices | US index rebound alerts | `DISCORD_WEBHOOK_US_IBS` |
+| #bot-status (staff only) | scorecard, gate, status checks, warnings | `DISCORD_WEBHOOK_REPORTS` |
+
+A failed Discord post never blocks Slack; it is recorded, and the verify step reports it.
+
 ### Timing and the delivery check
 - **Hourly runs** come from an external scheduler a few minutes after each hour. GitHub's own schedule (`7 * * * *`, every day) is the backup, so Bitcoin and Ether are covered at weekends too. Each run first pulls the latest state, so a run queued behind another can't repeat its alerts.
 - **US index dips** are checked for all four ETFs in the first run after 16:05 New York, so a BUY or CLOSE posts within minutes of the close. That run waits a minute before the extra calls, to stay within Twelve Data's free 8 calls a minute.
