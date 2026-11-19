@@ -2824,7 +2824,7 @@ def to_discord(text):
     t = t.replace("<!channel>", "@everyone").replace("<!here>", "@here")
     t = re.sub(r"<(https?://[^|>]+)\|([^>]+)>", r"[\2](\1)", t)
     t = re.sub(r"<(https?://[^>]+)>", r"\1", t)
-    t = re.sub(r"(?<![*\w])\*([^*\n]+?)\*(?![*\w])", r"**\1**", t)
+    t = re.sub(r"(?<![*A-Za-z0-9])\*([^*\n]+?)\*(?![*A-Za-z0-9])", r"**\1**", t)
     t = re.sub(r":([a-z0-9_]+):", lambda m: DISCORD_EMOJI.get(m.group(1), m.group(0)), t)
     return t
 
