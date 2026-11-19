@@ -208,12 +208,12 @@ CONFIG = {
         "look": 14,
         "cost_bps": 1.0,
     },
-    # US stock-index IBS reversion (research rounds 12 and 15). A nursery
-    # candidate: it passed on the S&P 500, Nasdaq 100 and Dow, held on the
+    # US stock-index IBS reversion (research rounds 12 and 15). It passed on the S&P 500, Nasdaq 100 and Dow, held on the
     # Russell 2000, and failed outside the US. Each run fetches the daily
     # candles of one ETF in turn (one API call, inside the free plan's
     # per-minute limit), replays the rule and journals closed trades. Daily,
-    # so each ETF being checked every few hours is plenty. Never alerts.
+    # so each ETF being checked every few hours is plenty. Its nursery tier
+    # decides whether it alerts (shadow: paper alerts, never a size).
     "ibs": {
         "enabled": True,
         "symbols": ["SPY", "QQQ", "DIA", "IWM"], "strategy": "us_ibs",
@@ -241,7 +241,7 @@ CONFIG = {
         # Research round 16: of 16 more markets x 3 strategies, only the
         # inside-day breakout on Ether passed, and it held on 24/7 data with
         # signals from weekday inside days only (327 trades, +0.23R, p=0.0001).
-        # A candidate: journalled, never alerted. Trend and 4-hour setups off.
+        # Its nursery tier decides how it is alerted. Trend and 4-hour setups off.
         "eth": {
             "symbol": "ETH/USD",
             "name": "Ether", "ticker": "ETHUSD",
@@ -257,6 +257,8 @@ CONFIG = {
                 "ledger": False,
                 "track_record": "Ether, tested 2017-2026 (rules never tuned on it): 327 trades, "
                                 "+0.23R per trade after costs",
+                "inside_day_track_record": "Ether, tested 2017-2026 (rules never tuned on it): 327 trades, "
+                                           "50% winners, +0.23R per trade after costs",
             },
         },
     },
@@ -1475,8 +1477,10 @@ def fmt_ib_event(e, cfg, sizing):
         lines = [
             f":package: *INSIDE-DAY SETUP: Gold (XAUUSD)* | daily candle closed {uk_day(e['t'])} UK",
             f"_Today's range ({px(ib['lo'])} to {px(ib['hi'])}) stayed inside yesterday's "
-            f"({px(ib['prev_lo'])} to {px(ib['prev_hi'])}). This second strategy trades the breakout during the "
-            "next daily candle. It runs separately from the trend setups._",
+            f"({px(ib['prev_lo'])} to {px(ib['prev_hi'])}). "
+            + ("This setup trades the breakout during the next daily candle._" if cfg.get("trend") is False else
+               "This second strategy trades the breakout during the next daily candle. It runs separately "
+               "from the trend setups._"),
             "",
             "*The plan* (two orders, one cancels the other)",
             f"• *Buy-stop:* *{px(ib['hi'])}*, stop *{px(ib['lo'])}*",
@@ -1774,22 +1778,22 @@ def default_nursery(cfg):
                 "history": [],
             },
             "us_ibs": {
-                "tier": "candidate", "label": "US index IBS reversion (tracking)",
+                "tier": "shadow", "label": "US index IBS reversion",
                 "expected_avg_r": IBS_EXPECTED_R, "expected_win": IBS_EXPECTED_WIN,
                 "expected_n": IBS_EXPECTED_N,
                 "note": "Round 12 M8: IBS band reversion, long only, on SPY, QQQ, DIA and IWM. Passed on "
                         "the S&P 500, Nasdaq 100 and Dow (p=2.6e-07 pooled over six indices), held on the "
                         "Russell 2000, failed on ten non-US indices in round 15. No stop: the worst "
-                        "index trade in 2020 lost 31%. Candidate: journalled, never alerted.",
+                        "index trade in 2020 lost 31%. Shadow since 19 Nov 2026: paper alerts, never sized.",
                 "history": [],
             },
             "eth_inside_day": {
-                "tier": "candidate", "label": "Ether inside-day (tracking)",
+                "tier": "shadow", "label": "Ether inside-day",
                 "expected_avg_r": 0.226, "expected_win": ETH_IB_EXPECTED_WIN, "expected_n": 327,
                 "note": "Round 16: the gold inside-day breakout on Ether, never tuned on it. Passed 1 of 48 "
                         "market x strategy tests (p=5.5e-05), and held on 24/7 data with weekday signals "
                         "(p=0.0001, 0/20 shuffles). +0.45 correlated with Bitcoin's inside-day, about 0 with "
-                        "the gold setups. Candidate: journalled, never alerted.",
+                        "the gold setups. Shadow since 19 Nov 2026: paper alerts, no size.",
                 "history": [],
             },
             "btc_trend": {
@@ -2343,60 +2347,113 @@ def ibs_sessions(bars, now):
     out = []
     for b in bars:
         d = b["t"].date()
-        close = datetime(d.year, d.month, d.day, 16, 15, tzinfo=NY).astimezone(UTC)
-        if close <= now:
+        close = datetime(d.year, d.month, d.day, 16, 0, tzinfo=NY).astimezone(UTC)
+        if close + timedelta(minutes=15) <= now:
             out.append(dict(b, t_close=close))
     return out
 
 
-def ibs_trades(days, cost_bps):
+def ibs_trades(days, cost_bps, include_open=False):
     """IBS band reversion (research round 12, M8). Long at the close when the
     close is below the 10-day highest high minus 2.5 x the 25-day average
     range and IBS = (close - low) / (high - low) < 0.3; out at the first close
     above the previous day's high. No stop. 1R = the 25-day average range at
-    entry, the rule's own unit."""
+    entry, the rule's own unit. With include_open, a trade still open at the
+    last session is returned too, with t_exit None."""
     out, i = [], 25
-    while i < len(days) - 1:
+    while i < len(days):
         hi10 = max(d["h"] for d in days[i - 9:i + 1])
         ar = sum(d["h"] - d["l"] for d in days[i - 24:i + 1]) / 25
         c = days[i]
         rng = c["h"] - c["l"]
         if rng > 0 and ar > 0 and c["c"] < hi10 - 2.5 * ar and (c["c"] - c["l"]) / rng < 0.3:
+            sig = {"t": c["t_close"], "d": 1, "entry": c["c"], "high": c["h"], "ar": ar,
+                   "ibs": (c["c"] - c["l"]) / rng, "depth": (hi10 - c["c"]) / ar}
             j = i + 1
             while j < len(days) and days[j]["c"] <= days[j - 1]["h"]:
                 j += 1
             if j >= len(days):
+                if include_open:
+                    out.append(dict(sig, t_exit=None, exit=None, held=len(days) - 1 - i,
+                                    exit_above=days[-1]["h"]))
                 break                       # still open: journalled once it closes
             x = days[j]
             cost = cost_bps * 1e-4 * c["c"]
-            out.append({"t": c["t_close"], "t_exit": x["t_close"], "d": 1, "entry": c["c"], "exit": x["c"],
-                        "r": (x["c"] - c["c"] - cost) / ar,
-                        "bps": (x["c"] / c["c"] - 1) * 1e4 - cost_bps})
+            out.append(dict(sig, t_exit=x["t_close"], exit=x["c"], held=j - i,
+                            r=(x["c"] - c["c"] - cost) / ar,
+                            bps=(x["c"] / c["c"] - 1) * 1e4 - cost_bps))
             i = j + 1
             continue
         i += 1
     return out
 
 
-def run_ibs(state, journal, symbol, bars_raw, now, cfg=None):
-    """Journal the IBS trades on one US ETF closed since the last run. Silent:
-    the candidate tier never alerts. The first run for a symbol only sets the
-    starting point, so history is never journalled as if it were live."""
-    ic = (cfg or CONFIG)["ibs"]
-    trades = ibs_trades(ibs_sessions(bars_raw, now), ic["cost_bps"])
+IBS_NAMES = {"SPY": ("S&P 500", "US500"), "QQQ": ("Nasdaq 100", "US100"),
+             "DIA": ("Dow", "US30"), "IWM": ("Russell 2000", "US2000")}
+
+
+def ibs_alert(kind, t, symbol, tier, now, cfg):
+    """Slack text for an IBS entry or exit. Never sized: the rule has no stop,
+    so there is no risk distance to size from."""
+    name, cfd = IBS_NAMES.get(symbol, (symbol, symbol))
+    lead = [cfg["slack_mention"]] if cfg.get("slack_mention") else []
+    if kind == "entry":
+        lead.append(f"*BUY {name}* ({cfd} / {symbol}) at the close {px(t['entry'])} · no stop · "
+                    f"exit at the first daily close above the previous day's high "
+                    f"(next session: above {px(t['exit_above'])})")
+        body = (f":chart_with_downwards_trend: *US index dip: {name}*. It closed {t['depth']:.1f} average "
+                f"daily ranges below its 10-day high, in the bottom {t['ibs'] * 100:.0f}% of the day's range. "
+                "Tested 2011-2026 on the S&P 500, Nasdaq 100, Dow and Russell 2000: 616 trades, 72% winners, "
+                "about +62 bp per trade before financing, median hold 3 days. The rule has no stop: in "
+                "March 2020 single trades lost up to 31%. Prices are the ETF's; on a CFD, buy at market.")
+    else:
+        lead.append(f"*CLOSE {name} BUY* ({cfd} / {symbol}) at the close {px(t['exit'])} · "
+                    f"*{t['bps']:+.0f} bp* ({t['r']:+.2f}R) after {t['held']} session{'s' if t['held'] != 1 else ''}")
+        body = (f":checkered_flag: *US index dip closed: {name}*. It closed above the previous day's high, "
+                "which is the exit. Close the position at market.")
+    notes = []
+    if tier == "shadow":
+        notes.append(":microscope: _Shadow (paper): this strategy is being tracked "
+                     "for evidence, not traded. No size given._")
+    happened = t["t"] if kind == "entry" else t["t_exit"]
+    lag_h = (now - happened).total_seconds() / 3600
+    if lag_h > 1:
+        notes.append(f":hourglass: _This is the {uk_day(happened)} UK close, checked {lag_h:.0f}h later "
+                     "(each ETF is checked every few hours). Index CFDs trade after hours, so check the "
+                     "current price before acting._")
+    return "\n".join([" ".join(lead)] + notes + [body])
+
+
+def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
+    """Journal the IBS trades on one US ETF closed since the last run, and
+    alert entries and exits unless the strategy is a silent candidate. The
+    first run for a symbol only sets the starting point, so history is never
+    journalled or alerted as if it were live. Returns Slack messages."""
+    cfg = cfg or CONFIG
+    ic = cfg["ibs"]
+    trades = ibs_trades(ibs_sessions(bars_raw, now), ic["cost_bps"], include_open=True)
+    closed = [t for t in trades if t["t_exit"] is not None]
+    open_t = trades[-1] if trades and trades[-1]["t_exit"] is None else None
     st = state.setdefault("ibs", {}).setdefault(symbol, {})
     if "last_exit" not in st:
-        st["last_exit"] = max((t["t_exit"] for t in trades), default=now).isoformat()
-        return 0
-    new = [t for t in trades if t["t_exit"].isoformat() > st["last_exit"]]
-    for t in new:
+        st["last_exit"] = max((t["t_exit"] for t in closed), default=now).isoformat()
+        st["alerted"] = ""          # an already-open trade from before the start is not alerted
+        return []
+    tier = tier_of(nursery, ic["strategy"]) if nursery else "candidate"
+    msgs = []
+    for t in [t for t in closed if t["t_exit"].isoformat() > st["last_exit"]]:
         journal.append({"sig_time": t["t"].isoformat(), "entry_time": t["t"].isoformat(),
                         "exit_time": t["t_exit"].isoformat(), "dir": 1, "grade": None,
                         "entry": round(t["entry"], 2), "exit": round(t["exit"], 2),
                         "r": round(t["r"], 3), "how": "ibs_exit", "strategy": ic["strategy"],
                         "symbol": symbol})
         st["last_exit"] = t["t_exit"].isoformat()
-    return len(new)
+        if tier != "candidate" and st.get("alerted") == t["t"].isoformat():
+            msgs.append(ibs_alert("exit", t, symbol, tier, now, cfg))
+    if open_t and tier != "candidate" and open_t["t"].isoformat() > st.get("alerted", ""):
+        msgs.append(ibs_alert("entry", open_t, symbol, tier, now, cfg))
+        st["alerted"] = open_t["t"].isoformat()
+    return msgs
 
 
 def run_markets(state, journal, now, api_key, sizing, nursery, fetch=None):
@@ -2647,7 +2704,8 @@ def main():
                         sym = syms[ist.get("next", 0) % len(syms)]
                         ist["next"] = (ist.get("next", 0) + 1) % len(syms)
                         try:
-                            run_ibs(state, journal, sym, td_daily(api_key, sym, CONFIG["ibs"]["bars"]), now)
+                            msgs += run_ibs(state, journal, sym, td_daily(api_key, sym, CONFIG["ibs"]["bars"]),
+                                            now, CONFIG, nursery)
                             ist["fail_count"] = 0
                         except Exception as e:  # noqa: BLE001 - tracking must never stop the alerts
                             print(f"ERROR (ibs {sym}): {e}", file=sys.stderr)
