@@ -1,0 +1,6 @@
+test,n_favoured,avg_favoured,n_other,avg_other,t,p,verdict
+"V1 US IBS, RVOL >= 1.5",145,42.9114,447,61.1437,-0.74,0.77,
+"V2 Gold trend, trigger RVOL >= 1.0",339,0.1562,382,0.2234,-0.84,0.8,
+"V3 Gold trend, VPIN above median",378,0.1325,343,0.2572,-1.57,0.94,
+"V4 Gold inside-day, quiet day (RVOL < 1)",426,0.0883,301,0.1461,-0.81,0.79,
+"V5 Ether inside-day, quiet day (RVOL < 1)",207,0.2883,120,0.1172,1.46,0.073,
