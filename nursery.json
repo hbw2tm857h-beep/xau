@@ -1,5 +1,5 @@
 {
-  "hypotheses_tested": 1147,
+  "hypotheses_tested": 1170,
   "strategies": {
     "btc_trend": {
       "expected_avg_r": 0.18,
@@ -45,6 +45,15 @@
       "label": "Trend setups",
       "note": "Rounds 1-4: Heikin Ashi trend-ride, 4H agreement + Ichimoku cloud",
       "tier": "live"
+    },
+    "us_ibs": {
+      "expected_avg_r": 0.478,
+      "expected_n": 616,
+      "expected_win": 72,
+      "history": [],
+      "label": "US index IBS reversion (tracking)",
+      "note": "Round 12 M8: IBS band reversion, long only, on SPY, QQQ, DIA and IWM. Passed on the S&P 500, Nasdaq 100 and Dow (p=2.6e-07 pooled over six indices), held on the Russell 2000, failed on ten non-US indices in round 15. No stop: the worst index trade in 2020 lost 31%. Candidate: journalled, never alerted.",
+      "tier": "candidate"
     }
   }
 }
