@@ -212,6 +212,12 @@ CONFIG = {
     # GitHub's scheduler often runs hours late or skips runs, so every missed
     # hour is replayed (up to 2 days) and alerts more than 2 hours old say so.
     "max_catchup_bars": 48,
+    # A new setup found more than this many hours after its candle closed is
+    # not posted: by then the entry may already have run, and acting on it is
+    # guesswork. Its trade is still journalled, and its follow-up alerts are
+    # dropped too, so nothing refers to a setup you never saw. Alerts for a
+    # trade you were told about still post, marked late, because you may be in it.
+    "max_setup_age_hours": 1.0,
     "late_alert_hours": 2,
 
     # Other markets (research round 10). Each runs the same live code with these
@@ -2484,8 +2490,17 @@ def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
         if tier != "candidate" and st.get("alerted") == t["t"].isoformat():
             msgs.append(ibs_alert("exit", t, symbol, tier, now, cfg))
     if open_t and tier != "candidate" and open_t["t"].isoformat() > st.get("alerted", ""):
-        msgs.append(ibs_alert("entry", open_t, symbol, tier, now, cfg))
-        st["alerted"] = open_t["t"].isoformat()
+        age_h = (now - open_t["t"]).total_seconds() / 3600
+        if age_h > cfg.get("max_setup_age_hours", 1e9):
+            if st.get("skipped") != open_t["t"].isoformat():
+                st["skipped"] = open_t["t"].isoformat()
+                name = IBS_NAMES.get(symbol, (symbol,))[0]
+                msgs.append(Msg(f":fast_forward: *US index dip on {name} not posted:* the {uk_day(open_t['t'])} UK close "
+                                f"was only checked {age_h:.0f}h later, too late to buy at the close. "
+                                "The trade is still tracked in the journal.", "reports"))
+        else:
+            msgs.append(ibs_alert("entry", open_t, symbol, tier, now, cfg))
+            st["alerted"] = open_t["t"].isoformat()
     return msgs
 
 
@@ -2619,6 +2634,8 @@ def verify_run(state, now, cfg=None):
                         + "; ".join(lr["failed"])[:300])
     if lr.get("late"):
         problems.append(f"{lr['late']} alert{'s were' if lr['late'] != 1 else ' was'} posted late")
+    if lr.get("skipped"):
+        problems.append("late setups were not posted (see the :fast_forward: message)")
     expected = hour - H1                                   # the candle that closed on the hour
     gold_break = expected.astimezone(NY).hour == 17        # gold's daily 17:00-18:00 New York pause
     if market_open(expected) and not gold_break and state.get("last_h1") and \
@@ -2693,11 +2710,12 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
 
     if last_k >= 0 and state.get("last_daily_k_end") != F.daily[last_k]["end"].isoformat():
         e = daily_hold(F, last_k, state.get("idea"), cfg)
-        if e:
+        if e and not (state.get("idea") or {}).get("unannounced"):
             out.append(Msg(fmt_event(e, cfg, sizing), cfg.get("trend_strategy", "trend")))
         state["last_daily_k_end"] = F.daily[last_k]["end"].isoformat()
 
     new_idx = [i for i, b in enumerate(h1) if b["t"].isoformat() > state["last_h1"]]
+    dropped = []
     news = None
     led, closed_trades = [], []
     for i in new_idx[-cfg["max_catchup_bars"]:]:
@@ -2718,6 +2736,17 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
             tier = tier_of(nursery, (e.get("idea") or {}).get("strategy", "trend"))
             if tier == "candidate":
                 continue   # tracked in the journal and the ledger, never alerted
+            idea = e.get("idea") or {}
+            if e["type"] in ("signal", "ib_signal", "h4_signal") and \
+                    (now - e["t"]).total_seconds() / 3600 > cfg.get("max_setup_age_hours", 1e9):
+                key = {"signal": "idea", "ib_signal": "ib", "h4_signal": "h4"}[e["type"]]
+                if (state.get(key) or {}).get("sig_time") == idea.get("sig_time"):
+                    state[key]["unannounced"] = True
+                dropped.append(f"{side_word(idea['dir']) + ' ' if idea.get('dir') else ''}"
+                               f"{'inside-day' if e['type'] == 'ib_signal' else 'trend'} setup from {uk_day(e['t'])} UK")
+                continue
+            if idea.get("unannounced"):
+                continue   # a follow-up to a setup that was too late to post
             if e["type"] in ("entry", "ib_entry", "h4_entry") and not cfg["alert_entry_hit"]:
                 continue
             # shadow tier gets no size: it is being watched, not traded
@@ -2757,6 +2786,11 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                                  "Check the current price before acting._")
                 msg = "\n".join(([" ".join(lead)] if lead else []) + extra + notes + [msg])
                 out.append(Msg(relabel(msg, cfg), (e.get("idea") or {}).get("strategy", "trend")))
+    if dropped:
+        name = cfg.get("market_name", "Gold")
+        out.append(Msg(f":fast_forward: *{name}: {len(dropped)} late setup{'s' if len(dropped) != 1 else ''} not posted.* "
+                       f"The bot ran late, and a setup more than {cfg.get('max_setup_age_hours'):g}h old isn't safe to act on: "
+                       + "; ".join(dropped) + ". The trades are still tracked in the journal.", "reports"))
     skipped = len(new_idx) - cfg["max_catchup_bars"]
     if skipped > 0 and not cfg.get("market_name"):   # gold's warning covers the other markets
         warn = (f":warning: The bot didn't run for {len(new_idx)} hours, so the oldest {skipped} "
@@ -2946,7 +2980,8 @@ def main():
             failed.append(f"{getattr(m, 'route', None) or 'reports'}: {str(e)[:80]}")
     if mode == "run":
         state["last_run"] = dict(run_record, posts=len(msgs), failed=failed,
-                                 late=sum(":hourglass:" in m for m in msgs))
+                                 late=sum(":hourglass:" in m for m in msgs),
+                                 skipped=sum(":fast_forward:" in m for m in msgs))
     save_json(state_path, state)
     save_json(journal_path, journal)
     if failed:
