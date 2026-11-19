@@ -521,6 +521,24 @@ Round 10's code, costs method and pass mark, unchanged, on markets Dukascopy off
 
 Bitcoin's inside-day setup failed this same realistic test in round 10. Ether's passes it, so **Ether's inside-day setup is now a silent nursery candidate (`eth_inside_day`)**.
 
+## Round 17: the gold strategies on 30 more markets (19 Nov 2026)
+
+`round17_more_fx_indices.py`, `results_round17_more_fx_indices.csv`
+
+Round 10's code and pass mark on the ten indices downloaded for round 15 and twenty FX pairs round 10 didn't cover: USDMXN, USDZAR, USDSEK, USDNOK, USDPLN, USDHUF, USDCNH, USDSGD, USDCZK, AUDNZD, CADJPY, CHFJPY, NZDJPY, EURCHF, EURCAD, EURAUD, GBPAUD, GBPCAD, GBPCHF and AUDCAD. USDTRY was excluded in advance because of financing. 90 tests, bar p < 0.05/90 = 0.00056, committed (514da22) before the FX data was downloaded. Several pairs are missing 2013, which Dukascopy fails to serve.
+
+**0 of 90 passed.** The closest:
+
+| Market | Strategy | n | avg R | p |
+|---|---|---|---|---|
+| FTSE MIB | h4 | 170 | +0.216 | 0.0046 |
+| CADJPY | insideday | 636 | +0.088 | 0.024 |
+| Hang Seng | trend | 329 | +0.092 | 0.062 |
+| IBEX 35 | h4 | 265 | +0.091 | 0.084 |
+| Hang Seng | h4 | 252 | +0.086 | 0.1 |
+
+That completes the sweep. Across rounds 3, 10, 16 and 17 the gold strategies have now been run on 67 other markets, and two survived: the trend rules on Bitcoin and the inside-day breakout on Ether. FX, in any form, never has.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -553,5 +571,6 @@ python3 research/round15_ibs_new_indices.py # IBS on ten unseen indices
 python3 research/round16_commodities_crypto.py # gold strategies on 16 more markets
 python3 research/round16_eth_checks.py      # stress tests on the Ether inside-day pass
 python3 research/round16_eth_live_check.py  # live code vs research on Ether
+python3 research/round17_more_fx_indices.py # gold strategies on 30 more markets
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```

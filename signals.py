@@ -165,8 +165,8 @@ CONFIG = {
     "gate_bootstrap": 2000,
     # Recorded test rows in research/results*.csv. Used only to report how
     # strict a backtest search would have to be; see gate().
-    "hypotheses_tested": 1218,          # +63 in round 10, +9 in round 11, +1 re-test on 09:30 candles,
-                                        # +9 round 12, +7 round 13, +6 round 14, +1 round 15, +48 round 16
+    "hypotheses_tested": 1308,          # +63 in round 10, +9 in round 11, +1 re-test on 09:30 candles,
+                                        # +9 round 12, +7 round 13, +6 round 14, +1 round 15, +48 round 16, +90 round 17
 
     # Slack pushes nothing for a webhook message that mentions nobody: most
     # people's per-channel setting is "mentions and keywords only". Set the
