@@ -165,8 +165,8 @@ CONFIG = {
     "gate_bootstrap": 2000,
     # Recorded test rows in research/results*.csv. Used only to report how
     # strict a backtest search would have to be; see gate().
-    "hypotheses_tested": 1170,          # +63 in round 10, +9 in round 11, +1 re-test on 09:30 candles,
-                                        # +9 round 12, +7 round 13, +6 round 14, +1 round 15
+    "hypotheses_tested": 1218,          # +63 in round 10, +9 in round 11, +1 re-test on 09:30 candles,
+                                        # +9 round 12, +7 round 13, +6 round 14, +1 round 15, +48 round 16
 
     # Slack pushes nothing for a webhook message that mentions nobody: most
     # people's per-channel setting is "mentions and keywords only". Set the
@@ -236,6 +236,27 @@ CONFIG = {
                 "ledger": False,
                 "track_record": "Bitcoin, tested 2017-2026 (rules never tuned on it): 375 trades, "
                                 "+0.18R per trade after costs",
+            },
+        },
+        # Research round 16: of 16 more markets x 3 strategies, only the
+        # inside-day breakout on Ether passed, and it held on 24/7 data with
+        # signals from weekday inside days only (327 trades, +0.23R, p=0.0001).
+        # A candidate: journalled, never alerted. Trend and 4-hour setups off.
+        "eth": {
+            "symbol": "ETH/USD",
+            "name": "Ether", "ticker": "ETHUSD",
+            "cfg": {
+                "trend": False,
+                "trend_strategy": "eth_trend",
+                "all_hours": True,            # 24/7: open trades are tracked through the weekend
+                "inside_day": True,
+                "ib_strategy": "eth_inside_day",
+                "ib_weekday_signals": True,   # inside days ending at a weekend are skipped, as tested
+                "cost_per_trade": 1.4,        # ~8 basis points at $1,800
+                "h4_trigger": False,
+                "ledger": False,
+                "track_record": "Ether, tested 2017-2026 (rules never tuned on it): 327 trades, "
+                                "+0.23R per trade after costs",
             },
         },
     },
@@ -797,6 +818,8 @@ def step(F, i, st, cfg, news=None):
     opposite-colour HA exit in "ha" mode).
     """
     ev = []
+    if cfg.get("trend") is False:    # a market that runs only its other setups (e.g. Ether)
+        return ev
     b, x = F.h1[i], F.ha[i]
     t_close = F.close_time(i)
     idea = st.get("idea")
@@ -914,7 +937,7 @@ def ib_step(F, i, st, cfg):
     new_day = i > 0 and k >= 0 and k != F.d_idx[i - 1]
     if new_day and F.daily[k]["end"] <= b["t"]:
         # the day ended in a gap before this candle (early holiday close): settle it at its last price first
-        ev += _ib_day_close(F, k, st, F.h1[i - 1]["c"], t_close, cost)
+        ev += _ib_day_close(F, k, st, F.h1[i - 1]["c"], t_close, cost, cfg)
     ib = st.get("ib")
     if ib and not ib["triggered"]:
         up, dn = b["h"] >= ib["hi"], b["l"] <= ib["lo"]
@@ -937,13 +960,16 @@ def ib_step(F, i, st, cfg):
             st["ib"] = ib = None
 
     if new_day and F.daily[k]["end"] > b["t"]:
-        ev += _ib_day_close(F, k, st, b["c"], t_close, cost)  # this candle closed the day
+        ev += _ib_day_close(F, k, st, b["c"], t_close, cost, cfg)  # this candle closed the day
     return ev
 
 
-def _ib_day_close(F, k, st, price, t, cost):
+def _ib_day_close(F, k, st, price, t, cost, cfg=None):
     """Daily candle k has closed: settle the open inside-day trade or cancel the
-    unfilled orders, then look for a new inside day."""
+    unfilled orders, then look for a new inside day. cfg can rename the strategy
+    (ib_strategy) and skip inside days that end at a weekend
+    (ib_weekday_signals), as the round 16 Ether test did."""
+    cfg = cfg or {}
     ev = []
     ib = st.get("ib")
     day_end_iso = F.daily[k]["end"].isoformat()
@@ -954,9 +980,10 @@ def _ib_day_close(F, k, st, price, t, cost):
         else:
             ev.append({"type": "ib_cancel", "idea": dict(ib), "t": t})
         st["ib"] = None
-    if is_inside_day(F.daily, k):
+    weekend = cfg.get("ib_weekday_signals") and F.daily[k]["end"].astimezone(UTC).weekday() >= 5
+    if is_inside_day(F.daily, k) and not weekend:
         cur, prev = F.daily[k], F.daily[k - 1]
-        st["ib"] = {"strategy": "inside_day", "hi": round(cur["h"], 2), "lo": round(cur["l"], 2),
+        st["ib"] = {"strategy": cfg.get("ib_strategy", "inside_day"), "hi": round(cur["h"], 2), "lo": round(cur["l"], 2),
                     "prev_hi": round(prev["h"], 2), "prev_lo": round(prev["l"], 2),
                     "triggered": False, "setup_day_end": day_end_iso, "sig_time": F.daily[k]["end"].isoformat()}
         ev.append({"type": "ib_signal", "idea": dict(st["ib"]), "t": t})
@@ -1756,6 +1783,15 @@ def default_nursery(cfg):
                         "index trade in 2020 lost 31%. Candidate: journalled, never alerted.",
                 "history": [],
             },
+            "eth_inside_day": {
+                "tier": "candidate", "label": "Ether inside-day (tracking)",
+                "expected_avg_r": 0.226, "expected_win": ETH_IB_EXPECTED_WIN, "expected_n": 327,
+                "note": "Round 16: the gold inside-day breakout on Ether, never tuned on it. Passed 1 of 48 "
+                        "market x strategy tests (p=5.5e-05), and held on 24/7 data with weekday signals "
+                        "(p=0.0001, 0/20 shuffles). +0.45 correlated with Bitcoin's inside-day, about 0 with "
+                        "the gold setups. Candidate: journalled, never alerted.",
+                "history": [],
+            },
             "btc_trend": {
                 "tier": "shadow", "label": "Bitcoin trend setups",
                 "expected_avg_r": 0.18, "expected_win": 57, "expected_n": 375,
@@ -2279,6 +2315,8 @@ def run_noise(state, journal, bars_raw, now, cfg=None):
 # research/round12_ibs_live_check.py: S&P 500, Nasdaq 100, Dow and Russell 2000
 # cash sessions 2011-2026, 1 bp costs, no financing, R = 25-day average range.
 IBS_EXPECTED_R, IBS_EXPECTED_WIN, IBS_EXPECTED_N = 0.478, 72, 616
+# research/round16_eth_checks.py, realistic version: 24/7 data, weekday signals, 8 bp
+ETH_IB_EXPECTED_WIN = 50
 
 
 def td_daily(api_key, symbol, n):

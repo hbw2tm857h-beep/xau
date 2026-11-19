@@ -77,6 +77,11 @@ Research rounds 12–15 looked beyond gold: 23 pre-registered tests of documente
 
 It runs as `us_ibs` at tier `candidate`: each hourly run fetches the daily candles of one of SPY, QQQ, DIA or IWM in turn, replays the rule and journals closed trades. It never alerts. **The rule has no stop**, and the worst index trade in the 2020 crash lost 31%, so before it could carry size it needs a decision on that tail. 1R is the 25-day average daily range, so its R figures are not comparable with the gold setups'. Set `CONFIG["ibs"]["enabled"]` to `False` to turn it off.
 
+## Ether inside-day (candidate, silent)
+Research round 16 ran the three gold strategies, unchanged, on 16 more markets: 11 commodities and 5 cryptocurrencies. One passed: **the inside-day breakout on Ether**. It held on 24/7 data with signals only from weekday inside days: 327 trades over 2017–2026 at +0.23R after costs, positive in every period, p = 0.0001, and none of 20 shuffled histories came close. It's uncorrelated with the gold setups (monthly +0.10 and 0.00).
+
+Each run fetches ETH/USD hourly candles and runs the live inside-day code on them as `eth_inside_day` at tier `candidate`: journalled, never alerted. Trend and 4-hour setups are off for Ether (`"trend": False`). The settings are under `CONFIG["markets"]["eth"]`; delete that entry to switch it off.
+
 ## Tiers: what gets traded, what only gets watched
 Each strategy in `nursery.json` sits in one of three tiers:
 
@@ -92,7 +97,7 @@ Once a week (with the scorecard, or on demand with mode `gate`) each strategy is
 - A **live** strategy whose last 50 trades average less than half the edge it was promoted on is **demoted automatically** — alerts carry on, marked paper and unsized, until it earns its way back. Demotion is automatic because it cuts risk.
 - A **candidate or shadow** strategy with 30+ closed trades, a positive average above half its tested edge, and a one-sided bootstrap p<0.05 is **proposed** for promotion. The gate never applies it: raising real size stays your decision, made by editing `nursery.json`.
 
-**Why the asymmetry, and why the bootstrap is honest here.** `research/results*.csv` records **1,063** tested configurations (1,170 by round 15). At a nominal p<0.05 you would expect roughly 53 of those to look good by luck alone, which is why a backtest result on its own earns a candidate slot and nothing more — to clear that search, an idea would need p<0.000047. Live promotion is a different test: the rule was fixed *before* the live data existed, so it is a single pre-registered test with no multiplicity to correct for. That is the whole point of the nursery — it converts a multiple-comparisons problem into one clean out-of-sample test per idea.
+**Why the asymmetry, and why the bootstrap is honest here.** `research/results*.csv` records **1,063** tested configurations (1,218 by round 16). At a nominal p<0.05 you would expect roughly 53 of those to look good by luck alone, which is why a backtest result on its own earns a candidate slot and nothing more — to clear that search, an idea would need p<0.000047. Live promotion is a different test: the rule was fixed *before* the live data existed, so it is a single pre-registered test with no multiplicity to correct for. That is the whole point of the nursery — it converts a multiple-comparisons problem into one clean out-of-sample test per idea.
 
 ## What it remembers (feature ledger)
 Every hour the bot checks, it writes one row to `data/ledger.csv`: the features it computed (Heikin Ashi geometry on H1, the daily trend and distance from the 50 EMA in ATRs, the 4-hour colour and Ichimoku position, ADX, ATR and its percentile, room to the nearest daily levels, hour, day, session, inside-day flag) plus what it decided and what state it was in. Closed trades go to `data/outcomes.csv`, keyed by `sig_time` so it joins to the ledger's `t_close`.

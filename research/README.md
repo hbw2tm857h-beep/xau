@@ -497,6 +497,30 @@ No relative-value edge on these markets at textbook settings.
 
 **What it means:** the IBS edge is not a property of stock indices in general. It is a US effect. All four US indices tested are positive, by +43 to +70 bp: S&P 500, Nasdaq 100 and Dow in round 12, each significant on its own, plus Russell 2000 here, the only new US index. Outside the US it is mostly flat or negative, and round 12's DAX, FTSE and Nikkei were not significant either. That fits the explanation usually given for it, persistent buying of US index dips. **So the candidate covers the US indices only**, and a non-US version is ruled out.
 
+## Round 16: the gold strategies on 16 more markets (19 Nov 2026)
+
+`round16_commodities_crypto.py`, `results_round16_commodities_crypto.csv`, `round16_eth_checks.py`, `round16_eth_live_check.py`
+
+Round 10's code, costs method and pass mark, unchanged, on markets Dukascopy offers that round 10 didn't use: copper, platinum, palladium, natural gas, cocoa, coffee, sugar, cotton, soybeans, orange juice, diesel, Ether, Litecoin, Bitcoin Cash, Stellar and Cardano. 48 tests, bar p < 0.05/48 = 0.00104, committed (9fddd8f) before the data was downloaded. Most softs and the altcoins start in 2017–2021, and copper and natural gas are missing 2013 (Dukascopy fails on that year).
+
+**1 of 48 passed: the inside-day breakout on Ether**, 376 trades, +0.223R, PF 1.83, p 5.5e-05. Near misses that don't clear the bar: orange-juice inside-day (+0.143R, p 0.0038), coffee trend (+0.136R, p 0.056) and coffee inside-day (p 0.063). Everything else is flat or negative, including every metal and all four other cryptos' trend setups.
+
+**Ether checks** (the realistic test was fixed in advance: 24/7 data, signals only from weekday inside days, trades tracked through weekends; it must stay positive in every period at p < 0.05):
+
+| | n | avg R | 2016–22 | 2023–24 | 2025–26 | p |
+|---|---|---|---|---|---|---|
+| As tested (gold's hours, 8 bp) | 376 | +0.223 | +0.315 | +0.188 | +0.023 | 5.5e-05 |
+| Costs 16 bp / 32 bp | 376 | +0.199 / +0.151 | | | −0.002 / −0.052 | 0.0003 / 0.004 |
+| 24/7, all signals | 543 | +0.193 | +0.220 | +0.167 | +0.157 | 2e-05 |
+| **24/7, weekday signals (realistic)** | **327** | **+0.226** | **+0.241** | **+0.304** | **+0.102** | **0.0001** |
+
+- Buys +0.229R, sells +0.217R. Positive in 8 of 10 years.
+- **Shuffle test:** 0 of 20 shuffles reached it (mean −0.007R).
+- **Monthly correlation:** +0.45 with Bitcoin's inside-day setup (not running), −0.01 with Bitcoin's trend setups, +0.10 with gold's trend setups, +0.00 with gold's inside-day.
+- **Live code:** `round16_eth_live_check.py` replays all of Ether through `ib_step` with the live config. At zero cost 309 of the research's 327 trades match exactly and the averages agree (+0.252R live, +0.250R research). The rest are the warm-up period, and days that hit both sides, where the live code uses the hourly order instead of the research's open-price rule.
+
+Bitcoin's inside-day setup failed this same realistic test in round 10. Ether's passes it, so **Ether's inside-day setup is now a silent nursery candidate (`eth_inside_day`)**.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -526,4 +550,8 @@ python3 research/round12_ibs_checks.py    # stress tests on the IBS index pass
 python3 research/round13_more_markets.py  # IBS on FX/commodities/Bitcoin + four more
 python3 research/round14_relative_value.py # pairs and cross-sectional tests
 python3 research/round15_ibs_new_indices.py # IBS on ten unseen indices
+python3 research/round16_commodities_crypto.py # gold strategies on 16 more markets
+python3 research/round16_eth_checks.py      # stress tests on the Ether inside-day pass
+python3 research/round16_eth_live_check.py  # live code vs research on Ether
+python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```
