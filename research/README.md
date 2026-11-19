@@ -559,6 +559,36 @@ That completes the sweep. Across rounds 3, 10, 16 and 17 the gold strategies hav
 - **The one hint, Ether's quiet inside days, is not enough.** It is better in all three periods, but p 0.073 misses the bar, and it would be the 1,314th configuration tested. It is not adopted. The bot already journals every Ether trade, so live trades can show whether it is real at no cost.
 - A pass on proxy volume would have needed checking against real exchange volume (futures or ETF tape) before use. None passed, so that question doesn't arise.
 
+## Round 19: the five alerted strategies as one portfolio (19 Nov 2026)
+
+`round19_portfolio.py`. Not a rule search: nothing changes and nothing is added to the test count. It measures what the strategies are worth together. Every trade comes from the live code replaying history, in R, booked by exit month, over the 104 months all five can trade (Mar 2018 – Oct 2026), assuming 1R = 1% of the account.
+
+| Stream | R a month | Vol | Sharpe | Total | Worst drop |
+|---|---|---|---|---|---|
+| Gold trend | +0.72 | 2.15 | 1.16 | +75R | 7.5R |
+| Gold inside-day | +0.30 | 1.54 | 0.68 | +31R | 6.7R |
+| Bitcoin trend | +0.42 | 1.74 | 0.83 | +43R | 9.7R |
+| Ether inside-day | +0.71 | 2.00 | 1.22 | +74R | 5.7R |
+| US IBS | +1.21 | 5.13 | 0.82 | +126R | 23.1R |
+
+**Correlations are all low:** the highest monthly correlation is +0.22 (US IBS with gold trend); most pairs are between −0.09 and +0.17.
+
+| Portfolio | R a month | Vol | Sharpe | Worst drop |
+|---|---|---|---|---|
+| Gold only (today's live set: trend 1%, inside-day 0.5%) | +0.87 | 2.36 | 1.28 | 7.6R |
+| All five at 1% each | +3.36 | 7.21 | 1.62 | 24.8R |
+| **All five, risk parity (inverse volatility)** | **+2.86** | **5.47** | **1.81** | **22.6R** |
+| All five, mean-variance (fitted in-sample) | +3.03 | 5.59 | 1.88 | 20.7R |
+| √(Σ Sharpe²), if fully uncorrelated | | | 2.16 | |
+
+Fitted on the first half and judged on the second (52 months): gold only 1.41, equal 1% 1.76, **risk parity 1.80**, mean-variance 1.65. The mean-variance weights don't survive out of sample; risk parity, which uses no return information, does.
+
+**What it says:**
+- **Breadth is the lever.** Adding the three new streams lifts the portfolio Sharpe from 1.28 to about 1.8 with no change to any rule. At the same volatility as gold alone, that's roughly 40% more return.
+- **Size US IBS at about 0.4% per R, not 1%.** Its R (the 25-day average range) is small next to a no-stop crash, so it carries most of the portfolio's volatility and drawdown. Risk parity weights per R: gold trend 0.98, gold inside-day 1.36, Bitcoin trend 1.20, Ether inside-day 1.05, US IBS 0.41.
+- **The drawdown rises with the size.** All five at risk parity have a 22.6R worst drop against gold's 7.6R, mostly from US IBS in crash months. Scaled to gold's volatility the worst drop is about 9.7R. Size the whole book to the drawdown you can sit through, not the Sharpe.
+- **Caveats:** in-sample history only. The three new streams have no live record yet (shadow tier). US IBS excludes financing (roughly −6 bp a trade) and has no stop. Bitcoin's live config takes a few more signals than its research version.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -593,5 +623,7 @@ python3 research/round16_eth_checks.py      # stress tests on the Ether inside-d
 python3 research/round16_eth_live_check.py  # live code vs research on Ether
 python3 research/round17_more_fx_indices.py # gold strategies on 30 more markets
 python3 research/round18_volume.py         # five volume tests (Dukascopy volume)
+python3 research/similar_setups.py         # build data/similar_setups.json (alert history line)
+python3 research/round19_portfolio.py      # the five strategies as one portfolio
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```
