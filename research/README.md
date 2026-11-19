@@ -539,6 +539,26 @@ Round 10's code and pass mark on the ten indices downloaded for round 15 and twe
 
 That completes the sweep. Across rounds 3, 10, 16 and 17 the gold strategies have now been run on 67 other markets, and two survived: the trend rules on Bitcoin and the inside-day breakout on Ether. FX, in any form, never has.
 
+## Round 18: does volume help? (19 Nov 2026)
+
+`round18_volume.py`, `results_round18_volume.csv`, volume in `data/volume/`
+
+**Why:** Bradley asked for a live volume-based probability. **The data problem first:** spot gold, FX and index CFDs have no exchange volume. The free sources for real US ETF volume either block scripts behind a browser check (Stooq) or report the broker's own small flow rather than the exchange's (Dukascopy's SPY shows ~2,000 units a day against ~60 million real shares). So the volume here is Dukascopy's own hourly volume, a proxy for activity. Five tests were committed (b630686) before it was downloaded. Each asks whether a volume condition picks out better trades from a strategy already in the bot. Bar p < 0.05/5 = 0.01.
+
+| Test | Favoured | n | avg | Other | n | avg | p | |
+|---|---|---|---|---|---|---|---|---|
+| V1 US IBS, capitulation volume (RVOL ≥ 1.5) | high volume | 145 | +43 bp | normal | 447 | +61 bp | 0.77 | no, worse |
+| V2 Gold trend, trigger candle RVOL ≥ 1.0 | high volume | 339 | +0.156R | low | 382 | +0.223R | 0.80 | no, worse |
+| V3 Gold trend, VPIN above its 500-hour median | high VPIN | 378 | +0.132R | low | 343 | +0.257R | 0.94 | no, worse |
+| V4 Gold inside-day, quiet inside day (RVOL < 1) | quiet | 426 | +0.088R | busy | 301 | +0.146R | 0.79 | no, worse |
+| V5 Ether inside-day, quiet inside day (RVOL < 1) | quiet | 207 | +0.288R | busy | 120 | +0.117R | 0.073 | no |
+
+**What it says:**
+- **Volume adds nothing the strategies can use.** Four of the five favoured groups did *worse*. The classic ideas, capitulation volume, volume confirmation and informed-flow VPIN, all point the wrong way on these strategies, though none of the reversals is significant either.
+- **VPIN is the "volume-based probability" in the literature, and it is not a direction signal.** Here, setups taken when it was high averaged half the R of the rest. That fits its published use as a warning of volatility and toxic flow, not as an entry signal.
+- **The one hint, Ether's quiet inside days, is not enough.** It is better in all three periods, but p 0.073 misses the bar, and it would be the 1,314th configuration tested. It is not adopted. The bot already journals every Ether trade, so live trades can show whether it is real at no cost.
+- A pass on proxy volume would have needed checking against real exchange volume (futures or ETF tape) before use. None passed, so that question doesn't arise.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -572,5 +592,6 @@ python3 research/round16_commodities_crypto.py # gold strategies on 16 more mark
 python3 research/round16_eth_checks.py      # stress tests on the Ether inside-day pass
 python3 research/round16_eth_live_check.py  # live code vs research on Ether
 python3 research/round17_more_fx_indices.py # gold strategies on 30 more markets
+python3 research/round18_volume.py         # five volume tests (Dukascopy volume)
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```
