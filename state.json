@@ -1,6 +1,6 @@
 {
   "fail_count": 0,
-  "h4_last_k": 892,
+  "h4_last_k": 893,
   "ib": null,
   "ibs": {
     "DIA": {
@@ -27,25 +27,37 @@
     "next": 2
   },
   "idea": null,
-  "last_daily_k_end": "2026-11-18T22:00:00+00:00",
-  "last_h1": "2026-11-19T20:00:00+00:00",
+  "last_daily_k_end": "2026-11-19T22:00:00+00:00",
+  "last_h1": "2026-11-19T21:00:00+00:00",
   "last_run": {
     "failed": [],
-    "late": 2,
+    "late": 0,
     "mode": "run",
-    "posts": 2,
-    "started": "2026-11-19T21:07:07.959479+00:00"
+    "posts": 1,
+    "skipped": 0,
+    "started": "2026-11-19T22:07:39.361790+00:00"
   },
   "markets": {
     "btc": {
       "fail_count": 0,
-      "last_daily_k_end": "2026-11-18T22:00:00+00:00",
-      "last_h1": "2026-11-19T20:00:00+00:00"
+      "last_daily_k_end": "2026-11-19T22:00:00+00:00",
+      "last_h1": "2026-11-19T21:00:00+00:00"
     },
     "eth": {
       "fail_count": 0,
-      "last_daily_k_end": "2026-11-18T22:00:00+00:00",
-      "last_h1": "2026-11-19T20:00:00+00:00"
+      "ib": {
+        "hi": 1817.57,
+        "lo": 1736.28,
+        "prev_hi": 1836.0,
+        "prev_lo": 1732.83,
+        "range_atr": 0.719,
+        "setup_day_end": "2026-11-19T22:00:00+00:00",
+        "sig_time": "2026-11-19T22:00:00+00:00",
+        "strategy": "eth_inside_day",
+        "triggered": false
+      },
+      "last_daily_k_end": "2026-11-19T22:00:00+00:00",
+      "last_h1": "2026-11-19T21:00:00+00:00"
     }
   },
   "noise": {
