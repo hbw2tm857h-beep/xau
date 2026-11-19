@@ -206,6 +206,9 @@ CONFIG = {
                        "ib_entry", "ib_cancel", "ib_close"],
 
     "fail_alert_after": 3,
+    # The verify step (a minute after each run) flags a run that started later
+    # than this many minutes after the hour.
+    "verify_late_minutes": 15,
     # GitHub's scheduler often runs hours late or skips runs, so every missed
     # hour is replayed (up to 2 days) and alerts more than 2 hours old say so.
     "max_catchup_bars": 48,
@@ -2366,12 +2369,12 @@ def td_daily(api_key, symbol, n):
 
 def ibs_sessions(bars, now):
     """Complete sessions only: a candle counts once its 16:00 New York close
-    (plus 15 minutes for the feed to settle) has passed."""
+    (plus 5 minutes for the feed to settle) has passed."""
     out = []
     for b in bars:
         d = b["t"].date()
         close = datetime(d.year, d.month, d.day, 16, 0, tzinfo=NY).astimezone(UTC)
-        if close + timedelta(minutes=15) <= now:
+        if close + timedelta(minutes=5) <= now:
             out.append(dict(b, t_close=close))
     return out
 
@@ -2552,6 +2555,84 @@ def history_line(strategy, idea, cfg=None):
                        f"{len(s['buckets'])} groups found by looking at the same history, so treat it as a hint")
     return (f":abacus: _History: setups like this ({b}) won {g['win']:.0f}% of {g['n']:,} times, "
             f"avg {fmt(g['avg'])}; {head}. {verdict}._")
+
+
+def ibs_due(state, now, cfg=None):
+    """The ETFs whose daily candle closed today and has not been checked yet.
+    All of them come due together in the first run after 16:05 New York, so
+    an entry or exit is alerted within minutes of the close, not hours."""
+    cfg = cfg or CONFIG
+    ny = now.astimezone(NY)
+    if ny.weekday() >= 5 or (ny.hour, ny.minute) < (16, 5):
+        return []
+    today = ny.date().isoformat()
+    st = state.get("ibs", {})
+    return [s for s in cfg["ibs"]["symbols"] if (st.get(s) or {}).get("checked") != today]
+
+
+def run_ibs_due(state, journal, now, api_key, nursery, fetch=None, sleep=None):
+    """Fetch and replay every ETF that is due. Twelve Data's free plan allows 8
+    calls a minute and this run has already used about 4, so with more than
+    one ETF due it waits a minute first. A failure never stops the alerts."""
+    fetch = fetch or (lambda sym: td_daily(api_key, sym, CONFIG["ibs"]["bars"]))
+    sleep = sleep or time.sleep
+    ist = state.setdefault("ibs", {})
+    due = ibs_due(state, now)
+    msgs = []
+    if len(due) > 1:
+        sleep(61)
+    for sym in due:
+        try:
+            msgs += run_ibs(state, journal, sym, fetch(sym), now, CONFIG, nursery)
+            ist.setdefault(sym, {})["checked"] = now.astimezone(NY).date().isoformat()
+            ist["fail_count"] = 0
+        except Exception as e:  # noqa: BLE001 - tracking must never stop the alerts
+            print(f"ERROR (ibs {sym}): {e}", file=sys.stderr)
+            ist["fail_count"] = ist.get("fail_count", 0) + 1
+            if ist["fail_count"] == CONFIG["fail_alert_after"]:
+                msgs.append(f":warning: US index tracking (IBS) failed {ist['fail_count']} times in a row: {e}")
+    return msgs
+
+
+def verify_run(state, now, cfg=None):
+    """Run about a minute after each hourly run: did it run on time, process
+    the latest candle for each market, check the US ETFs after their close,
+    and deliver every Slack post? Returns a list of problems (empty if fine)."""
+    cfg = cfg or CONFIG
+    lr = state.get("last_run") or {}
+    problems = []
+    started = datetime.fromisoformat(lr["started"]) if lr.get("started") else None
+    hour = now.replace(minute=0, second=0, microsecond=0)
+    if started is None or started < hour - timedelta(minutes=5):
+        problems.append(f"no run has started since {uk_hm(hour)} UK" + (f" (last one {uk_day(started)} UK)" if started else ""))
+        run_hour = hour
+    else:
+        run_hour = started.replace(minute=0, second=0, microsecond=0)
+        mins = (started - run_hour).total_seconds() / 60
+        if mins > cfg.get("verify_late_minutes", 15):
+            problems.append(f"the run started {mins:.0f} minutes after the hour")
+    hour = run_hour
+    if lr.get("error"):
+        problems.append(f"the run failed: {lr['error']}")
+    if lr.get("failed"):
+        problems.append(f"{len(lr['failed'])} Slack post{'s' if len(lr['failed']) != 1 else ''} not delivered: "
+                        + "; ".join(lr["failed"])[:300])
+    if lr.get("late"):
+        problems.append(f"{lr['late']} alert{'s were' if lr['late'] != 1 else ' was'} posted late")
+    expected = hour - H1                                   # the candle that closed on the hour
+    gold_break = expected.astimezone(NY).hour == 17        # gold's daily 17:00-18:00 New York pause
+    if market_open(expected) and not gold_break and state.get("last_h1") and \
+            datetime.fromisoformat(state["last_h1"]) < expected:
+        problems.append(f"gold's {uk_hm(expected)} UK candle was not processed (last: {uk_hm(datetime.fromisoformat(state['last_h1']))} UK)")
+    for key, m in (state.get("markets") or {}).items():
+        if m.get("last_h1") and datetime.fromisoformat(m["last_h1"]) < expected:
+            name = cfg["markets"].get(key, {}).get("name", key)
+            problems.append(f"{name}'s {uk_hm(expected)} UK candle was not processed")
+    if cfg["ibs"]["enabled"]:
+        missing = ibs_due(state, now, cfg)
+        if missing:
+            problems.append("US ETFs not checked after today's close: " + ", ".join(missing))
+    return problems
 
 
 def run_markets(state, journal, now, api_key, sizing, nursery, fetch=None):
@@ -2762,6 +2843,20 @@ def main():
     journal = load_json(journal_path, [])
     now = datetime.now(UTC)
     msgs = []
+    if mode == "verify":
+        problems = verify_run(state, now)
+        if not problems:
+            print("Verified: the last run was on time and every alert went out.")
+            return
+        text = (":rotating_light: *Signal check failed* "
+                + (f"({uk_day(now)} UK)" if now else "") + "\n" + "\n".join(f"\u2022 {p}" for p in problems)
+                + "\n_Alerts from this hour may be missing or late. Check your charts directly._")
+        if CONFIG.get("slack_mention"):
+            text = CONFIG["slack_mention"] + " " + text
+        print(text)
+        post_slack(webhook_for(Msg(text, "reports"), webhook), text)
+        return
+    run_record = {"started": now.isoformat(), "mode": mode}
 
     try:
         if mode == "scorecard":
@@ -2822,24 +2917,13 @@ def main():
                                 msgs.append(f":warning: Nasdaq tracking ({CONFIG['noise']['symbol']}) failed "
                                             f"{nst['fail_count']} runs in a row: {e}")
                     if CONFIG["ibs"]["enabled"]:
-                        ist = state.setdefault("ibs", {})
-                        syms = CONFIG["ibs"]["symbols"]
-                        sym = syms[ist.get("next", 0) % len(syms)]
-                        ist["next"] = (ist.get("next", 0) + 1) % len(syms)
-                        try:
-                            msgs += run_ibs(state, journal, sym, td_daily(api_key, sym, CONFIG["ibs"]["bars"]),
-                                            now, CONFIG, nursery)
-                            ist["fail_count"] = 0
-                        except Exception as e:  # noqa: BLE001 - tracking must never stop the alerts
-                            print(f"ERROR (ibs {sym}): {e}", file=sys.stderr)
-                            ist["fail_count"] = ist.get("fail_count", 0) + 1
-                            if ist["fail_count"] == CONFIG["fail_alert_after"]:
-                                msgs.append(f":warning: US index tracking (IBS) failed "
-                                            f"{ist['fail_count']} runs in a row: {e}")
+                        msgs += run_ibs_due(state, journal, now, api_key, nursery)
         state["fail_count"] = 0
     except Exception as e:  # noqa: BLE001 - report every failure the same way
         print(f"ERROR: {e}", file=sys.stderr)
         state["fail_count"] = state.get("fail_count", 0) + 1
+        if mode == "run":
+            state["last_run"] = dict(run_record, error=str(e)[:200], failed=[], late=0)
         if mode != "run" or state["fail_count"] == CONFIG["fail_alert_after"]:
             msgs = [f":warning: Gold signals bot failed ({mode}, {state['fail_count']} in a row): {e}"]
         else:
@@ -2852,11 +2936,21 @@ def main():
                 print(f"Slack post failed: {se}", file=sys.stderr)
         sys.exit(1)
 
+    failed = []
     for m in msgs:
         print(m + "\n")
-        post_slack(webhook_for(m, webhook), m)
+        try:
+            post_slack(webhook_for(m, webhook), m)
+        except Exception as e:  # noqa: BLE001 - one failed post must not stop the others
+            print(f"Slack post failed: {e}", file=sys.stderr)
+            failed.append(f"{getattr(m, 'route', None) or 'reports'}: {str(e)[:80]}")
+    if mode == "run":
+        state["last_run"] = dict(run_record, posts=len(msgs), failed=failed,
+                                 late=sum(":hourglass:" in m for m in msgs))
     save_json(state_path, state)
     save_json(journal_path, journal)
+    if failed:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

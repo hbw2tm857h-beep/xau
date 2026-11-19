@@ -2,10 +2,10 @@ name: XAU signals
 
 on:
   schedule:
-    # A few minutes after each H1 close while gold trades (times are UTC).
-    # Gold reopens Sunday ~22:00-23:00 UTC and closes Friday ~21:00-22:00 UTC.
-    - cron: "7 * * * 1-5"
-    - cron: "7 22,23 * * 0"
+    # A few minutes after each H1 close, every day: gold sleeps at weekends but
+    # Bitcoin and Ether don't, and the bot skips gold's closed hours itself.
+    # This is the backup; an external scheduler triggers the on-time runs.
+    - cron: "7 * * * *"
     # Weekly scorecard, Friday after the close.
     - cron: "37 22 * * 5"
   workflow_dispatch:
@@ -30,6 +30,11 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+
+      # A run queued behind another must start from the state that one saved,
+      # or it could post the same alert twice.
+      - name: Pull the latest state
+        run: git pull --ff-only --quiet origin "${GITHUB_REF_NAME}" || true
 
       - name: Run
         env:
@@ -62,3 +67,18 @@ jobs:
             git pull --rebase --quiet origin "${GITHUB_REF_NAME}" || true
             git push
           fi
+
+      # About a minute later, check the run did its job: on time, the latest
+      # candle processed for each market, the US ETFs checked after their
+      # close, every Slack post delivered. Silent when all is well; a warning
+      # in the reports channel when not.
+      - name: Verify the signals went out on time
+        if: always() && ((github.event_name == 'schedule' && github.event.schedule != '37 22 * * 5') || github.event.inputs.mode == 'run')
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_REPORTS: ${{ secrets.SLACK_WEBHOOK_REPORTS }}
+          MODE: verify
+        run: |
+          sleep 75
+          git pull --ff-only --quiet origin "${GITHUB_REF_NAME}" || true
+          python3 signals.py
