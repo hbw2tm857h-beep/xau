@@ -2817,7 +2817,11 @@ def to_discord(text):
     @everyone, <url|label> -> [label](url), :emoji: -> the emoji itself
     (Discord does not expand shortcodes in webhook posts)."""
     import re
-    t = text.replace("<!channel>", "@everyone").replace("<!here>", "@here")
+    # The owner's position sizes and account risk stay private: Discord is for members.
+    t = re.sub(r" · [\d.]+ lots", "", text)
+    t = re.sub(r", about [\d.]+% of the account", "", t)
+    t = "\n".join(line for line in t.split("\n") if "at risk)" not in line)
+    t = t.replace("<!channel>", "@everyone").replace("<!here>", "@here")
     t = re.sub(r"<(https?://[^|>]+)\|([^>]+)>", r"[\2](\1)", t)
     t = re.sub(r"<(https?://[^>]+)>", r"\1", t)
     t = re.sub(r"(?<![*\w])\*([^*\n]+?)\*(?![*\w])", r"**\1**", t)
