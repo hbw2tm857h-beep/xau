@@ -1,6 +1,15 @@
 {
-  "hypotheses_tested": 1063,
+  "hypotheses_tested": 1137,
   "strategies": {
+    "btc_trend": {
+      "expected_avg_r": 0.18,
+      "expected_n": 375,
+      "expected_win": 57,
+      "history": [],
+      "label": "Bitcoin trend setups",
+      "note": "Round 10: the gold trend rules on Bitcoin, never tuned on it. Passed 1 of 63 market x strategy tests (p=0.0008 with weekday signals). Shadow: alerted as paper with no size until live trades back it up.",
+      "tier": "shadow"
+    },
     "h4_trend": {
       "expected_avg_r": 0.143,
       "expected_n": 526,

@@ -300,6 +300,60 @@ Two further cautions. Both E2 and the live rules show their strongest results in
 
 **Conclusion: E2 earns a nursery candidate slot and nothing more.** It is a real, distinct trade stream with a positive expectation across every period tested, selected under a pre-registered Bonferroni-corrected rule. It is also correlated with something already live, so its portfolio contribution is modest, and all its evidence is in-sample. Tracking it silently on live data is exactly what the candidate tier exists for.
 
+## Round 10: the gold strategies on 21 other markets (19 Nov 2026)
+
+`round10_markets.py`, `results_round10_markets.csv`, `round10_btc_checks.py`, data in `data/markets/`
+
+**Why:** gold alone gives about one trend setup and 0.7 inside-day setups a week. More markets would mean more signals, but only if the edge travels. This is also the cleanest test left in the project. None of the three strategies was ever tuned on any of these markets, so every result is out of sample for the rules. That's a different kind of evidence from the in-sample Sharpe that round 8 discounted.
+
+**Pre-registered:**
+- **Strategies:** the live trend rules (with the cloud), the inside-day breakout and the 4-hour trigger, nothing re-tuned.
+- **Markets (21):**
+  - FX: EURUSD, GBPUSD, USDJPY, AUDUSD, USDCAD, USDCHF, NZDUSD, EURJPY, GBPJPY, EURGBP, AUDJPY
+  - Silver, WTI and Brent oil
+  - Indices: S&P 500, Nasdaq 100, Dow, DAX, FTSE, Nikkei
+  - Bitcoin
+- **Data:** Dukascopy H1, 2008 to now. Indices start between 2011 and 2013, with some quarters of 2013 missing; Bitcoin starts in 2017.
+- **Costs:** a share of price per market, 1 to 10 basis points (gold is 1.75). Gold's three $0.30 buffers are scaled by each market's typical hourly range (ATR).
+- **Pass mark, 63 tests:**
+  - at least 150 trades and at least +0.05R per trade
+  - positive in every period with 10 or more trades, with at least 3 such periods
+  - p < 0.05/63 = 0.0008
+
+### Results
+| | trend | inside-day | 4-hour |
+|---|---|---|---|
+| **Gold (reference)** | +0.192 ✔ | +0.111 (p 0.0011) | +0.149 ✔ |
+| 11 FX pairs | best AUDJPY +0.075 (p 0.03) | best USDJPY +0.121, but 2023–24 negative | best NZDUSD +0.036 |
+| Silver | −0.028 | +0.063 | +0.018 |
+| WTI / Brent | −0.039 / +0.056 | **+0.130** (2025–26 −0.002) / +0.073 | +0.041 / +0.002 |
+| S&P / Nasdaq / Dow | +0.007 / +0.033 / −0.023 | +0.005 / +0.016 / −0.050 | +0.023 / **+0.181** (p 0.0012) / +0.012 |
+| DAX / FTSE / Nikkei | +0.063 / −0.023 / **+0.126** (p 0.0033) | −0.001 / −0.160 / +0.087 | +0.056 / −0.072 / −0.005 |
+| **Bitcoin** | **+0.185 ✔** | **+0.210 ✔** | +0.166 (p 0.012) |
+
+**2 of 63 passed, both on Bitcoin.** Even the gold reference's own inside-day setup misses at this bar (p 0.0011), which shows how strict it is. Near misses that are positive in every period but not significant after correction: Nikkei trend (p 0.0033) and Nasdaq 4-hour (p 0.0012). FX is dead for all three strategies, as round 3 found for the trend rules.
+
+### The Bitcoin checks (`round10_btc_checks.py`)
+| | trend | inside-day |
+|---|---|---|
+| As tested (gold's trading hours, 5 bp) | +0.185 | +0.210 |
+| Costs at 10 bp / 20 bp | +0.159 / +0.107 | +0.191 / +0.152 |
+| Fills at the open after a gap | +0.191 | |
+| 24/7 data, weekend signals included | +0.112 (p 0.014) | +0.062 (p 0.096) |
+| **Weekday signals, trades tracked through weekends (realistic)** | **+0.180, 375 trades, p 0.00078** | +0.170, but 2025–26 −0.023, p 0.009 |
+| Shuffle test (20 shuffles) | 0/20 reached it, 5.0 sd | 0/20, 2.9 sd |
+| Years positive | 9/10 | 10/10 |
+| Buys / sells | +0.217 / +0.124 | +0.255 / +0.159 |
+| Monthly correlation with gold trend / inside-day | −0.03 / +0.08 | |
+
+- **The weekend matters.** Weekend Bitcoin signals are weak, and the inside-day passed only because the first test dropped weekend candles. A live bot would still be holding trades through the weekend.
+- **Realistic test:** take signals only in gold's trading hours, but manage open trades on every candle. The trend rules still pass under that; the inside-day setup doesn't.
+- **What remains:** the trend rules on Bitcoin read real sequence (the shuffle destroys the edge), are positive in 9 of 10 years, and are uncorrelated with gold. The data is shorter (2017 on), and 2017–2026 was mostly a bull market, though shorts made money too (+0.124R).
+
+**Adopted as a shadow strategy, `btc_trend`:** Bitcoin trend setups are alerted in Slack, marked as paper with no position size, and judged by the weekly gate on live trades. Promoting it to sized is your decision. In `signals.py` it runs as an extra market: same code, its own saved state, weekday signals only, weekend candles kept, $7.50 entry buffer (gold's $0.30 × the ATR ratio over the last 12 months) and $30 costs (about 5 bp). Run through the live code with the research settings, it reproduces the research exactly (375 trades, +0.208R before costs). Gold's trades are unchanged.
+
+Not done: the MT5 EA still trades gold only.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -320,4 +374,6 @@ python3 research/round6b_allocation.py  # inside-day risk weight sweep
 python3 research/round7_synthetic.py   # shuffle test + random-walk control
 python3 research/round8_multiple_testing.py # deflated Sharpe / multiple-testing haircut
 python3 research/round9_entries.py      # four new entry mechanisms
+python3 research/round10_markets.py     # the three strategies on 21 other markets
+python3 research/round10_btc_checks.py  # Bitcoin: costs, weekends, shuffle test
 ```

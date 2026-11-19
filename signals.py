@@ -165,7 +165,7 @@ CONFIG = {
     "gate_bootstrap": 2000,
     # Recorded test rows in research/results*.csv. Used only to report how
     # strict a backtest search would have to be; see gate().
-    "hypotheses_tested": 1074,
+    "hypotheses_tested": 1137,          # +63 in round 10 (21 markets x 3 strategies)
 
     # Slack pushes nothing for a webhook message that mentions nobody: most
     # people's per-channel setting is "mentions and keywords only". Set the
@@ -188,6 +188,30 @@ CONFIG = {
     # hour is replayed (up to 2 days) and alerts more than 2 hours old say so.
     "max_catchup_bars": 48,
     "late_alert_hours": 2,
+
+    # Other markets (research round 10). Each runs the same live code with these
+    # overrides and its own saved state. Of 21 markets x 3 strategies, only the
+    # trend rules on Bitcoin passed, and only with signals taken in gold's
+    # trading hours (weekend signals were weak); open trades are still tracked
+    # through the weekend. Its nursery tier decides how it is alerted.
+    "markets": {
+        "btc": {
+            "symbol": "BTC/USD",
+            "name": "Bitcoin", "ticker": "BTCUSD",
+            "cfg": {
+                "trend_strategy": "btc_trend",
+                "all_hours": True,            # keep weekend candles: open trades are tracked through them
+                "signal_hours_only": True,    # ...but new setups only in gold's trading hours
+                "entry_buffer": 7.5,          # gold's $0.30 scaled by the H1 ATR ratio (~25x, last 12 months)
+                "cost_per_trade": 30.0,       # ~5 basis points at $64k
+                "inside_day": False,          # failed the realistic test on Bitcoin
+                "h4_trigger": False,          # failed on Bitcoin (p=0.012)
+                "ledger": False,
+                "track_record": "Bitcoin, tested 2017-2026 (rules never tuned on it): 375 trades, "
+                                "+0.18R per trade after costs",
+            },
+        },
+    },
 }
 
 NY = ZoneInfo("America/New_York")
@@ -609,6 +633,8 @@ def news_near(news, t, window_min):
 
 def evaluate(F, i, d, cfg, news=None):
     """Return a setup dict if closed H1 bar i passes the checklist for direction d."""
+    if cfg.get("signal_hours_only") and not market_open(F.h1[i]["t"]):
+        return None
     tol = cfg["wick_tolerance"]
     ha, h1 = F.ha, F.h1
     x = ha[i]
@@ -817,6 +843,7 @@ def step(F, i, st, cfg, news=None):
                     "target": round(s["entry"] + d * cfg["target_r"] * risk, 2) if cfg["target_r"] else None,
                     "sig_time": s["t_close"].isoformat(),
                     "session": s["checks"]["session"][0], "grade": s["grade"],
+                    "strategy": cfg.get("trend_strategy", "trend"),
                 }
                 ev.append({"type": "signal", "setup": s, "idea": dict(idea), "t": t_close,
                            "replaced": replaced})
@@ -1683,6 +1710,14 @@ def default_nursery(cfg):
                 "note": "Round 5: inside-day breakout at half risk",
                 "history": [],
             },
+            "btc_trend": {
+                "tier": "shadow", "label": "Bitcoin trend setups",
+                "expected_avg_r": 0.18, "expected_win": 57, "expected_n": 375,
+                "note": "Round 10: the gold trend rules on Bitcoin, never tuned on it. Passed 1 of 63 "
+                        "market x strategy tests (p=0.0008 with weekday signals). Shadow: alerted as "
+                        "paper with no size until live trades back it up.",
+                "history": [],
+            },
         },
     }
 
@@ -2094,11 +2129,49 @@ def status_message(F, st, cfg, now):
             + "Data and Slack are working.")
 
 
+def relabel(msg, cfg):
+    """Alerts are written for gold; another market swaps its own name in."""
+    name = cfg.get("market_name")
+    if not name:
+        return msg
+    return (msg.replace("Gold (XAUUSD)", f"{name} ({cfg['market_ticker']})")
+               .replace("XAUUSD", cfg["market_ticker"]).replace("Gold", name))
+
+
+def market_cfg(key):
+    m = CONFIG["markets"][key]
+    cfg = dict(CONFIG, **m["cfg"])
+    cfg.update(symbol=m["symbol"], market_name=m["name"], market_ticker=m["ticker"])
+    return cfg
+
+
+def run_markets(state, journal, now, api_key, sizing, nursery, fetch=None):
+    """Run each extra market on its own state. One market failing never stops
+    the others, or the gold alerts that already went out."""
+    fetch = fetch or (lambda sym: fetch_h1(api_key, sym, CONFIG["h1_bars"]))
+    out = []
+    for key in CONFIG.get("markets", {}):
+        cfg = market_cfg(key)
+        st = state.setdefault("markets", {}).setdefault(key, {})
+        try:
+            out += run_live(st, journal, fetch(cfg["symbol"]), now, cfg, sizing, None, nursery)
+            st["fail_count"] = 0
+        except Exception as e:  # noqa: BLE001
+            print(f"ERROR ({key}): {e}", file=sys.stderr)
+            st["fail_count"] = st.get("fail_count", 0) + 1
+            if st["fail_count"] == CONFIG["fail_alert_after"]:
+                out.append(f":warning: {cfg['market_name']} signals failed {st['fail_count']} runs in a row: {e}")
+    return out
+
+
 def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nursery=None):
     out = []
     if nursery is None:
         nursery = load_nursery(cfg)
-    h1 = closed_h1(h1_raw, now)
+    if cfg.get("all_hours"):
+        h1 = [b for b in h1_raw if b["t"] + H1 <= now]   # e.g. Bitcoin: keep the weekend
+    else:
+        h1 = closed_h1(h1_raw, now)
     if len(h1) < 500:
         raise RuntimeError(f"Only {len(h1)} closed H1 candles returned")
     F = Features(h1, cfg)
@@ -2168,7 +2241,7 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                                  f"{uk_day(e['t'])} UK. The bot's scheduled run was delayed. "
                                  "Check the current price before acting._")
                 msg = "\n".join(([" ".join(lead)] if lead else []) + extra + notes + [msg])
-                out.append(msg)
+                out.append(relabel(msg, cfg))
     skipped = len(new_idx) - cfg["max_catchup_bars"]
     if skipped > 0:
         warn = (f":warning: The bot didn't run for {len(new_idx)} hours, so the oldest {skipped} "
@@ -2299,8 +2372,9 @@ def main():
                     msgs = [m]
                 else:
                     sizing = sizing_from_env(api_key) if os.environ.get("ACCOUNT_SIZE") else None
-                    msgs = run_live(state, journal, h1_raw, now, CONFIG, sizing, fetch_news,
-                                    load_nursery(CONFIG))
+                    nursery = load_nursery(CONFIG)
+                    msgs = run_live(state, journal, h1_raw, now, CONFIG, sizing, fetch_news, nursery)
+                    msgs += run_markets(state, journal, now, api_key, sizing, nursery)
         state["fail_count"] = 0
     except Exception as e:  # noqa: BLE001 - report every failure the same way
         print(f"ERROR: {e}", file=sys.stderr)
