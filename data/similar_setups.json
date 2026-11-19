@@ -1,0 +1,289 @@
+{
+ "built": "2026-11-19",
+ "strategies": {
+  "btc_trend": {
+   "all": {
+    "avg": 0.162,
+    "n": 417,
+    "sd": 1.1,
+    "win": 57.1
+   },
+   "buckets": {
+    "BUY, grade A": {
+     "avg": 0.106,
+     "n": 84,
+     "rest": {
+      "avg": 0.177,
+      "n": 333,
+      "sd": 1.106,
+      "win": 57.4
+     },
+     "sd": 1.081,
+     "win": 56.0
+    },
+    "BUY, grade B": {
+     "avg": 0.338,
+     "n": 166,
+     "rest": {
+      "avg": 0.046,
+      "n": 251,
+      "sd": 1.073,
+      "win": 53.4
+     },
+     "sd": 1.121,
+     "win": 62.7
+    },
+    "BUY, grade C": {
+     "avg": 0.479,
+     "n": 2,
+     "rest": {
+      "avg": 0.161,
+      "n": 415,
+      "sd": 1.103,
+      "win": 56.9
+     },
+     "sd": 0.004,
+     "win": 100.0
+    },
+    "SELL, grade A": {
+     "avg": -0.189,
+     "n": 56,
+     "rest": {
+      "avg": 0.217,
+      "n": 361,
+      "sd": 1.102,
+      "win": 59.3
+     },
+     "sd": 1.033,
+     "win": 42.9
+    },
+    "SELL, grade B": {
+     "avg": 0.123,
+     "n": 106,
+     "rest": {
+      "avg": 0.176,
+      "n": 311,
+      "sd": 1.107,
+      "win": 57.2
+     },
+     "sd": 1.084,
+     "win": 56.6
+    },
+    "SELL, grade C": {
+     "avg": -0.237,
+     "n": 3,
+     "rest": {
+      "avg": 0.165,
+      "n": 414,
+      "sd": 1.099,
+      "win": 57.2
+     },
+     "sd": 1.449,
+     "win": 33.3
+    }
+   },
+   "kind": "dir_grade",
+   "label": "Bitcoin trend setups",
+   "unit": "R"
+  },
+  "eth_inside_day": {
+   "all": {
+    "avg": 0.227,
+    "n": 322,
+    "sd": 1.106,
+    "win": 50.0
+   },
+   "buckets": {
+    "tight inside day": {
+     "avg": 0.396,
+     "n": 161,
+     "rest": {
+      "avg": 0.058,
+      "n": 161,
+      "sd": 0.759,
+      "win": 46.6
+     },
+     "sd": 1.35,
+     "win": 53.4
+    },
+    "wide inside day": {
+     "avg": 0.058,
+     "n": 161,
+     "rest": {
+      "avg": 0.396,
+      "n": 161,
+      "sd": 1.35,
+      "win": 53.4
+     },
+     "sd": 0.759,
+     "win": 46.6
+    }
+   },
+   "kind": "range_atr",
+   "label": "Ether inside-day setups",
+   "threshold": 0.668,
+   "unit": "R"
+  },
+  "inside_day": {
+   "all": {
+    "avg": 0.103,
+    "n": 722,
+    "sd": 0.977,
+    "win": 49.4
+   },
+   "buckets": {
+    "tight inside day": {
+     "avg": 0.137,
+     "n": 360,
+     "rest": {
+      "avg": 0.068,
+      "n": 362,
+      "sd": 0.783,
+      "win": 47.5
+     },
+     "sd": 1.14,
+     "win": 51.4
+    },
+    "wide inside day": {
+     "avg": 0.068,
+     "n": 362,
+     "rest": {
+      "avg": 0.137,
+      "n": 360,
+      "sd": 1.14,
+      "win": 51.4
+     },
+     "sd": 0.783,
+     "win": 47.5
+    }
+   },
+   "kind": "range_atr",
+   "label": "gold inside-day setups",
+   "threshold": 0.638,
+   "unit": "R"
+  },
+  "trend": {
+   "all": {
+    "avg": 0.182,
+    "n": 720,
+    "sd": 1.07,
+    "win": 60.1
+   },
+   "buckets": {
+    "BUY, grade A": {
+     "avg": 0.111,
+     "n": 150,
+     "rest": {
+      "avg": 0.2,
+      "n": 570,
+      "sd": 1.072,
+      "win": 60.9
+     },
+     "sd": 1.06,
+     "win": 57.3
+    },
+    "BUY, grade B": {
+     "avg": 0.225,
+     "n": 298,
+     "rest": {
+      "avg": 0.151,
+      "n": 422,
+      "sd": 1.077,
+      "win": 58.3
+     },
+     "sd": 1.06,
+     "win": 62.8
+    },
+    "BUY, grade C": {
+     "avg": 0.56,
+     "n": 5,
+     "rest": {
+      "avg": 0.179,
+      "n": 715,
+      "sd": 1.07,
+      "win": 60.0
+     },
+     "sd": 1.024,
+     "win": 80.0
+    },
+    "SELL, grade A": {
+     "avg": 0.144,
+     "n": 85,
+     "rest": {
+      "avg": 0.187,
+      "n": 635,
+      "sd": 1.066,
+      "win": 60.6
+     },
+     "sd": 1.104,
+     "win": 56.5
+    },
+    "SELL, grade B": {
+     "avg": 0.165,
+     "n": 177,
+     "rest": {
+      "avg": 0.187,
+      "n": 543,
+      "sd": 1.065,
+      "win": 60.6
+     },
+     "sd": 1.087,
+     "win": 58.8
+    },
+    "SELL, grade C": {
+     "avg": 0.528,
+     "n": 5,
+     "rest": {
+      "avg": 0.179,
+      "n": 715,
+      "sd": 1.07,
+      "win": 60.0
+     },
+     "sd": 1.022,
+     "win": 80.0
+    }
+   },
+   "kind": "dir_grade",
+   "label": "gold trend setups",
+   "unit": "R"
+  },
+  "us_ibs": {
+   "all": {
+    "avg": 61.9,
+    "n": 616,
+    "sd": 225.4,
+    "win": 72.1
+   },
+   "buckets": {
+    "deep dip": {
+     "avg": 97.9,
+     "n": 127,
+     "rest": {
+      "avg": 52.5,
+      "n": 489,
+      "sd": 202.2,
+      "win": 71.2
+     },
+     "sd": 296.6,
+     "win": 75.6
+    },
+    "moderate dip": {
+     "avg": 52.5,
+     "n": 489,
+     "rest": {
+      "avg": 97.9,
+      "n": 127,
+      "sd": 296.6,
+      "win": 75.6
+     },
+     "sd": 202.2,
+     "win": 71.2
+    }
+   },
+   "kind": "depth",
+   "label": "US index dips",
+   "threshold": 4.0,
+   "unit": "bp"
+  }
+ }
+}

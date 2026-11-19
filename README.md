@@ -82,6 +82,13 @@ Research round 16 ran the three gold strategies, unchanged, on 16 more markets: 
 
 Each run fetches ETH/USD hourly candles and runs the live inside-day code on them as `eth_inside_day` at tier `shadow`: the same inside-day alerts as gold, marked as paper with no size. Trend and 4-hour setups are off for Ether (`"trend": False`). The settings are under `CONFIG["markets"]["eth"]`; delete that entry to switch it off.
 
+## History line on every new setup
+Each new-setup alert (trend, inside-day, Bitcoin, Ether, US index dips) carries one line on how setups like it did in the past, for example:
+
+> :abacus: _History: setups like this (BUY, grade B) won 63% of 298 times, avg +0.23R; all gold trend setups: 60% of 720 won, avg +0.18R. No real difference from the rest._
+
+The numbers come from `data/similar_setups.json`, built by `research/similar_setups.py`, which replays the history files through the live code (prices scaled for Bitcoin and Ether, whose dollar settings are set for today's price). The groups are fixed and coarse: direction and grade for trend setups, tight or wide inside day (its range against the last 14 days' average, split at the median), deep or moderate dip for the US index trades. The line says whether a group's average differs from the rest (Welch t-test, p<0.05) and reminds you that a difference found by looking at the same history is a hint, not a rule. Most groups show no real difference, which is the honest answer: rounds 4–6 and 18 found that context and volume barely separate winners from losers. Re-run the script after refreshing the history files.
+
 ## Tiers: what gets traded, what only gets watched
 Each strategy in `nursery.json` sits in one of three tiers:
 

@@ -157,6 +157,9 @@ CONFIG = {
     # Nursery (layer 2): which strategies are traded, which are only watched,
     # and what it takes to move between tiers. See nursery.json.
     "nursery_file": "nursery.json",
+    # How setups like the current one did in the past (research/similar_setups.py).
+    # Each new-setup alert gets one line from it; a missing file just drops the line.
+    "similar_file": "data/similar_setups.json",
     "gate_promote_min_trades": 30,   # live closed trades before promotion is considered
     "gate_demote_min_trades": 30,    # ...and before a live strategy can be demoted
     "gate_trailing": 50,             # recent live trades used to judge a live strategy
@@ -985,7 +988,9 @@ def _ib_day_close(F, k, st, price, t, cost, cfg=None):
     weekend = cfg.get("ib_weekday_signals") and F.daily[k]["end"].astimezone(UTC).weekday() >= 5
     if is_inside_day(F.daily, k) and not weekend:
         cur, prev = F.daily[k], F.daily[k - 1]
+        past = [F.daily[j]["h"] - F.daily[j]["l"] for j in range(max(0, k - 14), k)]
         st["ib"] = {"strategy": cfg.get("ib_strategy", "inside_day"), "hi": round(cur["h"], 2), "lo": round(cur["l"], 2),
+                    "range_atr": round((cur["h"] - cur["l"]) / (sum(past) / len(past)), 3) if len(past) == 14 else None,
                     "prev_hi": round(prev["h"], 2), "prev_lo": round(prev["l"], 2),
                     "triggered": False, "setup_day_end": day_end_iso, "sig_time": F.daily[k]["end"].isoformat()}
         ev.append({"type": "ib_signal", "idea": dict(st["ib"]), "t": t})
@@ -2406,6 +2411,9 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
                 "Tested 2011-2026 on the S&P 500, Nasdaq 100, Dow and Russell 2000: 616 trades, 72% winners, "
                 "about +62 bp per trade before financing, median hold 3 days. The rule has no stop: in "
                 "March 2020 single trades lost up to 31%. Prices are the ETF's; on a CFD, buy at market.")
+        hist = history_line(cfg["ibs"]["strategy"], t, cfg)
+        if hist:
+            body += "\n" + hist
     else:
         lead.append(f"*CLOSE {name} BUY* ({cfd} / {symbol}) at the close {px(t['exit'])} · "
                     f"*{t['bps']:+.0f} bp* ({t['r']:+.2f}R) after {t['held']} session{'s' if t['held'] != 1 else ''}")
@@ -2454,6 +2462,56 @@ def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
         msgs.append(ibs_alert("entry", open_t, symbol, tier, now, cfg))
         st["alerted"] = open_t["t"].isoformat()
     return msgs
+
+
+_SIMILAR = {}
+
+
+def similar_bucket(strategy, idea, table):
+    """The group a new setup belongs to in data/similar_setups.json. Groups were
+    fixed before the table was built and kept coarse so each holds enough trades."""
+    s = (table.get("strategies") or {}).get(strategy) or {}
+    kind = s.get("kind")
+    if kind == "dir_grade":
+        return f"{side_word(idea['dir'])}, grade {idea.get('grade')}"
+    if kind == "range_atr" and idea.get("range_atr") is not None:
+        return "tight inside day" if idea["range_atr"] < s["threshold"] else "wide inside day"
+    if kind == "depth":
+        return "deep dip" if idea["depth"] >= s["threshold"] else "moderate dip"
+    return None
+
+
+def history_line(strategy, idea, cfg=None):
+    """One line: how setups like this one did, next to all setups of the same
+    strategy, and whether the difference means anything. None if unknown."""
+    cfg = cfg or CONFIG
+    path = cfg.get("similar_file")
+    if not path:
+        return None
+    if path not in _SIMILAR:
+        _SIMILAR[path] = load_json(path, {})
+    table = _SIMILAR[path]
+    s = (table.get("strategies") or {}).get(strategy)
+    if not s:
+        return None
+    b = similar_bucket(strategy, idea, table)
+    g, a = s["buckets"].get(b), s["all"]
+    unit = "bp" if s.get("unit") == "bp" else "R"
+    fmt = (lambda v: f"{v:+.0f} bp") if unit == "bp" else (lambda v: f"{v:+.2f}R")
+    head = f"all {s['label']}: {a['win']:.0f}% of {a['n']:,} won, avg {fmt(a['avg'])}"
+    if not g or g["n"] < 30:
+        return f":abacus: _History: {head}._"
+    verdict = "No real difference from the rest"
+    rest = g.get("rest")
+    if rest and rest["n"] > 1:
+        # Welch t on the average result: what a trade earns matters more than how often it wins
+        se = (g["sd"] ** 2 / g["n"] + rest["sd"] ** 2 / rest["n"]) ** 0.5
+        z = (g["avg"] - rest["avg"]) / se if se else 0.0
+        if abs(z) >= 1.96:
+            verdict = (f"{'Better' if z > 0 else 'Worse'} than the rest at p<0.05, but this is one of "
+                       f"{len(s['buckets'])} groups found by looking at the same history, so treat it as a hint")
+    return (f":abacus: _History: setups like this ({b}) won {g['win']:.0f}% of {g['n']:,} times, "
+            f"avg {fmt(g['avg'])}; {head}. {verdict}._")
 
 
 def run_markets(state, journal, now, api_key, sizing, nursery, fetch=None):
@@ -2542,6 +2600,9 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                     risk_line = open_risk(state, cfg, sizing, nursery)
                     if risk_line:
                         extra.append(risk_line)
+                    hist = history_line((e.get("idea") or {}).get("strategy", "trend"), e.get("idea") or {}, cfg)
+                    if hist:
+                        extra.append(hist)
                 notes = []
                 if tier == "shadow":
                     notes.append(":microscope: _Shadow (paper): this strategy is being tracked "
