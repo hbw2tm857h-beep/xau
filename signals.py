@@ -165,7 +165,7 @@ CONFIG = {
     "gate_bootstrap": 2000,
     # Recorded test rows in research/results*.csv. Used only to report how
     # strict a backtest search would have to be; see gate().
-    "hypotheses_tested": 1146,          # +63 in round 10, +9 in round 11
+    "hypotheses_tested": 1147,          # +63 in round 10, +9 in round 11, +1 re-test on 09:30 candles
 
     # Slack pushes nothing for a webhook message that mentions nobody: most
     # people's per-channel setting is "mentions and keywords only". Set the
@@ -194,6 +194,20 @@ CONFIG = {
     # trend rules on Bitcoin passed, and only with signals taken in gold's
     # trading hours (weekend signals were weak); open trades are still tracked
     # through the weekend. Its nursery tier decides how it is alerted.
+    # Nasdaq 100 noise-area momentum (research round 11: Zarattini, Aziz &
+    # Barbon, SSRN 4824172), on QQQ's hourly candles from the 09:30 cash open.
+    # A nursery candidate: each run replays the rules on the latest complete
+    # sessions and journals the closed trades. It never alerts - it acts within
+    # the hour, and the scheduler runs hours late - so it only builds the live
+    # record the gate needs. 1R = the noise band's width at entry.
+    "noise": {
+        "enabled": True,
+        "symbol": "QQQ", "strategy": "ndx_noise",
+        "bars": 400,                 # ~57 sessions; the band needs 14
+        "look": 14,
+        "cost_bps": 1.0,
+    },
+
     "markets": {
         "btc": {
             "symbol": "BTC/USD",
@@ -1710,6 +1724,15 @@ def default_nursery(cfg):
                 "note": "Round 5: inside-day breakout at half risk",
                 "history": [],
             },
+            "ndx_noise": {
+                "tier": "candidate", "label": "Nasdaq noise-area (tracking)",
+                "expected_avg_r": NOISE_EXPECTED_R, "expected_win": NOISE_EXPECTED_WIN,
+                "expected_n": NOISE_EXPECTED_N,
+                "note": "Round 11: Zarattini, Aziz & Barbon noise-area momentum on the Nasdaq 100, "
+                        "re-tested on 09:30 candles (+4.4 bp/trade, p=0.0004). Candidate: journalled, "
+                        "never alerted - it needs on-time hourly runs before it can be traded.",
+                "history": [],
+            },
             "btc_trend": {
                 "tier": "shadow", "label": "Bitcoin trend setups",
                 "expected_avg_r": 0.18, "expected_win": 57, "expected_n": 375,
@@ -2145,6 +2168,91 @@ def market_cfg(key):
     return cfg
 
 
+# research/round11_noise_30.py check: 2,242 trades 2011-2026 on 09:30 candles at 1 bp
+NOISE_EXPECTED_R, NOISE_EXPECTED_WIN, NOISE_EXPECTED_N = 0.074, 44, 2242
+
+
+def cash_session_bars(bars, now):
+    """QQQ-style hourly candles (09:30 ... 15:30 New York), complete sessions
+    only: seven candles, the last one closed by `now`."""
+    days = {}
+    for b in bars:
+        x = b["t"].astimezone(NY)
+        mins = x.hour * 60 + x.minute
+        if x.weekday() < 5 and 570 <= mins < 960:
+            days.setdefault(x.date(), []).append(b)
+    out = []
+    for d in sorted(days):
+        gs = sorted(days[d], key=lambda b: b["t"])
+        last_close = datetime(d.year, d.month, d.day, 16, 0, tzinfo=NY).astimezone(UTC)
+        if len(gs) == 7 and last_close <= now:
+            out += gs
+    return out
+
+
+def noise_trades(bars, cost_bps, look=14):
+    """Zarattini, Aziz & Barbon's noise area on hourly cash-session candles.
+    The band is the session open (or the previous close, whichever is further)
+    +/- the average move from the open at that hour over the last `look`
+    sessions. An hourly close outside the band enters at the next open; a close
+    back inside (or through the other side) exits at the next open; anything
+    open is closed at the session's last close. research/round11_noise_30.py
+    checks this against the research implementation."""
+    sessions = []
+    for b in bars:
+        k = b["t"].astimezone(NY).date()
+        if not sessions or sessions[-1][0] != k:
+            sessions.append((k, []))
+        sessions[-1][1].append(b)
+    out, hist, prev_close = [], [], None
+    for _k, sb in sessions:
+        o = sb[0]["o"]
+        if len(hist) >= look and prev_close:
+            up_ref, dn_ref = max(o, prev_close), min(o, prev_close)
+            pos = 0
+            for h in range(len(sb) - 1):
+                vals = [m[h] for m in hist[-look:] if len(m) > h]
+                if len(vals) < look // 2:
+                    continue
+                sig = sum(vals) / len(vals)
+                c = sb[h]["c"]
+                want = 1 if c > up_ref * (1 + sig) else -1 if c < dn_ref * (1 - sig) else 0
+                if pos and want != pos:
+                    out.append(dict(cur, exit=sb[h + 1]["o"], t_exit=sb[h + 1]["t"]))
+                    pos = 0
+                if not pos and want:
+                    pos = want
+                    cur = {"d": want, "entry": sb[h + 1]["o"], "t": sb[h + 1]["t"], "sigma": sig}
+            if pos:
+                out.append(dict(cur, exit=sb[-1]["c"], t_exit=sb[-1]["t"] + timedelta(minutes=30)))
+        hist.append([abs(x["c"] / o - 1) for x in sb])
+        prev_close = sb[-1]["c"]
+    for t in out:
+        cost = cost_bps * 1e-4 * t["entry"]
+        t["r"] = ((t["exit"] - t["entry"]) * t["d"] - cost) / (t["sigma"] * t["entry"])
+        t["bps"] = (t["exit"] / t["entry"] - 1) * t["d"] * 1e4 - cost_bps
+    return out
+
+
+def run_noise(state, journal, bars_raw, now, cfg=None):
+    """Journal the noise-area trades closed since the last run. Silent: the
+    candidate tier never alerts. The first run only sets the starting point."""
+    nc = (cfg or CONFIG)["noise"]
+    trades = noise_trades(cash_session_bars(bars_raw, now), nc["cost_bps"], nc["look"])
+    st = state.setdefault("noise", {})
+    if "last_exit" not in st:
+        st["last_exit"] = max((t["t_exit"] for t in trades), default=now).isoformat()
+        return 0
+    new = [t for t in trades if t["t_exit"].isoformat() > st["last_exit"]]
+    for t in new:
+        journal.append({"sig_time": t["t"].isoformat(), "entry_time": t["t"].isoformat(),
+                        "exit_time": t["t_exit"].isoformat(), "dir": t["d"], "grade": None,
+                        "entry": round(t["entry"], 2), "exit": round(t["exit"], 2),
+                        "r": round(t["r"], 3), "how": "noise_exit", "strategy": nc["strategy"]})
+        st["last_exit"] = t["t_exit"].isoformat()
+    return len(new)
+
+
 def run_markets(state, journal, now, api_key, sizing, nursery, fetch=None):
     """Run each extra market on its own state. One market failing never stops
     the others, or the gold alerts that already went out."""
@@ -2375,6 +2483,18 @@ def main():
                     nursery = load_nursery(CONFIG)
                     msgs = run_live(state, journal, h1_raw, now, CONFIG, sizing, fetch_news, nursery)
                     msgs += run_markets(state, journal, now, api_key, sizing, nursery)
+                    if CONFIG["noise"]["enabled"]:
+                        nst = state.setdefault("noise", {})
+                        try:
+                            run_noise(state, journal, fetch_h1(api_key, CONFIG["noise"]["symbol"],
+                                                               CONFIG["noise"]["bars"]), now)
+                            nst["fail_count"] = 0
+                        except Exception as e:  # noqa: BLE001 - tracking must never stop the alerts
+                            print(f"ERROR (noise): {e}", file=sys.stderr)
+                            nst["fail_count"] = nst.get("fail_count", 0) + 1
+                            if nst["fail_count"] == CONFIG["fail_alert_after"]:
+                                msgs.append(f":warning: Nasdaq tracking ({CONFIG['noise']['symbol']}) failed "
+                                            f"{nst['fail_count']} runs in a row: {e}")
         state["fail_count"] = 0
     except Exception as e:  # noqa: BLE001 - report every failure the same way
         print(f"ERROR: {e}", file=sys.stderr)

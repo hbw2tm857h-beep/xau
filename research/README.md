@@ -394,7 +394,21 @@ Not done: the MT5 EA still trades gold only.
 - **S&P 500 (the paper's original market):** +2.6 bp, positive every period, p 0.0075.
 - **Dow:** fails (−0.4 bp).
 
-**Status: research only, not in the bot.** It's a genuine candidate, but three things stand between it and alerts:
+**Re-test on live-matchable candles (`round11_noise_30.py`).** A live feed (QQQ on Twelve Data) gives hourly candles from the 09:30 open, not on the hour, so the rules were re-run on 30-minute Dukascopy data rebuilt that way:
+
+| | Net per trade | 2011–15 | 2016–22 | 2023–24 | 2025–26 | Years + | p |
+|---|---|---|---|---|---|---|---|
+| 09:30 candles, 1 bp | +4.4 bp | +1.4 | +5.4 | +6.6 | +4.2 | 12/15 | 0.00041 |
+| 09:30 candles, 3 bp | +2.4 bp | −0.6 | +3.4 | +4.6 | +2.2 | 10/15 | 0.035 |
+
+It still passes at realistic costs (0.5–1 bp), with buys at +5.8 bp and sells at +2.7 bp, but it's thinner and more sensitive to costs than on the on-the-hour candles. The bot's `noise_trades` reproduces these 2,242 trades exactly (`round11_noise_30.py check`): +0.074R per trade with 1R = the noise band at entry (median 41 bp), 44% winners.
+
+**Now in the bot as a silent candidate (`ndx_noise`).** Each run fetches QQQ's hourly candles, replays the rules on complete sessions and journals new closed trades. It never alerts. That builds the live record the gate judges at no risk, and because the replay is deterministic, late runs don't matter. Before it could ever alert, it would need:
+1. **On-time runs:** an external hourly trigger, since GitHub's schedule runs hours late.
+2. **Alert code:** intraday entry and exit alerts, which aren't written yet.
+3. **Your sizing decision:** it's an index trade alongside gold.
+
+**Original status (before the re-test): research only, not in the bot.** It's a genuine candidate, but three things stand between it and alerts:
 1. **Timing.** It acts within the hour during the US cash session. GitHub's scheduler has been running the bot hours late, and a late alert is worthless for an intraday trade. It needs the external hourly trigger first.
 2. **Data.** The research used Dukascopy's Nasdaq 100 CFD with candles on the hour. A live feed (Twelve Data's NDX, or QQQ, whose candles start at :30) has to be matched to that, or the rules re-checked on it.
 3. **Portfolio.** Gold, Bitcoin and an index trade are different risks. How it should be sized next to the gold setups is your decision.

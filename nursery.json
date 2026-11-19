@@ -1,5 +1,5 @@
 {
-  "hypotheses_tested": 1146,
+  "hypotheses_tested": 1147,
   "strategies": {
     "btc_trend": {
       "expected_avg_r": 0.18,
@@ -27,6 +27,15 @@
       "label": "Inside-day setups",
       "note": "Round 5: inside-day breakout at half risk",
       "tier": "live"
+    },
+    "ndx_noise": {
+      "expected_avg_r": 0.074,
+      "expected_n": 2242,
+      "expected_win": 44,
+      "history": [],
+      "label": "Nasdaq noise-area (tracking)",
+      "note": "Round 11: Zarattini, Aziz & Barbon noise-area momentum on the Nasdaq 100, re-tested on 09:30 candles (+4.4 bp/trade, p=0.0004). Candidate: journalled, never alerted - it needs on-time hourly runs before it can be traded.",
+      "tier": "candidate"
     },
     "trend": {
       "expected_avg_r": 0.18,
