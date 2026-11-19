@@ -64,6 +64,11 @@ It runs at tier `candidate`, which means it is **journalled and written to the l
 
 `research/round9_entries.py` calls the live `h4_setup` directly, so the backtest and the bot cannot drift apart. Both report 526 trades at +0.1434R.
 
+## Other markets: Bitcoin trend setups (shadow)
+Research round 10 ran all three strategies, unchanged, on 21 other markets: 11 FX pairs, silver, two oils, six stock indices and Bitcoin. Only one result survived the realistic tests: **the trend rules on Bitcoin**. Taking signals only on weekdays and tracking trades through the weekend, that's 375 trades over 2017–2026 at +0.18R after costs, positive in 9 of 10 years and uncorrelated with gold. FX, oil, the indices and silver all failed (`research/README.md`).
+
+So each run also fetches BTC/USD and runs the same trend code on it, with its own saved state (`state.json` under `markets.btc`). Bitcoin setups start in the **shadow** tier: they're alerted in Slack as paper trades with no size. If they earn it on live trades, the weekly gate proposes promotion, and you decide. They add roughly **0.75 setups a week**. The settings are under `CONFIG["markets"]["btc"]`: weekday signals only, $7.50 entry buffer, $30 costs. Delete that entry to switch it off. The MT5 EA is still gold-only.
+
 ## Tiers: what gets traded, what only gets watched
 Each strategy in `nursery.json` sits in one of three tiers:
 
