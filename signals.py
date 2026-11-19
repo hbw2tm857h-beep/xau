@@ -1916,7 +1916,7 @@ def gate(nursery, journal, cfg, now):
                     "why": f"last {t['n']} trades avg {t['avg']:+.3f}R, below {floor:+.3f}R"})
                 lines.append(head + f"\n   :arrow_down: *Demoted to shadow.* The last {t['n']} trades average "
                              f"{t['avg']:+.2f}R, under half the {exp:+.2f}R it was promoted on. Alerts carry on, "
-                             "marked paper and without a size, until it earns its way back.")
+                             "without a size, until it earns its way back.")
             else:
                 lines.append(head + " — holding.")
             continue
@@ -2024,7 +2024,7 @@ def edge_note(s):
     if s["avg"] >= 0.2 and s["pf"] >= 1.5:
         verdict = "*Verdict:* a real edge so far."
     elif s["avg"] >= 0.05:
-        verdict = "*Verdict:* a thin edge after costs. Trade it small or paper-trade it while live results build up."
+        verdict = "*Verdict:* a thin edge after costs. Trade it small, or watch it while live results build up."
     elif s["avg"] > -0.05:
         verdict = "*Verdict:* roughly break-even after costs. No proven edge yet."
     else:
@@ -2450,9 +2450,10 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
     lines = [" ".join(lead)]
     if kind == "entry":
         lines.append(f"_Exit level moves each day: the previous day's high. 1R = {px(t['ar'])} ETF points._")
-    if tier == "shadow":
-        sug = short_size(cfg["ibs"]["strategy"], cfg) if kind == "entry" else ""
-        lines.append(":microscope: _Paper trade" + (f" · suggested risk {sug} per 1R" if sug else "") + "_")
+    if tier == "shadow" and kind == "entry":
+        sug = short_size(cfg["ibs"]["strategy"], cfg)
+        if sug:
+            lines.append(f"_Suggested risk {sug} per 1R_")
     happened = t["t"] if kind == "entry" else t["t_exit"]
     lag_h = (now - happened).total_seconds() / 3600
     if lag_h > 1:
@@ -2765,9 +2766,10 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                     risk_line = open_risk(state, cfg, sizing, nursery)
                     if risk_line:
                         lines.append(risk_line)
-                if tier == "shadow":
-                    sug = short_size(strategy, cfg) if e["type"] in ("signal", "ib_signal") else ""
-                    lines.append(":microscope: _Paper trade" + (f" · suggested risk {sug}" if sug else "") + "_")
+                if tier == "shadow" and e["type"] in ("signal", "ib_signal"):
+                    sug = short_size(strategy, cfg)
+                    if sug:
+                        lines.append(f"_Suggested risk {sug}_")
                 lag_h = (now - e["t"]).total_seconds() / 3600
                 if lag_h > cfg["late_alert_hours"]:
                     lines.append(f":hourglass: _Late: from {uk_day(e['t'])} UK. Check the price first._")
