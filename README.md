@@ -130,6 +130,20 @@ The calculation assumes 1 lot = 100 oz, which is standard but not universal — 
 1. Add the repository secrets `SLACK_WEBHOOK_URL` (an Incoming Webhook for #gold-signals) and `TWELVEDATA_API_KEY` (from the free plan).
 2. Open *Actions* and run the workflow with mode `test`. A status message should appear in Slack.
 
+### One channel per strategy
+Each strategy posts to its own channel through its own incoming webhook. A route with no webhook falls back to `SLACK_WEBHOOK_URL`, so channels can be added one at a time:
+
+| Channel | Strategy | Secret |
+|---|---|---|
+| #signals-gold-trend | gold trend setups (and the 4-hour trigger, if promoted) | `SLACK_WEBHOOK_TREND` |
+| #signals-gold-inside-day | gold inside-day setups | `SLACK_WEBHOOK_INSIDE_DAY` |
+| #signals-bitcoin | Bitcoin trend setups | `SLACK_WEBHOOK_BTC` |
+| #signals-ether | Ether inside-day setups | `SLACK_WEBHOOK_ETH` |
+| #signals-us-indices | US index IBS dips | `SLACK_WEBHOOK_US_IBS` |
+| #gold-signals | scorecard, nursery gate, status checks, backtests, failure warnings | `SLACK_WEBHOOK_REPORTS`, or `SLACK_WEBHOOK_URL` if unset |
+
+To add one: in your Slack app's *Incoming Webhooks* page, click *Add New Webhook to Workspace*, pick the channel and copy the URL. Then add it as a repository secret under the name above (*Settings → Secrets and variables → Actions*). The routes live in `CONFIG["slack_routes"]`.
+
 ### Getting push notifications
 Slack sends no push for a webhook message that mentions nobody, because almost everyone's per-channel setting is *mentions and keywords only*. Messages still arrive in the channel; phones stay silent. Two ways to fix it:
 

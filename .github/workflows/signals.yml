@@ -35,6 +35,13 @@ jobs:
         env:
           TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_TREND: ${{ secrets.SLACK_WEBHOOK_TREND }}
+          SLACK_WEBHOOK_INSIDE_DAY: ${{ secrets.SLACK_WEBHOOK_INSIDE_DAY }}
+          SLACK_WEBHOOK_BTC: ${{ secrets.SLACK_WEBHOOK_BTC }}
+          SLACK_WEBHOOK_ETH: ${{ secrets.SLACK_WEBHOOK_ETH }}
+          SLACK_WEBHOOK_US_IBS: ${{ secrets.SLACK_WEBHOOK_US_IBS }}
+          SLACK_WEBHOOK_NDX: ${{ secrets.SLACK_WEBHOOK_NDX }}
+          SLACK_WEBHOOK_REPORTS: ${{ secrets.SLACK_WEBHOOK_REPORTS }}
           ACCOUNT_SIZE: ${{ secrets.ACCOUNT_SIZE }}
           ACCOUNT_CCY: ${{ secrets.ACCOUNT_CCY }}
           RISK_PCT: ${{ secrets.RISK_PCT }}
