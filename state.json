@@ -1,6 +1,6 @@
 {
   "fail_count": 0,
-  "h4_last_k": 890,
+  "h4_last_k": 891,
   "ib": null,
   "idea": {
     "age": 1,
@@ -19,5 +19,16 @@
     "triggered": true
   },
   "last_daily_k_end": "2026-11-18T22:00:00+00:00",
-  "last_h1": "2026-11-19T12:00:00+00:00"
+  "last_h1": "2026-11-19T13:00:00+00:00",
+  "markets": {
+    "btc": {
+      "fail_count": 0,
+      "last_daily_k_end": "2026-11-18T22:00:00+00:00",
+      "last_h1": "2026-11-19T13:00:00+00:00"
+    }
+  },
+  "noise": {
+    "fail_count": 0,
+    "last_exit": "2026-11-17T21:00:00+00:00"
+  }
 }
