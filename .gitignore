@@ -1,2 +1,4 @@
 __pycache__/
 *.pyc
+research/reddit_raw/
+.env
