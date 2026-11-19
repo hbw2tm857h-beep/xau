@@ -47,6 +47,11 @@ jobs:
           SLACK_WEBHOOK_US_IBS: ${{ secrets.SLACK_WEBHOOK_US_IBS }}
           SLACK_WEBHOOK_NDX: ${{ secrets.SLACK_WEBHOOK_NDX }}
           SLACK_WEBHOOK_REPORTS: ${{ secrets.SLACK_WEBHOOK_REPORTS }}
+          DISCORD_WEBHOOK_GOLD: ${{ secrets.DISCORD_WEBHOOK_GOLD }}
+          DISCORD_WEBHOOK_BTC: ${{ secrets.DISCORD_WEBHOOK_BTC }}
+          DISCORD_WEBHOOK_ETH: ${{ secrets.DISCORD_WEBHOOK_ETH }}
+          DISCORD_WEBHOOK_US_IBS: ${{ secrets.DISCORD_WEBHOOK_US_IBS }}
+          DISCORD_WEBHOOK_REPORTS: ${{ secrets.DISCORD_WEBHOOK_REPORTS }}
           ACCOUNT_SIZE: ${{ secrets.ACCOUNT_SIZE }}
           ACCOUNT_CCY: ${{ secrets.ACCOUNT_CCY }}
           RISK_PCT: ${{ secrets.RISK_PCT }}
@@ -77,6 +82,7 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_REPORTS: ${{ secrets.SLACK_WEBHOOK_REPORTS }}
+          DISCORD_WEBHOOK_REPORTS: ${{ secrets.DISCORD_WEBHOOK_REPORTS }}
           MODE: verify
         run: |
           sleep 75
