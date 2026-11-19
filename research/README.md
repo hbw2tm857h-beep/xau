@@ -413,6 +413,132 @@ It still passes at realistic costs (0.5–1 bp), with buys at +5.8 bp and sells 
 2. **Data.** The research used Dukascopy's Nasdaq 100 CFD with candles on the hour. A live feed (Twelve Data's NDX, or QQQ, whose candles start at :30) has to be matched to that, or the rules re-checked on it.
 3. **Portfolio.** Gold, Bitcoin and an index trade are different risks. How it should be sized next to the gold setups is your decision.
 
+## Round 12: documented edges beyond gold (19 Nov 2026)
+
+`round12_beyond_gold.py`, `results_round12_beyond_gold.csv`, `round12_ibs_checks.py`
+
+**Why:** the Slack system should cover more than gold. Rounds 3 and 10 showed the gold rules don't travel, so this round started from edges documented *on each market*, in the literature or in the Reddit catalogue (`reddit_catalogue.md`), and tested them on the hourly data already in `data/`. All nine rules, the costs, CFD financing for index positions held overnight, and the pass mark were committed (5b800b2) before anything ran. Pass: 150+ observations, positive in every period with 10+, one-sided p < 0.05/9 = 0.0056.
+
+| Test | Source | n | Net bp | 2008–15 | 2016–22 | 2023–24 | 2025–26 | Years + | p | |
+|---|---|---|---|---|---|---|---|---|---|---|
+| M1 Time-series momentum, 22 markets (monthly, vol-scaled) | Moskowitz, Ooi & Pedersen 2012 | 214 | +9.3 | +6.8 | +6.6 | +7.1 | +30.2 | 10/18 | 0.17 | no |
+| M2 FX: home currency weakens 08–12 local | Breedon & Ranaldo 2013 | 4,901 | −0.8 | −0.2 | −1.3 | −1.0 | −1.4 | 4/19 | 1 | no |
+| M3 FX: dollar weakens 08–12 New York | same | 4,900 | −1.1 | −1.2 | −0.8 | −1.8 | −0.6 | 4/19 | 0.99 | no |
+| M4 FX month-end hedge flows | Melvin & Prins 2015 | 158 | −2.3 | +1.2 | −4.4 | −3.8 | +2.8 | 5/14 | 0.89 | no |
+| M5 Turn of the month, 6 indices | Lakonishok & Smidt; McConnell & Xu | 172 | +10.8 | +23.4 | +7.6 | −28.2 | +41.5 | 7/15 | 0.24 | no |
+| M6 US overnight drift (after financing) | Cliff, Cooper & Gulen; Reddit #6 | 3,236 | +0.3 | +1.2 | +0.1 | −0.3 | +0.7 | 11/14 | 0.41 | no |
+| M7 European-open drift, US indices | Boyarchenko, Larsen & Whelan 2023 | 3,346 | +0.1 | +1.1 | −0.1 | −1.0 | +0.8 | 7/14 | 0.43 | no |
+| **M8 IBS band reversion, 6 indices** | **Reddit #1; Pagonidis 2013** | **1,060** | **+36.6** | **+46.7** | **+32.1** | **+31.4** | **+40.2** | **13/15** | **2.6e-07** | **PASS** |
+| M9 USDJPY into the Tokyo fix | Ito & Yamada 2017 | 1,359 | −0.3 | +0.1 | −0.1 | −0.8 | −1.9 | 8/19 | 0.71 | no |
+
+(Index data starts in 2011–13, so "2008–15" means 2011–15 for M5–M8.)
+
+**What failed and why it matters:** the FX time-of-day effects are now slightly *negative* after costs, and so is the month-end hedge-flow trade. US overnight drift is real before financing but a long CFD position pays roughly 2 bp a night, which takes all of it. Time-series momentum is positive in every period but far too noisy at monthly frequency to clear the bar.
+
+**IBS stress tests (`round12_ibs_checks.py`):**
+- **Random entries** with the same holding periods on the same indices make +10.6 bp, which is the indices' upward drift. **None of 300 random runs reached +36.6 bp** (z = 3.8). The edge is the timing, not just being long.
+- **Execution:** entering at the next session's open instead of the signal close gives +34.9 bp. Double costs give +35.3 bp. Without financing it would be +42.9 bp.
+- **Clustering:** trades on different indices often fire in the same sell-off. On weekly averages it's still t = 5.1.
+- **Where it works:** the three US indices carry it: S&P 500 +55 bp (p 5e-05), Nasdaq +70 bp (p 2e-05), Dow +46 bp (p 0.0003). DAX, FTSE and Nikkei are positive (+14 to +22 bp) but not significant on their own.
+- **No stop, so the tail is real:** worst trades were DAX −31% (Feb 2020, held 19 sessions), FTSE −22% and Nikkei −17% (Mar 2020). Median hold 3 sessions. About 70 trades a year across six indices.
+- **Correlation, monthly:** −0.03 with the gold trend setups, −0.05 with inside-day, −0.07 with `ndx_noise`. A genuinely separate stream.
+
+**Verdict:** a nursery candidate on the three US indices, where it passes on each one alone. It stays journal-only until live trades back it. Before it could ever carry size it needs a decision on the tail: the rule as published has no stop, and the 2020 trades show what that costs.
+
+## Round 13: does the IBS edge travel? (19 Nov 2026)
+
+`round13_more_markets.py`, `results_round13_more_markets.csv`. Seven tests, committed before running, bar p < 0.05/7 = 0.0071.
+
+| Test | n | Net bp | 2008–15 | 2016–22 | 2023–24 | 2025–26 | p | |
+|---|---|---|---|---|---|---|---|---|
+| N1 IBS band, 11 FX pairs, both sides | 4,450 | −0.8 | −4.0 | −1.3 | −3.2 | +16.5 | 0.64 | no |
+| N2 IBS band, gold/silver/WTI/Brent, both sides | 1,457 | −23.2 | −34.6 | −32.9 | +37.7 | −26.2 | 0.96 | no |
+| N3 IBS band, Bitcoin, long only | 118 | +120.8 | | +156.4 | +80.7 | +50.8 | 0.053 | too few trades |
+| N4 Nasdaq intraday momentum (Gao et al. 2018) | 3,659 | −0.9 | +0.5 | −1.1 | −2.0 | −1.3 | 0.94 | no |
+| N5 Bitcoin weekly momentum (Liu & Tsyvinski 2021) | 489 | +35.6 | | +53.1 | +4.7 | +15.3 | 0.21 | no |
+| N6 Lower-low/high reversal, US indices (Reddit #3) | 1,704 | +3.3 | +0.6 | +6.2 | +3.2 | −2.8 | 0.051 | no |
+| N7 Daily gap fill, US indices (Reddit #12) | 263 | +24.9 | +45.1 | +6.7 | +51.1 | +38.3 | 0.041 | no |
+
+IBS reversion is not a general mean-reversion edge: it is flat on FX and loses on commodities, gold included. Bitcoin is promising but has only 118 trades.
+
+## Round 14: relative value and cross-sectional (19 Nov 2026)
+
+`round14_relative_value.py`, `results_round14_relative_value.csv`. Six tests, bar p < 0.05/6 = 0.0083.
+
+| Test | n | Net bp | p | |
+|---|---|---|---|---|
+| P1 FX cross-sectional momentum (Menkhoff et al. 2012) | 225 | −16.3 | 0.97 | no |
+| P2 Pairs: Brent vs WTI (z = 2, 20 days) | 106 | +12.9 | 0.20 | no |
+| P3 Pairs: AUDUSD vs NZDUSD | 169 | −3.9 | 0.75 | no |
+| P4 Pairs: Nasdaq 100 vs Dow | 116 | −16.4 | 0.86 | no |
+| P5 Pairs: gold vs silver | 168 | −32.8 | 0.91 | no |
+| P6 Weekly reversal across six indices | 419 | +4.8 | 0.22 | no |
+
+No relative-value edge on these markets at textbook settings.
+
+## Round 15: IBS on ten indices it had never seen (19 Nov 2026)
+
+`round15_ibs_new_indices.py`, `results_round15_ibs_new_indices.csv`. Ten more indices were downloaded from Dukascopy for this test only (`data/markets/*idx*`). CAC 40, SMI and South Africa 40 fail in the downloader. One confirmatory test of the unchanged round 12 rule, bar p < 0.05.
+
+**It failed.** Pooled: 1,495 trades, +1.75 bp, p 0.41, and 110 of 300 random-entry runs did as well.
+
+| Index | From | n | Net bp | p |
+|---|---|---|---|---|
+| Russell 2000 | 2018 | 109 | +43.0 | 0.096 |
+| Euro Stoxx 50 | 2014 | 175 | +30.8 | 0.079 |
+| FTSE MIB | 2016 | 119 | +8.5 | 0.41 |
+| Hang Seng | 2013 | 247 | +5.7 | 0.36 |
+| WIG 20 | 2018 | 109 | +0.0 | 0.50 |
+| ASX 200 | 2014 | 189 | −3.5 | 0.57 |
+| AEX | 2018 | 111 | −8.3 | 0.61 |
+| IBEX 35 | 2014 | 159 | −9.0 | 0.65 |
+| Singapore | 2018 | 146 | −24.1 | 0.83 |
+| China A50 | 2017 | 131 | −25.6 | 0.87 |
+
+**What it means:** the IBS edge is not a property of stock indices in general. It is a US effect. All four US indices tested are positive, by +43 to +70 bp: S&P 500, Nasdaq 100 and Dow in round 12, each significant on its own, plus Russell 2000 here, the only new US index. Outside the US it is mostly flat or negative, and round 12's DAX, FTSE and Nikkei were not significant either. That fits the explanation usually given for it, persistent buying of US index dips. **So the candidate covers the US indices only**, and a non-US version is ruled out.
+
+## Round 16: the gold strategies on 16 more markets (19 Nov 2026)
+
+`round16_commodities_crypto.py`, `results_round16_commodities_crypto.csv`, `round16_eth_checks.py`, `round16_eth_live_check.py`
+
+Round 10's code, costs method and pass mark, unchanged, on markets Dukascopy offers that round 10 didn't use: copper, platinum, palladium, natural gas, cocoa, coffee, sugar, cotton, soybeans, orange juice, diesel, Ether, Litecoin, Bitcoin Cash, Stellar and Cardano. 48 tests, bar p < 0.05/48 = 0.00104, committed (9fddd8f) before the data was downloaded. Most softs and the altcoins start in 2017–2021, and copper and natural gas are missing 2013 (Dukascopy fails on that year).
+
+**1 of 48 passed: the inside-day breakout on Ether**, 376 trades, +0.223R, PF 1.83, p 5.5e-05. Near misses that don't clear the bar: orange-juice inside-day (+0.143R, p 0.0038), coffee trend (+0.136R, p 0.056) and coffee inside-day (p 0.063). Everything else is flat or negative, including every metal and all four other cryptos' trend setups.
+
+**Ether checks** (the realistic test was fixed in advance: 24/7 data, signals only from weekday inside days, trades tracked through weekends; it must stay positive in every period at p < 0.05):
+
+| | n | avg R | 2016–22 | 2023–24 | 2025–26 | p |
+|---|---|---|---|---|---|---|
+| As tested (gold's hours, 8 bp) | 376 | +0.223 | +0.315 | +0.188 | +0.023 | 5.5e-05 |
+| Costs 16 bp / 32 bp | 376 | +0.199 / +0.151 | | | −0.002 / −0.052 | 0.0003 / 0.004 |
+| 24/7, all signals | 543 | +0.193 | +0.220 | +0.167 | +0.157 | 2e-05 |
+| **24/7, weekday signals (realistic)** | **327** | **+0.226** | **+0.241** | **+0.304** | **+0.102** | **0.0001** |
+
+- Buys +0.229R, sells +0.217R. Positive in 8 of 10 years.
+- **Shuffle test:** 0 of 20 shuffles reached it (mean −0.007R).
+- **Monthly correlation:** +0.45 with Bitcoin's inside-day setup (not running), −0.01 with Bitcoin's trend setups, +0.10 with gold's trend setups, +0.00 with gold's inside-day.
+- **Live code:** `round16_eth_live_check.py` replays all of Ether through `ib_step` with the live config. At zero cost 309 of the research's 327 trades match exactly and the averages agree (+0.252R live, +0.250R research). The rest are the warm-up period, and days that hit both sides, where the live code uses the hourly order instead of the research's open-price rule.
+
+Bitcoin's inside-day setup failed this same realistic test in round 10. Ether's passes it, so **Ether's inside-day setup is now a silent nursery candidate (`eth_inside_day`)**.
+
+## Round 17: the gold strategies on 30 more markets (19 Nov 2026)
+
+`round17_more_fx_indices.py`, `results_round17_more_fx_indices.csv`
+
+Round 10's code and pass mark on the ten indices downloaded for round 15 and twenty FX pairs round 10 didn't cover: USDMXN, USDZAR, USDSEK, USDNOK, USDPLN, USDHUF, USDCNH, USDSGD, USDCZK, AUDNZD, CADJPY, CHFJPY, NZDJPY, EURCHF, EURCAD, EURAUD, GBPAUD, GBPCAD, GBPCHF and AUDCAD. USDTRY was excluded in advance because of financing. 90 tests, bar p < 0.05/90 = 0.00056, committed (514da22) before the FX data was downloaded. Several pairs are missing 2013, which Dukascopy fails to serve.
+
+**0 of 90 passed.** The closest:
+
+| Market | Strategy | n | avg R | p |
+|---|---|---|---|---|
+| FTSE MIB | h4 | 170 | +0.216 | 0.0046 |
+| CADJPY | insideday | 636 | +0.088 | 0.024 |
+| Hang Seng | trend | 329 | +0.092 | 0.062 |
+| IBEX 35 | h4 | 265 | +0.091 | 0.084 |
+| Hang Seng | h4 | 252 | +0.086 | 0.1 |
+
+That completes the sweep. Across rounds 3, 10, 16 and 17 the gold strategies have now been run on 67 other markets, and two survived: the trend rules on Bitcoin and the inside-day breakout on Ether. FX, in any form, never has.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -437,4 +563,14 @@ python3 research/round10_markets.py     # the three strategies on 21 other marke
 python3 research/round10_btc_checks.py  # Bitcoin: costs, weekends, shuffle test
 python3 research/round11_literature.py  # nine published anomalies (SSRN etc.)
 python3 research/round11_noise_checks.py # stress tests on the Nasdaq noise-area pass
+python3 research/round12_beyond_gold.py   # nine documented edges on other markets
+python3 research/round12_ibs_checks.py    # stress tests on the IBS index pass
+python3 research/round13_more_markets.py  # IBS on FX/commodities/Bitcoin + four more
+python3 research/round14_relative_value.py # pairs and cross-sectional tests
+python3 research/round15_ibs_new_indices.py # IBS on ten unseen indices
+python3 research/round16_commodities_crypto.py # gold strategies on 16 more markets
+python3 research/round16_eth_checks.py      # stress tests on the Ether inside-day pass
+python3 research/round16_eth_live_check.py  # live code vs research on Ether
+python3 research/round17_more_fx_indices.py # gold strategies on 30 more markets
+python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```

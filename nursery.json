@@ -1,5 +1,5 @@
 {
-  "hypotheses_tested": 1147,
+  "hypotheses_tested": 1308,
   "strategies": {
     "btc_trend": {
       "expected_avg_r": 0.18,
@@ -9,6 +9,15 @@
       "label": "Bitcoin trend setups",
       "note": "Round 10: the gold trend rules on Bitcoin, never tuned on it. Passed 1 of 63 market x strategy tests (p=0.0008 with weekday signals). Shadow: alerted as paper with no size until live trades back it up.",
       "tier": "shadow"
+    },
+    "eth_inside_day": {
+      "expected_avg_r": 0.226,
+      "expected_n": 327,
+      "expected_win": 50,
+      "history": [],
+      "label": "Ether inside-day (tracking)",
+      "note": "Round 16: the gold inside-day breakout on Ether, never tuned on it. Passed 1 of 48 market x strategy tests (p=5.5e-05), and held on 24/7 data with weekday signals (p=0.0001, 0/20 shuffles). +0.45 correlated with Bitcoin's inside-day, about 0 with the gold setups. Candidate: journalled, never alerted.",
+      "tier": "candidate"
     },
     "h4_trend": {
       "expected_avg_r": 0.143,
@@ -45,6 +54,15 @@
       "label": "Trend setups",
       "note": "Rounds 1-4: Heikin Ashi trend-ride, 4H agreement + Ichimoku cloud",
       "tier": "live"
+    },
+    "us_ibs": {
+      "expected_avg_r": 0.478,
+      "expected_n": 616,
+      "expected_win": 72,
+      "history": [],
+      "label": "US index IBS reversion (tracking)",
+      "note": "Round 12 M8: IBS band reversion, long only, on SPY, QQQ, DIA and IWM. Passed on the S&P 500, Nasdaq 100 and Dow (p=2.6e-07 pooled over six indices), held on the Russell 2000, failed on ten non-US indices in round 15. No stop: the worst index trade in 2020 lost 31%. Candidate: journalled, never alerted.",
+      "tier": "candidate"
     }
   }
 }
