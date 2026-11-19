@@ -183,7 +183,7 @@ CONFIG = {
         "reports": "DISCORD_WEBHOOK_REPORTS",
     },
     "discord_username": "StarkFX",
-    "discord_avatar_url": "",
+    "discord_avatar_url": "https://cdn.discordapp.com/icons/1573090531838402742/3913855cf014060eab3ede6640bde75d.png?size=256",
     # Research round 19: risk-parity risk per R for each stream (inverse monthly
     # volatility, held out of sample), and the fraction of it suggested on shadow
     # setup alerts until the gate has judged the strategy on live trades.
