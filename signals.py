@@ -2425,42 +2425,27 @@ IBS_NAMES = {"SPY": ("S&P 500", "US500"), "QQQ": ("Nasdaq 100", "US100"),
 
 
 def ibs_alert(kind, t, symbol, tier, now, cfg):
-    """Slack text for an IBS entry or exit. Never sized: the rule has no stop,
-    so there is no risk distance to size from."""
+    """Slack text for an IBS entry or exit: one line to act on, plus short notes.
+    Never sized: the rule has no stop, so there is no risk distance to size from."""
     name, cfd = IBS_NAMES.get(symbol, (symbol, symbol))
     lead = [cfg["slack_mention"]] if cfg.get("slack_mention") else []
     if kind == "entry":
-        lead.append(f"*BUY {name}* ({cfd} / {symbol}) at the close {px(t['entry'])} · no stop · "
-                    f"exit at the first daily close above the previous day's high "
-                    f"(next session: above {px(t['exit_above'])})")
-        body = (f":chart_with_downwards_trend: *US index dip: {name}*. It closed {t['depth']:.1f} average "
-                f"daily ranges below its 10-day high, in the bottom {t['ibs'] * 100:.0f}% of the day's range. "
-                "Tested 2011-2026 on the S&P 500, Nasdaq 100, Dow and Russell 2000: 616 trades, 72% winners, "
-                "about +62 bp per trade before financing, median hold 3 days. The rule has no stop: in "
-                "March 2020 single trades lost up to 31%. Prices are the ETF's; on a CFD, buy at market.")
-        hist = history_line(cfg["ibs"]["strategy"], t, cfg)
-        if hist:
-            body += "\n" + hist
+        lead.append(f"*BUY {name}* ({cfd}) at the close {px(t['entry'])} · no stop · "
+                    f"exit on a daily close above {px(t['exit_above'])}")
     else:
-        lead.append(f"*CLOSE {name} BUY* ({cfd} / {symbol}) at the close {px(t['exit'])} · "
-                    f"*{t['bps']:+.0f} bp* ({t['r']:+.2f}R) after {t['held']} session{'s' if t['held'] != 1 else ''}")
-        body = (f":checkered_flag: *US index dip closed: {name}*. It closed above the previous day's high, "
-                "which is the exit. Close the position at market.")
-    notes = []
+        lead.append(f"*CLOSE {name}* ({cfd}) at the close {px(t['exit'])} · *{t['bps']:+.0f} bp* "
+                    f"after {t['held']} day{'s' if t['held'] != 1 else ''}")
+    lines = [" ".join(lead)]
+    if kind == "entry":
+        lines.append(f"_Exit level moves each day: the previous day's high. 1R = {px(t['ar'])} ETF points._")
     if tier == "shadow":
-        notes.append(":microscope: _Shadow (paper): this strategy is being tracked "
-                     "for evidence, not traded. No size given._")
-        if kind == "entry":
-            hint = sizing_hint(cfg["ibs"]["strategy"], cfg, t.get("ar"))
-            if hint:
-                notes.append(hint)
+        sug = short_size(cfg["ibs"]["strategy"], cfg) if kind == "entry" else ""
+        lines.append(":microscope: _Paper trade" + (f" · suggested risk {sug} per 1R" if sug else "") + "_")
     happened = t["t"] if kind == "entry" else t["t_exit"]
     lag_h = (now - happened).total_seconds() / 3600
     if lag_h > 1:
-        notes.append(f":hourglass: _This is the {uk_day(happened)} UK close, checked {lag_h:.0f}h later "
-                     "(each ETF is checked every few hours). Index CFDs trade after hours, so check the "
-                     "current price before acting._")
-    return Msg("\n".join([" ".join(lead)] + notes + [body]), cfg["ibs"]["strategy"])
+        lines.append(f":hourglass: _Late: the {uk_day(happened)} UK close. Check the price first._")
+    return Msg("\n".join(lines), cfg["ibs"]["strategy"])
 
 
 def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
@@ -2476,8 +2461,13 @@ def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
     st = state.setdefault("ibs", {}).setdefault(symbol, {})
     if "last_exit" not in st:
         st["last_exit"] = max((t["t_exit"] for t in closed), default=now).isoformat()
-        st["alerted"] = ""          # an already-open trade from before the start is not alerted
+        # a trade already open when tracking starts is never alerted: it is old news
+        st["alerted"] = open_t["t"].isoformat() if open_t else ""
+        st["start"] = now.isoformat()
         return []
+    st.setdefault("start", now.isoformat())   # state saved before "start" existed
+    if open_t and open_t["t"] < datetime.fromisoformat(st["start"]) and open_t["t"].isoformat() > st.get("alerted", ""):
+        st["alerted"] = open_t["t"].isoformat()   # opened before tracking began: not alerted
     tier = tier_of(nursery, ic["strategy"]) if nursery else "candidate"
     msgs = []
     for t in [t for t in closed if t["t_exit"].isoformat() > st["last_exit"]]:
@@ -2504,22 +2494,11 @@ def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
     return msgs
 
 
-def sizing_hint(strategy, cfg=None, r_points=None):
-    """Suggested risk for a shadow setup: a fraction of its round 19
-    risk-parity size, so trading it before the gate has judged it stays small.
-    None if the strategy has no parity weight."""
+def short_size(strategy, cfg=None):
+    """'0.30%': a quarter of the round 19 risk-parity size, for shadow alerts."""
     cfg = cfg or CONFIG
     full = (cfg.get("parity_risk_pct") or {}).get(strategy)
-    if full is None:
-        return None
-    f = cfg.get("shadow_risk_fraction", 0.25)
-    line = (f":scales: _If you trade it: about {full * f:.2f}% of the account per 1R, "
-            f"{'a quarter' if f == 0.25 else f'{f:g}x'} of its risk-parity size ({full:.2f}%, research round 19), "
-            "until 30 live trades back it.")
-    if r_points:
-        line += (f" Here 1R = {px(r_points)} points, the 25-day average daily range. There is no stop, "
-                 "so a crash can cost several R.")
-    return line + "_"
+    return f"{full * cfg.get('shadow_risk_fraction', 0.25):.2f}%" if full is not None else ""
 
 
 _SIMILAR = {}
@@ -2761,30 +2740,28 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                 head = headline(e, cfg, size_for)
                 if head:
                     lead.append(head)
-                extra = []
+                # Short by design: the first line carries everything needed to
+                # act; anything else is one short line that changes what you do.
+                lines = [" ".join(lead)] if lead else []
+                strategy = (e.get("idea") or {}).get("strategy", "trend")
+                if e["type"] == "signal":
+                    lines.append(f"_Cancel if the candle colour flips or {cfg['entry_expiry_bars']}h pass before entry._")
+                elif e["type"] == "ib_signal":
+                    lines.append("_Cancel both if neither fills before the daily close._")
                 if e["type"] in ("signal", "ib_signal", "h4_signal"):
-                    # a new setup is the moment you need to know what you are
-                    # already carrying, before adding to it
+                    # what you already hold matters before adding to it
                     risk_line = open_risk(state, cfg, sizing, nursery)
                     if risk_line:
-                        extra.append(risk_line)
-                    hist = history_line((e.get("idea") or {}).get("strategy", "trend"), e.get("idea") or {}, cfg)
-                    if hist:
-                        extra.append(hist)
-                notes = []
+                        lines.append(risk_line)
                 if tier == "shadow":
-                    notes.append(":microscope: _Shadow (paper): this strategy is being tracked "
-                                 "for evidence, not traded. No size given._")
-                    if e["type"] in ("signal", "ib_signal"):
-                        hint = sizing_hint((e.get("idea") or {}).get("strategy", "trend"), cfg)
-                        if hint:
-                            notes.append(hint)
+                    sug = short_size(strategy, cfg) if e["type"] in ("signal", "ib_signal") else ""
+                    lines.append(":microscope: _Paper trade" + (f" · suggested risk {sug}" if sug else "") + "_")
                 lag_h = (now - e["t"]).total_seconds() / 3600
                 if lag_h > cfg["late_alert_hours"]:
-                    notes.append(f":hourglass: _Late alert ({lag_h:.0f}h): this happened at "
-                                 f"{uk_day(e['t'])} UK. The bot's scheduled run was delayed. "
-                                 "Check the current price before acting._")
-                msg = "\n".join(([" ".join(lead)] if lead else []) + extra + notes + [msg])
+                    lines.append(f":hourglass: _Late: from {uk_day(e['t'])} UK. Check the price first._")
+                if not head:
+                    lines.append(msg)   # no compact form for this event: keep the full text
+                msg = "\n".join(lines)
                 out.append(Msg(relabel(msg, cfg), (e.get("idea") or {}).get("strategy", "trend")))
     if dropped:
         name = cfg.get("market_name", "Gold")
