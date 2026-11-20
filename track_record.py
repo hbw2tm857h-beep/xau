@@ -65,15 +65,13 @@ def render(rs, n=MAX_ROWS):
     head = f"## Live track record\nEvery trade closed since alerts went live on 14 November 2026.\n"
     if not rs:
         return head + "\nNo closed trades yet.\n\n-# Updated as trades close."
-    w_m = max(len(r[1]) for r in rs); w_k = max(len(r[3]) for r in rs)
-    w_o = max(len(r[6]) for r in rs); w_c = max(len(r[7]) for r in rs)
-    lines = [f"{datetime.fromisoformat(t):%d %b}  {m:<{w_m}}  {s:<4}  {k:<{w_k}}  "
-             f"open {o:>{w_o}}  close {c:>{w_c}}  {r:+.2f}R  {h}"
-             for t, m, s, k, r, h, o, c in reversed(rs[-n:])]
+    lines = [f"**{r:+.2f}R** · {m} {sd} {k} · {datetime.fromisoformat(t):%-d %b}\n"
+             f"-# Open {o} · Close {c} · {h}"
+             for t, m, sd, k, r, h, o, c in reversed(rs[-n:])]
     total = sum(r[4] for r in rs)
     wins = sum(r[4] > 0 for r in rs)
     more = f"\n-# Showing the latest {n} of {len(rs)} trades." if len(rs) > n else ""
-    return (head + "```\n" + "\n".join(lines) + "\n```\n"
+    return (head + "\n" + "\n".join(lines) + "\n\n"
             f"**{len(rs)} trade{'s' if len(rs) != 1 else ''}, {wins} winner{'s' if wins != 1 else ''} · {total:+.2f}R**\n"
             f"That's {total:+.2f}% at 1% risk per trade.\n{more}\n-# Updated as trades close.").replace("\n\n\n", "\n\n")
 
