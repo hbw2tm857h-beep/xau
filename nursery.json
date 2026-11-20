@@ -63,6 +63,15 @@
       "label": "US index IBS reversion",
       "note": "Round 12 M8: IBS band reversion, long only, on SPY, QQQ, DIA and IWM. Passed on the S&P 500, Nasdaq 100 and Dow (p=2.6e-07 pooled over six indices), held on the Russell 2000, failed on ten non-US indices in round 15. No stop: the worst index trade in 2020 lost 31%. Shadow since 19 Nov 2026: paper alerts, never sized.",
       "tier": "shadow"
+    },
+    "us_ibs_200": {
+      "expected_avg_r": 0.541,
+      "expected_n": 396,
+      "expected_win": 74,
+      "history": [],
+      "label": "US index rebounds, 200-day filter (tracking)",
+      "note": "Round 20 A3: the US index rebound rule, only above the 200-day average. Worst run of losses 23R against 36R for the base rule, average +0.54R against +0.48R, a third fewer trades. Missed the pre-set worst-trade bar, so tracked silently to let live trades decide between the two.",
+      "tier": "candidate"
     }
   }
 }
