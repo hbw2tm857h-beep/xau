@@ -1,0 +1,46 @@
+[
+ {
+  "test": "Q1 gold trend, the year agrees",
+  "n_fav": 477,
+  "avg_fav": 0.239,
+  "n_rest": 217,
+  "avg_rest": 0.085,
+  "t": 1.76,
+  "p": "0.039",
+  "periods": "4/4",
+  "verdict": "fail"
+ },
+ {
+  "test": "Q2 gold trend, variance ratio above 1",
+  "n_fav": 234,
+  "avg_fav": 0.14,
+  "n_rest": 486,
+  "avg_rest": 0.202,
+  "t": -0.74,
+  "p": "0.77",
+  "periods": "2/4",
+  "verdict": "fail"
+ },
+ {
+  "test": "Q3 gold trend, hourly autocorrelation above 0",
+  "n_fav": 284,
+  "avg_fav": 0.193,
+  "n_rest": 436,
+  "avg_rest": 0.174,
+  "t": 0.23,
+  "p": "0.41",
+  "periods": "2/4",
+  "verdict": "fail"
+ },
+ {
+  "test": "Q4 BTC/USD trend, the month agrees",
+  "n_fav": 368,
+  "avg_fav": 0.171,
+  "n_rest": 49,
+  "avg_rest": 0.093,
+  "t": 0.46,
+  "p": "0.32",
+  "periods": "2/3",
+  "verdict": "fail"
+ }
+]

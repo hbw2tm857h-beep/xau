@@ -687,6 +687,24 @@ The base averages +0.203R per trade on the unseen trades. **0 of 3 passed.** hyp
 
 **What it says:** the exits are as good as the data can show. The 1.5R partial that looked better in round 2 is worse on 2008-15, which is what a lucky result on one sample looks like. The chandelier trail is the closest (+0.03R a trade, p 0.09) but lost in 2025-26 and is far from the bar; it would also replace a fixed TP2 that members can set in advance with a stop they must move every hour. The 5-candle swing stop, half off at 1R with the stop to entry, and the rest at 2R stay.
 
+## Round 25: quantitative-finance regime filters (20 Nov 2026)
+
+Bradley asked whether anything from quantitative finance would help. The time-series momentum literature (Moskowitz, Ooi and Pedersen 2012; Georgopoulou and Wang 2016; Baltas and Kosowski; Levine and Pedersen 2016; Liu and Tsyvinski 2021 for crypto) says trend profits come from returns that keep going, and that this varies over time. Four filters were pre-registered and committed (5c25bcf) before any split was looked at (`research/round25_quant_regimes.py`), asking whether the hourly trend trades do better when slower measures say the market is trending. Bar: p < 0.05 / 4 = 0.0125.
+
+| Test | Favoured | Rest | p | Verdict |
+|---|---|---|---|---|
+| Q1 Gold trend, gold's 12-month return agrees with the trade | +0.239R (477) | +0.085R (217) | 0.039 | fail, ahead in all 4 periods |
+| Q2 Gold trend, 5-day variance ratio of the last 60 days above 1 | +0.140R (234) | +0.202R (486) | 0.77 | fail |
+| Q3 Gold trend, autocorrelation of the last 240 hourly returns above 0 | +0.193R (284) | +0.174R (436) | 0.41 | fail |
+| Q4 BTC/USD trend, Bitcoin's 28-day return agrees | +0.171R (368) | +0.093R (49) | 0.32 | fail |
+
+**0 of 4 passed.** hypotheses_tested rises from 1,342 to 1,346.
+
+**What it says:**
+- **Trading with gold's 12-month trend is the most consistent near miss in 25 rounds.** Those trades averaged nearly three times the others and were ahead in every period, but p = 0.039 is short of 0.0125. It is not enough to filter the alerts; the live record can show whether it holds, and a retest on the same history would only be data mining.
+- **Short-term measures of "trending" add nothing.** The variance ratio and the hourly autocorrelation don't pick better trades, consistent with round 6's ADX result: the hourly and 4-hour agreement the rules already require captures what these measure.
+- **Bitcoin's monthly trend agrees with nearly every trend trade already**, so there is little left to filter.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -728,5 +746,6 @@ python3 research/round21_positioning_and_market_filters.py # CFTC positioning, o
 python3 research/round22_springs_upthrusts.py # David Paul's springs and upthrusts on gold H4
 python3 research/round23_events_funding_metalabel.py # news timing, funding, sessions, meta-label
 python3 research/round24_exits.py           # three exit changes for gold trend trades
+python3 research/round25_quant_regimes.py    # quantitative-finance regime filters
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```
