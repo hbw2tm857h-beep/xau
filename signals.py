@@ -1578,10 +1578,105 @@ def fmt_ib_event(e, cfg, sizing):
     return None
 
 
+def add_field(text, field):
+    """Add a labelled line to a card, above its small-print footnote if it has one."""
+    if "\n-# " in text:
+        body, foot = text.rsplit("\n-# ", 1)
+        return f"{body}\n{field}\n-# {foot}"
+    return f"{text}\n{field}"
+
+
+def card(e, cfg, sizing):
+    """Discord alert for confirmed-only mode: a heading, then one labelled line
+    per level (Entry, Stop loss, Take profit 1 and 2), then one plain line on
+    what to do. Returns None for events with no card."""
+    t = e["type"]
+    idea = e.get("idea") or {}
+    d = idea.get("dir")
+    sw = side_word(d) if d else ""
+    base = t[3:] if t.startswith("h4_") else t
+    tag = "4H " if t.startswith("h4_") else ""
+    order = "buy-stop" if d == 1 else "sell-stop"
+    other = "sell-stop" if d == 1 else "buy-stop"
+
+    def lots_bit(risk):
+        got = lot_size(risk, sizing, cfg) if sizing else None
+        return f" · {got[0]:.2f} lots" if got else ""
+
+    def targets():
+        out = []
+        if idea.get("partial"):
+            out.append(f"*Take profit 1:* {px(idea['partial'])} (close half, move your stop to entry)")
+        if idea.get("target"):
+            out.append(f"*Take profit {2 if idea.get('partial') else ''}:* {px(idea['target'])}".replace(" :", ":"))
+        return out
+
+    if base == "signal":
+        hours = cfg.get("h4_expiry_bars" if tag else "entry_expiry_bars")
+        moves = "rises" if d == 1 else "falls"
+        return "\n".join([
+            f"## Gold · {tag}{sw} setup",
+            f"Place a *{order}* order. It only fills if price {moves} to the entry.",
+            f"*Entry:* {px(idea['entry'])}{lots_bit(idea.get('risk', 0))}",
+            f"*Stop loss:* {px(idea['stop'])}",
+            *targets(),
+            f"-# Valid for {hours} hours. We'll post when it fills, or tell you to delete it."])
+    if base == "entry":
+        return "\n".join([
+            f"## Gold · {tag}{sw} filled",
+            f"You're in at *{px(idea['entry'])}*.",
+            f"*Stop loss:* {px(idea['stop'])}{lots_bit(idea.get('risk', 0))}",
+            *targets()])
+    if base == "ib_signal":
+        hi, lo = idea.get("hi"), idea.get("lo")
+        if hi is None or lo is None:
+            return None
+        return "\n".join([
+            "## Gold · breakout setup",
+            "The last daily candle stayed inside the one before it. Place both orders:",
+            f"*Buy-stop:* {px(hi)}, stop loss {px(lo)}{lots_bit(abs(hi - lo))}",
+            f"*Sell-stop:* {px(lo)}, stop loss {px(hi)}",
+            "-# When one fills, delete the other. There's no take-profit: the trade closes at the daily close "
+            "(usually 22:00 UK). Delete both if neither fills by then."])
+    if base == "ib_entry":
+        return "\n".join([
+            f"## Gold · {sw} filled",
+            f"You're in at *{px(idea['entry'])}*. *Delete the {other}.*",
+            f"*Stop loss:* {px(idea['stop'])}{lots_bit(abs(idea['entry'] - idea['stop']))}",
+            "*Exit:* at the daily close (usually 22:00 UK)"])
+    if base == "partial":
+        pct = int(cfg["partial_frac"] * 100)
+        half = "half" if pct == 50 else f"{pct}%"
+        return "\n".join([
+            f"## Gold · {tag}{sw} · TP1 hit",
+            f"*Close {half}* at {px(idea['partial'])} and *move your stop to {px(idea['entry'])}* (your entry).",
+            f"The rest runs to take profit 2 at {px(idea['target'])}."])
+    if base == "target":
+        return f"## Gold · {tag}{sw} · TP2 hit\nTrade closed at {px(e['price'])}: *{e['r']:+.2f}R*."
+    if base in ("stop", "ib_stop"):
+        if idea.get("done"):
+            return (f"## Gold · {tag}{sw} · closed at entry\nThe rest closed at {px(e['price'])} after TP1: "
+                    f"*{e['r']:+.2f}R* in total.")
+        return f"## Gold · {tag}{sw} · stopped out\nTrade closed at {px(e['price'])}: *{e['r']:+.2f}R*."
+    if base == "ib_close":
+        return (f"## Gold · {sw} · close now\nThe daily close is here. Close the trade at about "
+                f"{px(e['price'])}: *{e['r']:+.2f}R*.")
+    if base == "ib_cancel":
+        return "## Gold · breakout setup cancelled\nNeither order filled. *Delete both orders.* No trade."
+    if base == "cancel":
+        return (f"## Gold · {tag}{sw} setup cancelled\nPrice never reached {px(idea['entry'])}. "
+                f"*Delete the {order}.* No trade.")
+    return None
+
+
 def headline(e, cfg, sizing):
     """One compact line with the numbers, put first so the phone's preview is
     enough to act on. Slack shows roughly the first line of a message, and a
     title like "SELL SETUP: Gold" tells you nothing you can trade from."""
+    if cfg.get("confirmed_only"):
+        c = card(e, cfg, sizing)
+        if c is not None:
+            return c
     t = e["type"]
     idea = e.get("idea") or {}
     d = idea.get("dir")
@@ -2484,19 +2579,33 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
     Never sized: the rule has no stop, so there is no risk distance to size from."""
     name, cfd = IBS_NAMES.get(symbol, (symbol, symbol))
     lead = [cfg["slack_mention"]] if cfg.get("slack_mention") else []
-    if kind == "entry":
-        lead.append(f"*BUY {name} ({cfd})* · Entry {px(t['entry'])} (the close) · No stop · "
-                    f"Exit on a daily close above {px(t['exit_above'])}")
+    days = f"{t['held']} day{'s' if t['held'] != 1 else ''}" if kind != "entry" else ""
+    if not cfg.get("confirmed_only"):
+        if kind == "entry":
+            lead.append(f"*BUY {name} ({cfd})* · Entry {px(t['entry'])} (the close) · No stop · "
+                        f"Exit on a daily close above {px(t['exit_above'])}")
+        else:
+            lead.append(f"*{name} ({cfd}) · Sell now at {px(t['exit'])}* · Closed {t['bps'] / 100:+.2f}% in {days}")
+        lines = [" ".join(lead)]
+        if kind == "entry":
+            lines.append("_The exit level moves each day to the previous day's high. We'll post when to sell._")
+    elif kind == "entry":
+        lead.append(f"## {name} ({cfd}) · BUY\n"
+                    f"Buy now, near the close at *{px(t['entry'])}*.\n"
+                    "*Stop loss:* none. This strategy buys short dips and waits for the bounce.\n"
+                    f"*Exit:* we'll post when a daily close finishes above *{px(t['exit_above'])}*.\n"
+                    "-# The exit level moves each day to the previous day's high.")
+        lines = ["\n".join(lead)]
     else:
-        lead.append(f"*{name} ({cfd}) · Sell now at {px(t['exit'])}* · Closed {t['bps'] / 100:+.2f}% "
-                    f"in {t['held']} day{'s' if t['held'] != 1 else ''}")
-    lines = [" ".join(lead)]
-    if kind == "entry":
-        lines.append("_The exit level moves each day to the previous day's high. We'll post when to sell._")
+        lead.append(f"## {name} ({cfd}) · sell now\nSell at *{px(t['exit'])}*: *{t['bps'] / 100:+.2f}%* in {days}.")
+        lines = ["\n".join(lead)]
     if tier == "shadow" and kind == "entry":
         sug = short_size(cfg["ibs"]["strategy"], cfg)
         if sug:
-            lines.append(f"_Risk {sug} of your account per {px(t['ar'])} points._")
+            if cfg.get("confirmed_only"):
+                lines[0] = add_field(lines[0], f"*Risk:* {sug} of your account per {px(t['ar'])} points")
+            else:
+                lines.append(f"_Risk {sug} of your account per {px(t['ar'])} points._")
     happened = t["t"] if kind == "entry" else t["t_exit"]
     lag_h = (now - happened).total_seconds() / 3600
     if lag_h > 1:
@@ -2825,7 +2934,8 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                     lead.append(head)
                 # Short by design: the first line carries everything needed to
                 # act; anything else is one short line that changes what you do.
-                lines = [" ".join(lead)] if lead else []
+                # a card starts with a heading, which must begin its own line
+                lines = [("\n" if head and head.startswith("## ") else " ").join(lead)] if lead else []
                 strategy = (e.get("idea") or {}).get("strategy", "trend")
                 if e["type"] in ("signal", "ib_signal", "h4_signal") and not confirmed:
                     # what you already hold matters before adding to it
@@ -2836,7 +2946,10 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                 if tier == "shadow" and e["type"] in ("signal", "ib_signal"):   # sized when the order is placed
                     sug = short_size(strategy, cfg)
                     if sug:
-                        lines.append(f"_Risk {sug} of your account._")
+                        if confirmed:
+                            lines[0] = add_field(lines[0], f"*Risk:* {sug} of your account")
+                        else:
+                            lines.append(f"_Risk {sug} of your account._")
                 lag_h = (now - e["t"]).total_seconds() / 3600
                 if lag_h > cfg["late_alert_hours"]:
                     lines.append(late_line(e["t"], now))
