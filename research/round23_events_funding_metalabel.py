@@ -109,12 +109,11 @@ def fomc_dates():
     for y in range(2008, 2021):
         for h in re.findall(r"<h5[^>]*>([^<]*)</h5>", get(f"https://www.federalreserve.gov/monetarypolicy/fomchistorical{y}.htm")):
             h = " ".join(h.split())
-            if "Meeting" not in h or "nscheduled" in h:
+            if "Meeting" not in h or "(" in h:          # unscheduled, cancelled, notation votes
                 continue
-            m = re.match(r"(.+?) Meeting", h).group(1)          # e.g. "July 31-August 1", "March 13"
-            last = m.split("-")[-1].strip().split()
-            mon = last[0].lower() if len(last) == 2 else m.split()[0].lower()
-            out.add(date(y, MONTHS[mon], int(last[-1])))
+            m = re.match(r"(.+?) Meeting", h).group(1)          # "July 31-August 1", "April/May 29-1"
+            mon = re.findall(r"[A-Za-z]+", m)[-1].lower()       # the meeting's last month
+            out.add(date(y, SHORT[mon[:3]], int(re.findall(r"\d+", m)[-1])))
     cal = get("https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm")
     parts = re.split(r'<h4[^>]*><a[^>]*>(\d{4}) FOMC Meetings', cal)
     for y, block in zip(parts[1::2], parts[2::2]):
