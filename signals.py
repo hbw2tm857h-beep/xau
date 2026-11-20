@@ -115,6 +115,10 @@ CONFIG = {
     "entry_expiry_bars": 12,      # stop order cancelled if not filled in 12 hours
     "breakeven_at_r": None,       # only used with exit_mode "ha"
     "alert_entry_hit": True,
+    # Trade alerts are for confirmed positions: the alert that pings everyone
+    # goes out when the order fills, with the entry, stop and take-profits. A
+    # setup gets a heads-up (which pings too), and one that expires gets a quiet note.
+    "confirmed_only": True,
     "alert_daily_hold": True,     # only used with exit_mode "ha"
     "track_record": "Tested 2008-2026: 715 trades, 60% winners, +0.18R per trade after costs",
 
@@ -215,8 +219,7 @@ CONFIG = {
     # action (the broker already did it); a take-profit 1 does, because you
     # close half and move the stop, and an inside-day entry does, because the
     # other side of the pair has to be deleted by hand.
-    "mention_events": ["signal", "ib_signal", "h4_signal", "partial", "cancel",
-                       "ib_entry", "ib_cancel", "ib_close"],
+    "mention_events": ["signal", "ib_signal", "h4_signal", "entry", "h4_entry", "ib_entry", "partial", "ib_close"],
 
     "fail_alert_after": 3,
     # The verify step (a minute after each run) flags a run that started later
@@ -1589,53 +1592,59 @@ def headline(e, cfg, sizing):
         got = lot_size(risk, sizing, cfg) if sizing else None
         return f" · {got[0]:.2f} lots" if got else ""
 
-    # Lumn's dot: orange while an order waits, green once you're in, a star
-    # for a winner, white for a scratch or a cancel, red for a loss.
-    WAIT, LIVE, WON, FLAT, LOST = "\U0001F7E0", "\U0001F7E2", "\u2726", "\u26AA", "\U0001F534"
-    result = lambda r: WON if r > 0.05 else LOST if r < -0.05 else FLAT
     order = "buy-stop" if d == 1 else "sell-stop"
-    levels = f"Stop {px(idea['stop'])}" if idea.get("stop") else ""
+    tps = ""
     if idea.get("partial") and idea.get("target"):
-        levels += f" · TP1 {px(idea['partial'])} · TP2 {px(idea['target'])}"
+        tps = f" · TP1 {px(idea['partial'])} · TP2 {px(idea['target'])}"
     elif idea.get("target"):
-        levels += f" · TP {px(idea['target'])}"
+        tps = f" · TP {px(idea['target'])}"
     if base == "ib_signal":
         hi, lo = idea.get("hi"), idea.get("lo")
         if hi is None or lo is None:
             return None
-        return (f"{WAIT} *{tag}Gold inside day* · buy-stop {px(hi)} · sell-stop {px(lo)}{lots_bit(abs(hi - lo))}\n"
-                "Each order's stop is the other order's entry. When one fills, delete the other.\n"
-                "We'll post when to close, at the daily close at the latest.")
+        if cfg.get("confirmed_only"):
+            return (f"*Heads up: Gold may break out* · Place a buy-stop at {px(hi)} and a sell-stop at {px(lo)}"
+                    f"{lots_bit(abs(hi - lo))}\n"
+                    "_Each order's stop is the other order's price. When one fills, delete the other. "
+                    "Delete both if neither fills by the daily close._")
+        return (f"*{tag}Gold inside day* · Buy-stop {px(hi)} · Sell-stop {px(lo)}{lots_bit(abs(hi - lo))}\n"
+                "When one fills, delete the other. Closes at the daily close.")
     if base == "signal":
         hours = cfg.get("h4_expiry_bars" if tag else "entry_expiry_bars")
-        return (f"{WAIT} *{tag}{sw} Gold* · {order} {px(idea['entry'])}{lots_bit(idea.get('risk', 0))}\n"
-                f"{levels}\n"
-                f"The order lasts up to {hours}h. We'll post if it's cancelled.")
-    if base in ("entry", "ib_entry"):
-        if base == "ib_entry":
-            other = "sell-stop" if d == 1 else "buy-stop"
-            return (f"{LIVE} *Gold {sw} filled* at {px(idea['entry'])} · delete the {other}\n"
-                    f"{levels} · closes at the daily close")
-        return f"{LIVE} *{tag}Gold {sw} filled* at {px(idea['entry'])}\n{levels}"
+        if cfg.get("confirmed_only"):
+            return (f"*Heads up: Gold may {sw}* · Place a {order} at {px(idea['entry'])} · Stop {px(idea['stop'])}{tps}"
+                    f"{lots_bit(idea.get('risk', 0))}\n"
+                    f"_The order lasts {hours}h. We'll post when it fills, or tell you to delete it if it doesn't._")
+        return (f"*{tag}{sw} Gold* · {order} {px(idea['entry'])} · Stop {px(idea['stop'])}{tps}"
+                f"{lots_bit(idea.get('risk', 0))}\nOrder lasts up to {hours}h.")
+    if base == "entry":
+        return (f"*{tag}{sw} Gold · Filled* · Entry {px(idea['entry'])} · Stop {px(idea['stop'])}{tps}"
+                f"{lots_bit(idea.get('risk', 0))}")
+    if base == "ib_entry":
+        other = "sell-stop" if d == 1 else "buy-stop"
+        return (f"*{sw} Gold · Filled* · Entry {px(idea['entry'])} · Stop {px(idea['stop'])} · Exit at the daily close"
+                f"{lots_bit(abs(idea['entry'] - idea['stop']))}\n_Delete the {other}._")
     if base == "partial":
         pct = int(cfg["partial_frac"] * 100)
-        return (f"{LIVE} *{tag}TP1 hit* {px(idea['partial'])} · close {pct}% · move stop to {px(idea['entry'])}\n"
-                f"The rest runs to TP2 {px(idea['target'])}. Worst case now: break-even.")
+        return (f"*{tag}Gold {sw} · TP1 hit {px(idea['partial'])}*\n"
+                f"Close {pct}% and move your stop to entry ({px(idea['entry'])}). The rest runs to TP2 {px(idea['target'])}.")
     if base == "target":
-        return f"{WON} *{tag}TP2 hit* {px(e['price'])} · closed {e['r']:+.2f}R"
+        return f"*{tag}Gold {sw} · TP2 hit {px(e['price'])}* · Closed {e['r']:+.2f}R"
     if base in ("stop", "ib_stop"):
         if idea.get("done"):
-            return f"{result(e['r'])} *{tag}Gold {sw} closed at entry* {px(e['price'])} · {e['r']:+.2f}R"
-        return f"{result(e['r'])} *{tag}Gold {sw} stopped out* {px(e['price'])} · {e['r']:+.2f}R"
+            return f"*{tag}Gold {sw} · Stopped at entry {px(e['price'])}* · Closed {e['r']:+.2f}R (TP1 banked)"
+        return f"*{tag}Gold {sw} · Stopped out {px(e['price'])}* · Closed {e['r']:+.2f}R"
     if base == "ib_close":
-        return f"{result(e['r'])} *Daily close* · close the Gold inside-day trade at {px(e['price'])} · about {e['r']:+.2f}R"
+        return f"*Gold {sw} · Close now at {px(e['price'])}* · Daily close reached · About {e['r']:+.2f}R"
     if base in ("cancel", "ib_cancel"):
-        if base == "ib_cancel":
-            return f"{FLAT} *Gold inside day cancelled* · delete both orders · no trade"
-        lvl = f" at {px(idea['entry'])}" if idea.get("entry") else ""
-        return f"{FLAT} *{tag}Gold {sw} cancelled* · delete the {order}{lvl} · no trade"
+        if cfg.get("confirmed_only"):
+            if base == "ib_cancel":
+                return "*Gold breakout didn't trigger* · Delete both orders · No trade"
+            return f"*Gold {sw} didn't trigger* · Delete the {order} at {px(idea['entry'])} · No trade"
+        lvl = f" {px(idea['entry'])}" if idea.get("entry") else ""
+        return f"*{tag}Gold {sw} cancelled{lvl}* · Delete the pending order"
     if base == "exit":
-        return f"{result(e['r'])} *{tag}Close the Gold {sw} now* at {px(e['price'])} · {e['r']:+.2f}R"
+        return f"*{tag}Gold {sw} · Close now at {px(e['price'])}* · {e['r']:+.2f}R"
     return None
 
 
@@ -2463,15 +2472,14 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
     name, cfd = IBS_NAMES.get(symbol, (symbol, symbol))
     lead = [cfg["slack_mention"]] if cfg.get("slack_mention") else []
     if kind == "entry":
-        lead.append(f"\U0001F7E2 *BUY {name}* ({cfd}) at the close · {px(t['entry'])}")
+        lead.append(f"*BUY {name} ({cfd})* · Entry {px(t['entry'])} (the close) · No stop · "
+                    f"Exit on a daily close above {px(t['exit_above'])}")
     else:
-        dot = "\u2726" if t["bps"] > 0 else "\U0001F534"
-        lead.append(f"{dot} *SELL {name}* ({cfd}) at the close · {px(t['exit'])} · {t['bps'] / 100:+.2f}% "
+        lead.append(f"*{name} ({cfd}) · Sell now at {px(t['exit'])}* · Closed {t['bps'] / 100:+.2f}% "
                     f"in {t['held']} day{'s' if t['held'] != 1 else ''}")
     lines = [" ".join(lead)]
     if kind == "entry":
-        lines.append(f"No stop. Sell on the first daily close above the previous day's high (now {px(t['exit_above'])}). "
-                     "We'll post when.")
+        lines.append("_The exit level moves each day to the previous day's high. We'll post when to sell._")
     if tier == "shadow" and kind == "entry":
         sug = short_size(cfg["ibs"]["strategy"], cfg)
         if sug:
@@ -2751,13 +2759,21 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
             if tier == "candidate":
                 continue   # tracked in the journal and the ledger, never alerted
             idea = e.get("idea") or {}
-            if e["type"] in ("signal", "ib_signal", "h4_signal") and \
+            confirmed = cfg.get("confirmed_only")
+            if confirmed and e["type"] in ("signal", "ib_signal", "h4_signal") and \
                     (now - e["t"]).total_seconds() / 3600 > cfg.get("max_setup_age_hours", 1e9):
-                key = {"signal": "idea", "ib_signal": "ib", "h4_signal": "h4"}[e["type"]]
+                continue   # a heads-up that arrives late is no use; the fill is still alerted
+            first = ("entry", "ib_entry", "h4_entry") if confirmed else ("signal", "ib_signal", "h4_signal")
+            if e["type"] in first and \
+                    (now - e["t"]).total_seconds() / 3600 > cfg.get("max_setup_age_hours", 1e9):
+                key = {"signal": "idea", "ib_signal": "ib", "h4_signal": "h4",
+                       "entry": "idea", "ib_entry": "ib", "h4_entry": "h4"}[e["type"]]
                 if (state.get(key) or {}).get("sig_time") == idea.get("sig_time"):
                     state[key]["unannounced"] = True
+                idea["unannounced"] = True
                 dropped.append(f"{side_word(idea['dir']) + ' ' if idea.get('dir') else ''}"
-                               f"{'inside-day' if e['type'] == 'ib_signal' else 'trend'} setup from {uk_day(e['t'])} UK")
+                               f"{'inside-day' if e['type'].startswith('ib_') else 'trend'} "
+                               f"{'entry' if confirmed else 'setup'} from {uk_day(e['t'])} UK")
                 continue
             if idea.get("unannounced"):
                 continue   # a follow-up to a setup that was too late to post
@@ -2779,13 +2795,13 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                 # act; anything else is one short line that changes what you do.
                 lines = [" ".join(lead)] if lead else []
                 strategy = (e.get("idea") or {}).get("strategy", "trend")
-                if e["type"] in ("signal", "ib_signal", "h4_signal"):
+                if e["type"] in ("signal", "ib_signal", "h4_signal") and not confirmed:
                     # what you already hold matters before adding to it
                     risk_line = open_risk(state, cfg, sizing, nursery,
                                           skip={"signal": "idea", "ib_signal": "ib", "h4_signal": "h4"}[e["type"]])
                     if risk_line:
                         lines.append(risk_line)
-                if tier == "shadow" and e["type"] in ("signal", "ib_signal"):
+                if tier == "shadow" and e["type"] in ("signal", "ib_signal"):   # sized when the order is placed
                     sug = short_size(strategy, cfg)
                     if sug:
                         lines.append(f"_Risk {sug} of your account._")
@@ -2798,9 +2814,10 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                 out.append(Msg(relabel(msg, cfg), (e.get("idea") or {}).get("strategy", "trend")))
     if dropped:
         name = cfg.get("market_name", "Gold")
-        out.append(Msg(f":fast_forward: *{name}: {len(dropped)} late setup{'s' if len(dropped) != 1 else ''} not posted.* "
-                       f"The bot only ran at {uk_day(now)} UK, and a setup more than "
-                       f"{cfg.get('max_setup_age_hours'):g}h old isn't safe to act on: "
+        out.append(Msg(f":fast_forward: *{name}: {len(dropped)} late trade{'s' if len(dropped) != 1 else ''} not posted.* "
+                       f"The bot only ran at {uk_day(now)} UK, and a trade more than "
+                       f"{cfg.get('max_setup_age_hours'):g}h old isn't safe to "
+                       f"{'enter' if cfg.get('confirmed_only') else 'act on'}: "
                        + "; ".join(dropped) + ". The trades are still tracked in the journal.", "reports"))
     skipped = len(new_idx) - cfg["max_catchup_bars"]
     if skipped > 0 and not cfg.get("market_name"):   # gold's warning covers the other markets

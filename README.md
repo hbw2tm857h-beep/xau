@@ -169,16 +169,17 @@ Slack sends no push for a webhook message that mentions nobody, because almost e
 - **Per person:** in the channel, open its name → *Notifications* → *All new messages*, and check the mobile section of that dialog separately, since it can differ from desktop. Each member has to do this for their own account.
 - **For everyone, once:** the bot mentions `<!channel>` by default. Set the `SLACK_MENTION` secret to change it to `<!here>`, a user group such as `<!subteam^S0123|@traders>`, or an empty string for no mentions at all.
 
-Only the events that need you to **touch your platform** ping everyone: a new setup (place the orders), take-profit 1 (close half, move the stop), a cancellation (delete the pending order), an inside-day entry (delete the other side) and the inside-day close. A fill, a take-profit 2 and a stop-out post without a mention, because the broker has already done the work. The weekly scorecard and the nursery gate never mention anyone. Edit `CONFIG["mention_events"]` to change the split.
+Heads-ups and the events that need you to act ping everyone: a confirmed entry, take-profit 1 (close half, move the stop) and the inside-day close. Expiries, take-profit 2 and stop-outs post without a mention. The weekly scorecard and the nursery gate never mention anyone. Edit `CONFIG["mention_events"]` to change the split.
 
-Every alert opens with one short line that a phone preview can show: a coloured dot, the direction and market, the order type and price. The levels follow on the next line, then one plain sentence on what happens next. Members follow the bot's own cancel and close posts, so no alert asks them to watch candle colours.
-
-The dots follow Lumn's "every enquiry is a dot" idea: 🟠 an order is waiting, 🟢 you're in the trade, ✦ a winner closed, ⚪ a scratch or a cancelled order, 🔴 a loss. For example:
+Each trade gets a **heads-up** when the setup forms, mentioning everyone, with the stop order to place: its price, the stop and the take-profits. The **confirmed** alert goes out when the order fills (`CONFIG["confirmed_only"]`), on one line a phone preview can show. If the order expires unfilled, a quiet note says to delete it. A heads-up that would arrive more than `max_setup_age_hours` late is skipped, and so is a fill that late (with its follow-ups), because the price has moved on. For example:
 
 ```
-🟠 SELL Gold · sell-stop 3,963.62
-Stop 4,002.41 · TP1 3,924.84 · TP2 3,886.06
-The order lasts up to 12h. We'll post if it's cancelled.
+@everyone Heads up: Gold may SELL · Place a sell-stop at 3,963.62 · Stop 4,002.41 · TP1 3,924.84 · TP2 3,886.06
+The order lasts 12h. We'll post when it fills, or tell you to delete it if it doesn't.
+@everyone SELL Gold · Filled · Entry 3,963.62 · Stop 4,002.41 · TP1 3,924.84 · TP2 3,886.06
+@everyone Gold SELL · TP1 hit 3,924.84
+Close 50% and move your stop to entry (3,963.62). The rest runs to TP2 3,886.06.
+Gold SELL · TP2 hit 3,886.06 · Closed +1.49R
 ```
 
 A new setup also carries an **open risk** line, so you can see what you are already holding before adding to it, and the `test` status check shows the same thing. It reports *current* risk rather than the risk a trade opened with: once take-profit 1 moves the stop to entry, that position reads `no risk left (stop at entry)`, because the remainder cannot lose. With two positions open it reads `Also open on Gold: trend SELL, 1.00R at risk · inside-day SELL, 0.50R at risk · 1.50R at risk in total`. The setup being announced is left out of its own line. A candidate strategy never appears, because it is tracked and never traded.
