@@ -614,6 +614,40 @@ Fitted on the first half and judged on the second (52 months): gold only 1.41, e
 - **Gold's macro drivers add nothing to the trend rules.** Real yields, the dollar, positioning and volatility all leave the average unchanged, which suggests the multi-timeframe agreement already reflects them.
 - **Constant risk-parity sizing is hard to beat** with simple volatility or drawdown rules on this portfolio.
 
+## Round 21: futures positioning and one filter per market (20 Nov 2026)
+
+Bradley asked whether the weekly CFTC Commitments of Traders report should feed the decisions, but only if it helps the edge, and for rules that favour each market's own setups the way gold's context checks do. Eight tests were pre-registered and committed before the financial-futures positioning data was downloaded (`research/round21_positioning_and_market_filters.py`). The data is the CFTC's Traders in Financial Futures report (leveraged funds, long minus short), treated as known from the Monday six days after each Tuesday report date. Gold's positioning was already tested in round 20 (B3) and failed, so it was not retested. Pass mark: 100+ favoured trades, positive in every period, ahead of the rest in most periods, and one-sided p < 0.05 / 8 = 0.00625.
+
+| Test | Favoured | Rest | p | Verdict |
+|---|---|---|---|---|
+| P1 BTC/USD trend follows the funds' weekly change | +0.041R (179) | +0.203R (197) | 0.92 | fail |
+| P2 BTC/USD trend not with an extreme crowd (104 weeks) | +0.125R (242) | +0.028R (48) | 0.29 | fail |
+| P3 ETH/USD inside-day follows the funds | +0.242R (85) | +0.118R (96) | 0.21 | fail |
+| P4 US rebounds when funds lean short (below 52-week median) | +0.478R (330) | +0.477R (286) | 0.50 | fail |
+| P5 US rebounds when funds were selling that week | +0.437R (288) | +0.514R (328) | 0.72 | fail |
+| F1 BTC/USD trend on candles closing 14:00-21:00 UTC | +0.127R (121) | +0.177R (296) | 0.66 | fail |
+| F2 ETH/USD tight inside day (range/ATR below the earlier median) | +0.381R (131) | +0.106R (171) | 0.021 | fail |
+| F3 US rebounds from a fresh 5-day low | +0.483R (363) | +0.470R (253) | 0.46 | fail |
+
+**0 of 8 pass.** hypotheses_tested rises from 1,322 to 1,330.
+
+- **Positioning adds nothing.** Following the funds, fading an extreme crowd, or buying US dips when funds are short or selling all leave the averages where they were, and for Bitcoin following the funds was worse. Together with round 20's gold test, that is six positioning tests with no edge, so the COT report stays out of the alerts. The weekly report is reachable by plain script (no browser), so it could be added later without any manual step if a future test passes.
+- **ETH/USD tight inside days are the one to watch.** They averaged +0.38R against +0.11R and were ahead in all three periods, but p = 0.021 is well short of the corrected 0.00625. Retesting the same split on the same history would only be data mining; it should be judged on live trades instead. The alert's "similar setups" line already reports tight and wide inside days separately, so the live record will show whether it holds.
+- **No market-specific filter improves BTC/USD or the US indices.** US hours do not help Bitcoin's trend setups, and a fresh 5-day low does not make a better US dip.
+
+## Round 22: David Paul's springs and upthrusts on gold (20 Nov 2026)
+
+Bradley asked for anything valuable from Dr David Paul's teaching. In his talk "Wisdom From a Legend" he trades gold on a 4-hour chart with Wyckoff springs and upthrusts read alongside volume, starts traders on a mechanical method for 30 to 40 trades before changing anything, and avoids trades that "risk a mile to make half a mile". The volume part can't be tested here (round 18: no free source of real exchange volume), so two price-only versions were pre-registered (`research/round22_springs_upthrusts.py`): a bar that breaks the 20-bar low (or high) and closes back inside, in the better half of its range; a stop order beyond the bar, stop at its other end, target 2R, out after 30 bars, $0.35 cost. Pass: 100+ trades, average above zero with p < 0.05 / 2, positive in every period.
+
+| Test | Trades | Avg R | Win rate | 2008-15 | 2016-22 | 2023-24 | 2025-26 | Verdict |
+|---|---|---|---|---|---|---|---|---|
+| S1 spring (long) | 500 | -0.080 | 34% | -0.099 | -0.081 | -0.032 | -0.042 | fail |
+| S2 upthrust (short) | 665 | -0.099 | 32% | -0.146 | +0.017 | -0.277 | -0.120 | fail |
+
+**0 of 2 pass.** Both lose after costs in almost every period, so the mechanical form of the setup has no edge on gold; whatever edge David Paul gets from it comes from his volume reading and judgement, which a rule can't copy. hypotheses_tested rises from 1,330 to 1,332.
+
+What is worth taking from his teaching is already how this project works, and the server now says so: one mechanical rule set, every alert taken, judged in batches of 30 trades rather than on the last few, a fixed small risk per trade, and targets at least as large as the risk.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -651,5 +685,7 @@ python3 research/round18_volume.py         # five volume tests (Dukascopy volume
 python3 research/similar_setups.py         # build data/similar_setups.json (alert history line)
 python3 research/round19_portfolio.py      # the five strategies as one portfolio
 python3 research/round20_risk_macro_sizing.py # tail protection, macro filters, sizing
+python3 research/round21_positioning_and_market_filters.py # CFTC positioning, one filter per market
+python3 research/round22_springs_upthrusts.py # David Paul's springs and upthrusts on gold H4
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```
