@@ -635,6 +635,19 @@ Bradley asked whether the weekly CFTC Commitments of Traders report should feed 
 - **ETH/USD tight inside days are the one to watch.** They averaged +0.38R against +0.11R and were ahead in all three periods, but p = 0.021 is well short of the corrected 0.00625. Retesting the same split on the same history would only be data mining; it should be judged on live trades instead. The alert's "similar setups" line already reports tight and wide inside days separately, so the live record will show whether it holds.
 - **No market-specific filter improves BTC/USD or the US indices.** US hours do not help Bitcoin's trend setups, and a fresh 5-day low does not make a better US dip.
 
+## Round 22: David Paul's springs and upthrusts on gold (20 Nov 2026)
+
+Bradley asked for anything valuable from Dr David Paul's teaching. In his talk "Wisdom From a Legend" he trades gold on a 4-hour chart with Wyckoff springs and upthrusts read alongside volume, starts traders on a mechanical method for 30 to 40 trades before changing anything, and avoids trades that "risk a mile to make half a mile". The volume part can't be tested here (round 18: no free source of real exchange volume), so two price-only versions were pre-registered (`research/round22_springs_upthrusts.py`): a bar that breaks the 20-bar low (or high) and closes back inside, in the better half of its range; a stop order beyond the bar, stop at its other end, target 2R, out after 30 bars, $0.35 cost. Pass: 100+ trades, average above zero with p < 0.05 / 2, positive in every period.
+
+| Test | Trades | Avg R | Win rate | 2008-15 | 2016-22 | 2023-24 | 2025-26 | Verdict |
+|---|---|---|---|---|---|---|---|---|
+| S1 spring (long) | 500 | -0.080 | 34% | -0.099 | -0.081 | -0.032 | -0.042 | fail |
+| S2 upthrust (short) | 665 | -0.099 | 32% | -0.146 | +0.017 | -0.277 | -0.120 | fail |
+
+**0 of 2 pass.** Both lose after costs in almost every period, so the mechanical form of the setup has no edge on gold; whatever edge David Paul gets from it comes from his volume reading and judgement, which a rule can't copy. hypotheses_tested rises from 1,330 to 1,332.
+
+What is worth taking from his teaching is already how this project works, and the server now says so: one mechanical rule set, every alert taken, judged in batches of 30 trades rather than on the last few, a fixed small risk per trade, and targets at least as large as the risk.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -673,5 +686,6 @@ python3 research/similar_setups.py         # build data/similar_setups.json (ale
 python3 research/round19_portfolio.py      # the five strategies as one portfolio
 python3 research/round20_risk_macro_sizing.py # tail protection, macro filters, sizing
 python3 research/round21_positioning_and_market_filters.py # CFTC positioning, one filter per market
+python3 research/round22_springs_upthrusts.py # David Paul's springs and upthrusts on gold H4
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```
