@@ -34,5 +34,17 @@
     "r": 0.727,
     "sig_time": "2026-11-19T19:30:00+00:00",
     "strategy": "ndx_noise"
+  },
+  {
+    "dir": -1,
+    "entry": 625.47,
+    "entry_time": "2026-11-20T16:30:00+00:00",
+    "exit": 609.75,
+    "exit_time": "2026-11-20T21:00:00+00:00",
+    "grade": null,
+    "how": "noise_exit",
+    "r": 2.379,
+    "sig_time": "2026-11-20T16:30:00+00:00",
+    "strategy": "ndx_noise"
   }
 ]
