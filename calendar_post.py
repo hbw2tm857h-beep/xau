@@ -21,7 +21,7 @@ FEED = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
 UK = ZoneInfo("Europe/London")
 FOOTER = ("-# High-impact US releases from Forex Factory. Times are UK. Gold, the US indices and crypto "
           "can move fast around these, and a pending order can fill on the spike. The bot doesn't pause "
-          "for news: in testing, skipping trades before a release didn't help.")
+          "for news.")
 
 
 def events():
