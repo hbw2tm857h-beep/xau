@@ -1,0 +1,35 @@
+name: Economic calendar
+
+# Posts the week's high-impact US releases to #economic-calendar on Sunday
+# evening, and a reminder on weekday mornings when something is due that day.
+# GitHub's schedule can run late; a calendar post a little late is harmless.
+on:
+  schedule:
+    - cron: "15 20 * * 0"      # Sunday 20:15 UTC: the week ahead
+    - cron: "30 6 * * 1-5"     # weekdays 06:30 UTC: today's releases
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "week or today"
+        default: "week"
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Post the calendar
+        env:
+          DISCORD_WEBHOOK_CALENDAR: ${{ secrets.DISCORD_WEBHOOK_CALENDAR }}
+          MODE: ${{ inputs.mode || (github.event.schedule == '15 20 * * 0' && 'week' || 'today') }}
+        run: python3 calendar_post.py "$MODE"
+      - name: Warn if it failed
+        if: failure()
+        env:
+          DISCORD_WEBHOOK_REPORTS: ${{ secrets.DISCORD_WEBHOOK_REPORTS }}
+        run: |
+          [ -n "${DISCORD_WEBHOOK_REPORTS:-}" ] || exit 0
+          curl -fsS -m 20 -H "Content-Type: application/json" \
+            -d '{"username":"LumnFx","content":"⚠️ The economic calendar post failed. The Forex Factory feed may be down; check the Economic calendar workflow."}' \
+            "$DISCORD_WEBHOOK_REPORTS" || true
