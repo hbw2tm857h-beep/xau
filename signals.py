@@ -259,7 +259,7 @@ CONFIG = {
     "ibs": {
         "enabled": True,
         "symbols": ["SPY", "QQQ", "DIA", "IWM"], "strategy": "us_ibs",
-        "bars": 80,                  # the band needs 25 sessions
+        "bars": 260,                 # the band needs 25 sessions, the 200-day variant 200
         "cost_bps": 1.0,
     },
 
@@ -1840,6 +1840,15 @@ def default_nursery(cfg):
                         "the gold setups. Shadow since 19 Nov 2026: paper alerts, no size.",
                 "history": [],
             },
+            "us_ibs_200": {
+                "tier": "candidate", "label": "US index rebounds, 200-day filter (tracking)",
+                "expected_avg_r": 0.541, "expected_win": 74, "expected_n": 396,
+                "note": "Round 20 A3: the US index rebound rule, only above the 200-day average. Worst run "
+                        "of losses 23R against 36R for the base rule, average +0.54R against +0.48R, a third "
+                        "fewer trades. Missed the pre-set worst-trade bar, so tracked silently to let live "
+                        "trades decide between the two.",
+                "history": [],
+            },
             "btc_trend": {
                 "tier": "shadow", "label": "Bitcoin trend setups",
                 "expected_avg_r": 0.18, "expected_win": 57, "expected_n": 375,
@@ -2397,20 +2406,23 @@ def ibs_sessions(bars, now):
     return out
 
 
-def ibs_trades(days, cost_bps, include_open=False):
+def ibs_trades(days, cost_bps, include_open=False, sma200=False):
     """IBS band reversion (research round 12, M8). Long at the close when the
     close is below the 10-day highest high minus 2.5 x the 25-day average
     range and IBS = (close - low) / (high - low) < 0.3; out at the first close
     above the previous day's high. No stop. 1R = the 25-day average range at
     entry, the rule's own unit. With include_open, a trade still open at the
-    last session is returned too, with t_exit None."""
+    last session is returned too, with t_exit None. With sma200, signals are
+    only taken when the close is at or above the 200-session average (research
+    round 20, A3: the near miss tracked as the us_ibs_200 candidate)."""
     out, i = [], 25
     while i < len(days):
         hi10 = max(d["h"] for d in days[i - 9:i + 1])
         ar = sum(d["h"] - d["l"] for d in days[i - 24:i + 1]) / 25
         c = days[i]
         rng = c["h"] - c["l"]
-        if rng > 0 and ar > 0 and c["c"] < hi10 - 2.5 * ar and (c["c"] - c["l"]) / rng < 0.3:
+        trend_ok = not sma200 or (i >= 200 and c["c"] >= sum(d["c"] for d in days[i - 199:i + 1]) / 200)
+        if rng > 0 and ar > 0 and trend_ok and c["c"] < hi10 - 2.5 * ar and (c["c"] - c["l"]) / rng < 0.3:
             sig = {"t": c["t_close"], "d": 1, "entry": c["c"], "high": c["h"], "ar": ar,
                    "ibs": (c["c"] - c["l"]) / rng, "depth": (hi10 - c["c"]) / ar}
             j = i + 1
@@ -2461,6 +2473,23 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
     return Msg("\n".join(lines), cfg["ibs"]["strategy"])
 
 
+def journal_ibs_200(state, journal, symbol, sessions, now, ic):
+    """The 200-day variant (silent candidate us_ibs_200): journal its closed
+    trades so live results can be compared with the base rule. Never alerts."""
+    st = state.setdefault("ibs", {}).setdefault(symbol, {})
+    closed = [t for t in ibs_trades(sessions, ic["cost_bps"], sma200=True) if t["t_exit"] is not None]
+    if "v200_last_exit" not in st:
+        st["v200_last_exit"] = max((t["t_exit"] for t in closed), default=now).isoformat()
+        return
+    for t in [t for t in closed if t["t_exit"].isoformat() > st["v200_last_exit"]]:
+        journal.append({"sig_time": t["t"].isoformat(), "entry_time": t["t"].isoformat(),
+                        "exit_time": t["t_exit"].isoformat(), "dir": 1, "grade": None,
+                        "entry": round(t["entry"], 2), "exit": round(t["exit"], 2),
+                        "r": round(t["r"], 3), "how": "ibs_exit", "strategy": "us_ibs_200",
+                        "symbol": symbol})
+        st["v200_last_exit"] = t["t_exit"].isoformat()
+
+
 def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
     """Journal the IBS trades on one US ETF closed since the last run, and
     alert entries and exits unless the strategy is a silent candidate. The
@@ -2468,7 +2497,9 @@ def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
     journalled or alerted as if it were live. Returns Slack messages."""
     cfg = cfg or CONFIG
     ic = cfg["ibs"]
-    trades = ibs_trades(ibs_sessions(bars_raw, now), ic["cost_bps"], include_open=True)
+    sessions = ibs_sessions(bars_raw, now)
+    trades = ibs_trades(sessions, ic["cost_bps"], include_open=True)
+    journal_ibs_200(state, journal, symbol, sessions, now, ic)
     closed = [t for t in trades if t["t_exit"] is not None]
     open_t = trades[-1] if trades and trades[-1]["t_exit"] is None else None
     st = state.setdefault("ibs", {}).setdefault(symbol, {})
