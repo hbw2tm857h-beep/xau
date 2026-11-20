@@ -648,6 +648,31 @@ Bradley asked for anything valuable from Dr David Paul's teaching. In his talk "
 
 What is worth taking from his teaching is already how this project works, and the server now says so: one mechanical rule set, every alert taken, judged in batches of 30 trades rather than on the last few, a fixed small risk per trade, and targets at least as large as the risk.
 
+## Round 23: news timing, funding, cross-market confirmation, sessions, a learned filter (20 Nov 2026)
+
+Bradley asked for a deeper and more creative search of what is published. Seven ideas from it were pre-registered and committed (9fdc12c) before the FOMC calendar or the Binance funding history was downloaded (`research/round23_events_funding_metalabel.py`). Sources: the New York Fed's pre-FOMC drift (Lucca and Moench 2015, and the 2018 Liberty Street update), studies of gold around FOMC and jobs releases (Christie-David, Chaudhry and Koch 2000; an MMU study of FOMC shocks), perpetual-futures funding (He, Manela, Ross and von Wachter), the Bitcoin-Ether lead-lag literature (Mohamad, Sifat and Shariff 2019), StoneX's "Asia buys the dip, US sells the rip" description of gold (16 Nov 2026), and Lopez de Prado's meta-labelling. Bar: p < 0.05 / 7 = 0.00714.
+
+The first runs stopped on the Federal Reserve's page formats ("April/May" meetings, abbreviated months, cancelled meetings and notation votes). Only the date reader was fixed; no rule changed. The jobs report is approximated as the first Friday of each month, as fixed in advance.
+
+| Test | Result | p | Verdict |
+|---|---|---|---|
+| E1 Gold trend, no FOMC or jobs report in the next 24h | +0.185R (680) vs +0.120R (40) | 0.35 | fail |
+| E2 Gold trend, signal within 24h after FOMC or jobs report | +0.601R (40) vs +0.157R (680) | 0.0031 | fail: only 40 trades |
+| E3 Pre-FOMC drift, S&P 500 / Nasdaq 100 / Dow | +17.0 bp per meeting (117), 55% up | 0.0024 | fail: 2025-26 −3.7 bp (15) |
+| E4 BTC/USD trend against the funding crowd | +0.060R (100) vs +0.154R (181) | 0.75 | fail, worse |
+| E5 ETH/USD inside-day when Bitcoin agrees | +0.275R (186) vs +0.163R (136) | 0.18 | fail |
+| E6 Gold Asia session minus US session | −1.0 bp a day (4,781) | 0.77 | fail |
+| E7 Gold trend, walk-forward meta-label (logistic, 5 features) | +0.081R (272) vs +0.273R (273) | 0.98 | fail, worse |
+
+**0 of 7 passed.** hypotheses_tested rises from 1,332 to 1,339.
+
+**What it says:**
+- **Gold trends that start just after big US news did far better** (+0.60R against +0.16R, ahead in both periods with enough trades), and the p-value clears the corrected bar, but 40 trades in 18 years is too few to act on. It is a note to watch in the live record, not a rule.
+- **The pre-FOMC drift is real in this data but fading**, as the New York Fed's own update suggested: strong in 2016-24, slightly negative in 2025-26. Not worth an alert.
+- **Avoiding news before a gold trade doesn't help**; the trades with news ahead were only slightly worse, and there are few of them.
+- **Funding rates, Bitcoin confirming Ether, and the Asia-versus-US session split add nothing.**
+- **The learned filter picked worse trades than it rejected.** Simple features of recent price action don't predict which trend trades win; the rules already use what is there.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -687,5 +712,6 @@ python3 research/round19_portfolio.py      # the five strategies as one portfoli
 python3 research/round20_risk_macro_sizing.py # tail protection, macro filters, sizing
 python3 research/round21_positioning_and_market_filters.py # CFTC positioning, one filter per market
 python3 research/round22_springs_upthrusts.py # David Paul's springs and upthrusts on gold H4
+python3 research/round23_events_funding_metalabel.py # news timing, funding, sessions, meta-label
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```
