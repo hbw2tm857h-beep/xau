@@ -673,6 +673,20 @@ The first runs stopped on the Federal Reserve's page formats ("April/May" meetin
 - **Funding rates, Bitcoin confirming Ether, and the Asia-versus-US session split add nothing.**
 - **The learned filter picked worse trades than it rejected.** Simple features of recent price action don't predict which trend trades win; the rules already use what is there.
 
+## Round 24: three exit changes for gold's trend trades (20 Nov 2026)
+
+Bradley asked whether the stop and take-profits are as efficient as they can be. Round 2 tuned the exits on 2016-22 and checked them on 2023-24; nothing beat the live rules, though taking the first partial at 1.5R was ahead in both samples without clearing the bar. Three exits were pre-registered and committed (f76084e) before any was simulated (`research/round24_exits.py`). Every live gold trend trade from 2008-2026 is re-run from its fill with the live entry, stop and cost; the base re-run reproduced the live state machine's R on all 720 trades. Judged on the trades round 2 never used (2008-15 and 2025-26, 396 trades): the per-trade gain must be above zero with a paired one-sided p < 0.05 / 3 and positive in both periods.
+
+| Test | Gain per trade, unseen | p | 2008-15 | 2025-26 | 2016-24 (already searched) | Verdict |
+|---|---|---|---|---|---|---|
+| X1 first partial at 1.5R | −0.021R | 0.75 | −0.046R | +0.068R | +0.035R | fail |
+| X2 chandelier trail (3x ATR) on the second half, no fixed TP2 | +0.032R | 0.093 | +0.045R | −0.019R | +0.020R | fail |
+| X3 second target scaled by volatility (1.5-3R) | −0.007R | 0.69 | −0.005R | −0.013R | +0.008R | fail |
+
+The base averages +0.203R per trade on the unseen trades. **0 of 3 passed.** hypotheses_tested rises from 1,339 to 1,342.
+
+**What it says:** the exits are as good as the data can show. The 1.5R partial that looked better in round 2 is worse on 2008-15, which is what a lucky result on one sample looks like. The chandelier trail is the closest (+0.03R a trade, p 0.09) but lost in 2025-26 and is far from the bar; it would also replace a fixed TP2 that members can set in advance with a stop they must move every hour. The 5-candle swing stop, half off at 1R with the stop to entry, and the rest at 2R stay.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -713,5 +727,6 @@ python3 research/round20_risk_macro_sizing.py # tail protection, macro filters, 
 python3 research/round21_positioning_and_market_filters.py # CFTC positioning, one filter per market
 python3 research/round22_springs_upthrusts.py # David Paul's springs and upthrusts on gold H4
 python3 research/round23_events_funding_metalabel.py # news timing, funding, sessions, meta-label
+python3 research/round24_exits.py           # three exit changes for gold trend trades
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```
