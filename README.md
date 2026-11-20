@@ -1,6 +1,6 @@
-# xau: gold Heikin Ashi signals to Slack
+# xau: LumnFx trading signals to Discord
 
-Alert-only bot. It **never places trades**. A few minutes after each H1 candle closes, GitHub Actions runs `signals.py`. The script checks the Heikin Ashi trend-ride rules on XAU/USD and posts plain-English alerts to Slack:
+Alert-only bot. It **never places trades**. A few minutes after each H1 candle closes, GitHub Actions runs `signals.py`. The script checks the Heikin Ashi trend-ride rules on XAU/USD and posts plain-English alerts to the LumnFx Discord server:
 
 - **Setup** (buy or sell): the plan (entry, stop, size, take profit 1 and 2, when it's cancelled), why the setup qualifies, and context checks
 - **Entry triggered**, **take profit 1** (close half, move the stop to entry), **take profit 2**, **stopped out**, **setup cancelled**
@@ -127,10 +127,12 @@ Add these repository secrets to show a lot size on every setup:
 The calculation assumes 1 lot = 100 oz, which is standard but not universal — micro and cent accounts often are not. Attach the EA and read the contract size it prints, or open the symbol specification in MT5, and set the `CONTRACT_OZ` secret if it differs. A wrong contract size misstates every lot size the bot posts, which is a risk number you would act on.
 
 ## Setup
-1. Add the repository secrets `SLACK_WEBHOOK_URL` (an Incoming Webhook for #gold-signals) and `TWELVEDATA_API_KEY` (from the free plan).
-2. Open *Actions* and run the workflow with mode `test`. A status message should appear in Slack.
+1. Add the repository secrets `TWELVEDATA_API_KEY` (from the free plan) and the Discord webhooks listed under *Discord (LumnFx)* below.
+2. Open *Actions* and run the workflow with mode `test`. A status message should appear in #bot-status.
 
-### One channel per strategy
+Since 20 Nov 2026 the workflow posts to Discord only. The Slack code paths are still in `signals.py` (a message with no Slack webhook is printed to the log and skipped), so Slack can come back by adding the secrets to the workflow's `env` again.
+
+### One channel per strategy (Slack, not in use)
 Each strategy posts to its own channel through its own incoming webhook. A route with no webhook falls back to `SLACK_WEBHOOK_URL`, so channels can be added one at a time:
 
 | Channel | Strategy | Secret |
@@ -142,24 +144,24 @@ Each strategy posts to its own channel through its own incoming webhook. A route
 
 To add one: in your Slack app's *Incoming Webhooks* page, click *Add New Webhook to Workspace*, pick the channel and copy the URL. Then add it as a repository secret under the name above (*Settings → Secrets and variables → Actions*). The routes live in `CONFIG["slack_routes"]`.
 
-### Discord (StarkFX)
-Every alert is mirrored to the StarkFX Discord server, converted to Discord's formatting (bold, `@everyone`, links, emoji). Routes are in `CONFIG["discord_routes"]`; a route without its secret is simply not posted to Discord.
+### Discord (LumnFx)
+Every alert goes to the LumnFx Discord server, converted to Discord's formatting (bold, `@everyone`, links, emoji). Routes are in `CONFIG["discord_routes"]`; a route without its secret is simply not posted to Discord.
 
 | Discord channel | Gets | Secret |
 |---|---|---|
 | #gold | gold trend and breakout alerts | `DISCORD_WEBHOOK_GOLD` |
-| #bitcoin | Bitcoin trend alerts | `DISCORD_WEBHOOK_BTC` |
-| #ether | Ether breakout alerts | `DISCORD_WEBHOOK_ETH` |
+| #bitcoin | BTC/USD trend alerts | `DISCORD_WEBHOOK_BTC` |
+| #ether | ETH/USD breakout alerts | `DISCORD_WEBHOOK_ETH` |
 | #us-indices | US index rebound alerts | `DISCORD_WEBHOOK_US_IBS` |
 | #bot-status (staff only) | scorecard, gate, status checks, warnings | `DISCORD_WEBHOOK_REPORTS` |
 
-A failed Discord post never blocks Slack; it is recorded, and the verify step reports it.
+A failed Discord post never blocks the others; it is recorded, and the verify step reports it.
 
 ### Timing and the delivery check
-- **Hourly runs** come from an external scheduler a few minutes after each hour. GitHub's own schedule (`7 * * * *`, every day) is the backup, so Bitcoin and Ether are covered at weekends too. Each run first pulls the latest state, so a run queued behind another can't repeat its alerts.
+- **Hourly runs** are started by the *Metronome* workflow (`.github/workflows/metronome.yml`) at :06 every hour, every day. It runs on GitHub alone: no outside scheduler, no extra token, no Claude session, so it keeps going when Claude usage runs out. One metronome job stays awake for about 5h40m, dispatches the signal check at :06, checks at :25 that a run started that hour (and starts one and warns in #bot-status if not), then dispatches the next metronome before the 6-hour job limit. Its own schedule (every 4 hours) restarts the chain if it ever breaks. GitHub's schedule on the signals workflow (`7 * * * *`) is the last backup. To stop the metronome, disable the workflow in the *Actions* tab. This relies on the repository being public: a private repository's free Actions minutes would not cover a job that is awake all day. Each run first pulls the latest state, so a run queued behind another can't repeat its alerts.
 - **US index dips** are checked for all four ETFs in the first run after 16:05 New York, so a BUY or CLOSE posts within minutes of the close. That run waits a minute before the extra calls, to stay within Twelve Data's free 8 calls a minute.
-- **Late setups are not posted.** If a run is late and finds a new setup more than an hour after its candle closed, the setup is not posted (the entry may already have run), and nor are its later fills, take-profits or stops. One :fast_forward: line in the reports channel says what was skipped; the trade is still journalled. Alerts about a trade you were told about still post, marked late, because you may be in it. `CONFIG["max_setup_age_hours"]` sets the limit.
-- **Verify step:** about 75 seconds after each hourly run, the workflow runs `signals.py` in `verify` mode. It checks that the run started within 15 minutes of the hour, processed the candle that just closed for gold, Bitcoin and Ether, checked the US ETFs after their close, delivered every Slack post, and flagged nothing as late. When all is well it posts nothing. Otherwise it posts a :rotating_light: warning to the reports channel listing what went wrong.
+- **Late setups are not posted.** If a run is late and finds a new setup more than an hour after its candle closed, the setup is not posted (the entry may already have run), and nor are its later fills, take-profits or stops. One :fast_forward: line in the reports channel says what was skipped; the trade is still journalled. Alerts about a trade you were told about still post, marked late with the time of the setup, the time of the post and how late it is, because you may be in it. `CONFIG["max_setup_age_hours"]` sets the limit.
+- **Verify step:** about 75 seconds after each hourly run, the workflow runs `signals.py` in `verify` mode. It checks that the run started within 15 minutes of the hour, processed the candle that just closed for gold, Bitcoin and Ether, checked the US ETFs after their close, delivered every post, and flagged nothing as late. When all is well it posts nothing. Otherwise it posts a :rotating_light: warning to the reports channel listing what went wrong.
 
 ### Getting push notifications
 Slack sends no push for a webhook message that mentions nobody, because almost everyone's per-channel setting is *mentions and keywords only*. Messages still arrive in the channel; phones stay silent. Two ways to fix it:
@@ -169,9 +171,17 @@ Slack sends no push for a webhook message that mentions nobody, because almost e
 
 Only the events that need you to **touch your platform** ping everyone: a new setup (place the orders), take-profit 1 (close half, move the stop), a cancellation (delete the pending order), an inside-day entry (delete the other side) and the inside-day close. A fill, a take-profit 2 and a stop-out post without a mention, because the broker has already done the work. The weekly scorecard and the nursery gate never mention anyone. Edit `CONFIG["mention_events"]` to change the split.
 
-Every alert opens with one compact line — direction, entry, stop, lot size, take-profits — because a phone preview shows about that much, and a title like "SELL SETUP: Gold" is not something you can trade from. The detail follows underneath.
+Every alert opens with one short line that a phone preview can show: a coloured dot, the direction and market, the order type and price. The levels follow on the next line, then one plain sentence on what happens next. Members follow the bot's own cancel and close posts, so no alert asks them to watch candle colours.
 
-A new setup also carries an **open risk** line, so you can see what you are already holding before adding to it, and the `test` status check shows the same thing. It reports *current* risk rather than the risk a trade opened with: once take-profit 1 moves the stop to entry, that position reads `0.00R (stop at entry)`, because the remainder cannot lose. Two positions at full risk read `trend SELL 1.00R · inside-day SELL 0.50R · total 1.50R, about 1.50% of the account`. A candidate strategy never appears, because it is tracked and never traded.
+The dots follow Lumn's "every enquiry is a dot" idea: 🟠 an order is waiting, 🟢 you're in the trade, ✦ a winner closed, ⚪ a scratch or a cancelled order, 🔴 a loss. For example:
+
+```
+🟠 SELL Gold · sell-stop 3,963.62
+Stop 4,002.41 · TP1 3,924.84 · TP2 3,886.06
+The order lasts up to 12h. We'll post if it's cancelled.
+```
+
+A new setup also carries an **open risk** line, so you can see what you are already holding before adding to it, and the `test` status check shows the same thing. It reports *current* risk rather than the risk a trade opened with: once take-profit 1 moves the stop to entry, that position reads `no risk left (stop at entry)`, because the remainder cannot lose. With two positions open it reads `Also open on Gold: trend SELL, 1.00R at risk · inside-day SELL, 0.50R at risk · 1.50R at risk in total`. The setup being announced is left out of its own line. A candidate strategy never appears, because it is tracked and never traded.
 
 ## Notes
 - Prices come from Twelve Data's XAU/USD feed, not OANDA's. Candles can differ by a few points, so compare each setup with your MT5 chart.

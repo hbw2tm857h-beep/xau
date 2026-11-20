@@ -172,7 +172,7 @@ CONFIG = {
         "us_ibs": "SLACK_WEBHOOK_US_IBS", "ndx_noise": "SLACK_WEBHOOK_NDX",
         "reports": "SLACK_WEBHOOK_REPORTS",
     },
-    # The same alerts, mirrored to the StarkFX Discord server. Each route names
+    # The same alerts, mirrored to the LumnFx Discord server. Each route names
     # the GitHub secret holding that channel's Discord webhook; a route with no
     # secret is simply not posted to Discord (no fallback, unlike Slack).
     "discord_routes": {
@@ -182,8 +182,9 @@ CONFIG = {
         "us_ibs": "DISCORD_WEBHOOK_US_IBS", "ndx_noise": "DISCORD_WEBHOOK_US_IBS",
         "reports": "DISCORD_WEBHOOK_REPORTS",
     },
-    "discord_username": "StarkFX",
-    "discord_avatar_url": "https://cdn.discordapp.com/icons/1573090531838402742/3913855cf014060eab3ede6640bde75d.png?size=256",
+    "discord_username": "LumnFx",
+    # None: each webhook's own avatar (the LFX icon, set on the webhook in Discord).
+    "discord_avatar_url": None,
     # Research round 19: risk-parity risk per R for each stream (inverse monthly
     # volatility, held out of sample), and the fraction of it suggested on shadow
     # setup alerts until the gate has judged the strategy on live trades.
@@ -266,7 +267,7 @@ CONFIG = {
     "markets": {
         "btc": {
             "symbol": "BTC/USD",
-            "name": "Bitcoin", "ticker": "BTCUSD",
+            "name": "BTC/USD", "ticker": "BTCUSD",
             "cfg": {
                 "trend_strategy": "btc_trend",
                 "all_hours": True,            # keep weekend candles: open trades are tracked through them
@@ -276,7 +277,7 @@ CONFIG = {
                 "inside_day": False,          # failed the realistic test on Bitcoin
                 "h4_trigger": False,          # failed on Bitcoin (p=0.012)
                 "ledger": False,
-                "track_record": "Bitcoin, tested 2017-2026 (rules never tuned on it): 375 trades, "
+                "track_record": "BTC/USD, tested 2017-2026 (rules never tuned on it): 375 trades, "
                                 "+0.18R per trade after costs",
             },
         },
@@ -286,7 +287,7 @@ CONFIG = {
         # Its nursery tier decides how it is alerted. Trend and 4-hour setups off.
         "eth": {
             "symbol": "ETH/USD",
-            "name": "Ether", "ticker": "ETHUSD",
+            "name": "ETH/USD", "ticker": "ETHUSD",
             "cfg": {
                 "trend": False,
                 "trend_strategy": "eth_trend",
@@ -297,9 +298,9 @@ CONFIG = {
                 "cost_per_trade": 1.4,        # ~8 basis points at $1,800
                 "h4_trigger": False,
                 "ledger": False,
-                "track_record": "Ether, tested 2017-2026 (rules never tuned on it): 327 trades, "
+                "track_record": "ETH/USD, tested 2017-2026 (rules never tuned on it): 327 trades, "
                                 "+0.23R per trade after costs",
-                "inside_day_track_record": "Ether, tested 2017-2026 (rules never tuned on it): 327 trades, "
+                "inside_day_track_record": "ETH/USD, tested 2017-2026 (rules never tuned on it): 327 trades, "
                                            "50% winners, +0.23R per trade after costs",
             },
         },
@@ -1433,6 +1434,16 @@ def uk_day(t):
     return t.astimezone(UK).strftime("%a %d %b %H:%M")
 
 
+def late_line(happened, now, what="from"):
+    """The :hourglass: line on a late alert: when the setup happened, when the
+    alert went out and how late that is, so nobody acts on stale prices."""
+    mins = max(0, round((now - happened).total_seconds() / 60))
+    lag = f"{mins // 60}h {mins % 60:02d}m" if mins >= 60 else f"{mins}m"
+    sent = now.astimezone(UK).strftime("%H:%M") if happened.astimezone(UK).date() == now.astimezone(UK).date() \
+        else uk_day(now)
+    return f":hourglass: _Late: {what} {uk_day(happened)} UK, posted {sent} UK ({lag} late). Check the price first._"
+
+
 def lot_size(risk_pts, sizing, cfg):
     """Return (lots, risk_amount_ccy) or None."""
     if not sizing:
@@ -1578,43 +1589,53 @@ def headline(e, cfg, sizing):
         got = lot_size(risk, sizing, cfg) if sizing else None
         return f" · {got[0]:.2f} lots" if got else ""
 
+    # Lumn's dot: orange while an order waits, green once you're in, a star
+    # for a winner, white for a scratch or a cancel, red for a loss.
+    WAIT, LIVE, WON, FLAT, LOST = "\U0001F7E0", "\U0001F7E2", "\u2726", "\u26AA", "\U0001F534"
+    result = lambda r: WON if r > 0.05 else LOST if r < -0.05 else FLAT
+    order = "buy-stop" if d == 1 else "sell-stop"
+    levels = f"Stop {px(idea['stop'])}" if idea.get("stop") else ""
+    if idea.get("partial") and idea.get("target"):
+        levels += f" · TP1 {px(idea['partial'])} · TP2 {px(idea['target'])}"
+    elif idea.get("target"):
+        levels += f" · TP {px(idea['target'])}"
     if base == "ib_signal":
         hi, lo = idea.get("hi"), idea.get("lo")
         if hi is None or lo is None:
             return None
-        return (f"*Gold inside day* · buy-stop {px(hi)} / sell-stop {px(lo)} · "
-                f"stop the other side{lots_bit(abs(hi - lo))} · closes at the daily close")
+        return (f"{WAIT} *{tag}Gold inside day* · buy-stop {px(hi)} · sell-stop {px(lo)}{lots_bit(abs(hi - lo))}\n"
+                "Each order's stop is the other order's entry. When one fills, delete the other.\n"
+                "We'll post when to close, at the daily close at the latest.")
     if base == "signal":
-        tps = ""
-        if idea.get("partial") and idea.get("target"):
-            tps = f" · TP {px(idea['partial'])} / {px(idea['target'])}"
-        elif idea.get("target"):
-            tps = f" · TP {px(idea['target'])}"
-        return (f"*{tag}{sw} Gold {px(idea['entry'])}* · stop {px(idea['stop'])}"
-                f"{lots_bit(idea.get('risk', 0))}{tps}")
+        hours = cfg.get("h4_expiry_bars" if tag else "entry_expiry_bars")
+        return (f"{WAIT} *{tag}{sw} Gold* · {order} {px(idea['entry'])}{lots_bit(idea.get('risk', 0))}\n"
+                f"{levels}\n"
+                f"The order lasts up to {hours}h. We'll post if it's cancelled.")
     if base in ("entry", "ib_entry"):
-        extra = ""
         if base == "ib_entry":
-            extra = " · delete the other order"
-        elif idea.get("partial") and idea.get("target"):
-            extra = f" · TP {px(idea['partial'])} / {px(idea['target'])}"
-        return f"*{tag}{sw} Gold filled {px(idea['entry'])}* · stop {px(idea['stop'])}{extra}"
+            other = "sell-stop" if d == 1 else "buy-stop"
+            return (f"{LIVE} *Gold {sw} filled* at {px(idea['entry'])} · delete the {other}\n"
+                    f"{levels} · closes at the daily close")
+        return f"{LIVE} *{tag}Gold {sw} filled* at {px(idea['entry'])}\n{levels}"
     if base == "partial":
         pct = int(cfg["partial_frac"] * 100)
-        return (f"*{tag}TP1 {px(idea['partial'])} hit* · close {pct}% · "
-                f"stop to entry {px(idea['entry'])} · TP2 {px(idea['target'])}")
+        return (f"{LIVE} *{tag}TP1 hit* {px(idea['partial'])} · close {pct}% · move stop to {px(idea['entry'])}\n"
+                f"The rest runs to TP2 {px(idea['target'])}. Worst case now: break-even.")
     if base == "target":
-        return f"*{tag}TP2 {px(e['price'])} hit* · closed *{e['r']:+.2f}R*"
+        return f"{WON} *{tag}TP2 hit* {px(e['price'])} · closed {e['r']:+.2f}R"
     if base in ("stop", "ib_stop"):
-        where = "at entry" if idea.get("done") else "stopped"
-        return f"*{tag}Gold {sw} {where} {px(e['price'])}* · *{e['r']:+.2f}R*"
+        if idea.get("done"):
+            return f"{result(e['r'])} *{tag}Gold {sw} closed at entry* {px(e['price'])} · {e['r']:+.2f}R"
+        return f"{result(e['r'])} *{tag}Gold {sw} stopped out* {px(e['price'])} · {e['r']:+.2f}R"
     if base == "ib_close":
-        return f"*Inside-day close now* {px(e['price'])} · about *{e['r']:+.2f}R* · daily close"
+        return f"{result(e['r'])} *Daily close* · close the Gold inside-day trade at {px(e['price'])} · about {e['r']:+.2f}R"
     if base in ("cancel", "ib_cancel"):
-        lvl = f" {px(idea['entry'])}" if idea.get("entry") else ""
-        return f"*{tag}Setup cancelled{lvl}* · delete the pending order · no trade"
+        if base == "ib_cancel":
+            return f"{FLAT} *Gold inside day cancelled* · delete both orders · no trade"
+        lvl = f" at {px(idea['entry'])}" if idea.get("entry") else ""
+        return f"{FLAT} *{tag}Gold {sw} cancelled* · delete the {order}{lvl} · no trade"
     if base == "exit":
-        return f"*{tag}Close the Gold {sw}* {px(e['price'])} · *{e['r']:+.2f}R*"
+        return f"{result(e['r'])} *{tag}Close the Gold {sw} now* at {px(e['price'])} · {e['r']:+.2f}R"
     return None
 
 
@@ -1832,7 +1853,7 @@ def default_nursery(cfg):
                 "history": [],
             },
             "eth_inside_day": {
-                "tier": "shadow", "label": "Ether inside-day",
+                "tier": "shadow", "label": "ETH/USD inside-day",
                 "expected_avg_r": 0.226, "expected_win": ETH_IB_EXPECTED_WIN, "expected_n": 327,
                 "note": "Round 16: the gold inside-day breakout on Ether, never tuned on it. Passed 1 of 48 "
                         "market x strategy tests (p=5.5e-05), and held on 24/7 data with weekday signals "
@@ -1841,7 +1862,7 @@ def default_nursery(cfg):
                 "history": [],
             },
             "btc_trend": {
-                "tier": "shadow", "label": "Bitcoin trend setups",
+                "tier": "shadow", "label": "BTC/USD trend setups",
                 "expected_avg_r": 0.18, "expected_win": 57, "expected_n": 375,
                 "note": "Round 10: the gold trend rules on Bitcoin, never tuned on it. Passed 1 of 63 "
                         "market x strategy tests (p=0.0008 with weekday signals). Shadow: alerted as "
@@ -2182,7 +2203,7 @@ def backtest_report(F, cfg, h1, repo):
 # --------------------------------------------------------------------------
 # Live run
 # --------------------------------------------------------------------------
-def open_risk(state, cfg, sizing=None, nursery=None):
+def open_risk(state, cfg, sizing=None, nursery=None, skip=None, prefix="Also open on Gold"):
     """What is actually on the table right now, across strategies.
 
     Reports CURRENT risk, not the risk the trade opened with: once take-profit
@@ -2197,7 +2218,7 @@ def open_risk(state, cfg, sizing=None, nursery=None):
     parts, total, pending = [], 0.0, 0
     for key, name, label, mult in rows:
         p = state.get(key)
-        if not p or not p.get("dir"):
+        if key == skip or not p or not p.get("dir"):
             continue
         tier = tier_of(nursery, name) if nursery else "live"
         if tier == "candidate":
@@ -2207,21 +2228,21 @@ def open_risk(state, cfg, sizing=None, nursery=None):
         side = side_word(p["dir"])
         if not p.get("triggered"):
             pending += 1
-            parts.append(f"{label} {side} order pending")
+            parts.append(f"{label} {side} order waiting")
             continue
         risk = p.get("risk") or 0
         rem = 0.0
         if risk:
             rem = (1 - p.get("done", 0.0)) * abs(p["entry"] - p["stop"]) / risk * mult
         total += rem
-        parts.append(f"{label} {side} {rem:.2f}R" + (" (stop at entry)" if rem < 0.005 else ""))
+        parts.append(f"{label} {side}, " + ("no risk left (stop at entry)" if rem < 0.005 else f"{rem:.2f}R at risk"))
     if not parts:
         return None
     pct = ""
     if total and sizing and sizing.get("risk_pct"):
         pct = f", about {total * sizing['risk_pct']:.2f}% of the account"
-    tail = f" · total *{total:.2f}R*{pct}" if total or not pending else ""
-    return f"_Open now: {' · '.join(parts)}{tail}_"
+    tail = f" · {total:.2f}R at risk in total{pct}" if total and len(parts) > 1 else (pct if total else "")
+    return f"_{prefix}: {' · '.join(parts)}{tail}_"
 
 
 def status_message(F, st, cfg, now):
@@ -2255,7 +2276,7 @@ def status_message(F, st, cfg, now):
             f"Daily levels: {lv}\n"
             f"Active trend setup: {idea_txt}\n"
             f"Active inside-day setup: {ib_txt}\n"
-            + ((open_risk(st, cfg) or "_Open now: nothing_") + "\n")
+            + ((open_risk(st, cfg, prefix="Open on Gold") or "_Open on Gold: nothing_") + "\n")
             + "Data and Slack are working.")
 
 
@@ -2442,22 +2463,23 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
     name, cfd = IBS_NAMES.get(symbol, (symbol, symbol))
     lead = [cfg["slack_mention"]] if cfg.get("slack_mention") else []
     if kind == "entry":
-        lead.append(f"*BUY {name}* ({cfd}) at the close {px(t['entry'])} · no stop · "
-                    f"exit on a daily close above {px(t['exit_above'])}")
+        lead.append(f"\U0001F7E2 *BUY {name}* ({cfd}) at the close · {px(t['entry'])}")
     else:
-        lead.append(f"*CLOSE {name}* ({cfd}) at the close {px(t['exit'])} · *{t['bps']:+.0f} bp* "
-                    f"after {t['held']} day{'s' if t['held'] != 1 else ''}")
+        dot = "\u2726" if t["bps"] > 0 else "\U0001F534"
+        lead.append(f"{dot} *SELL {name}* ({cfd}) at the close · {px(t['exit'])} · {t['bps'] / 100:+.2f}% "
+                    f"in {t['held']} day{'s' if t['held'] != 1 else ''}")
     lines = [" ".join(lead)]
     if kind == "entry":
-        lines.append(f"_Exit level moves each day: the previous day's high. 1R = {px(t['ar'])} ETF points._")
+        lines.append(f"No stop. Sell on the first daily close above the previous day's high (now {px(t['exit_above'])}). "
+                     "We'll post when.")
     if tier == "shadow" and kind == "entry":
         sug = short_size(cfg["ibs"]["strategy"], cfg)
         if sug:
-            lines.append(f"_Suggested risk {sug} per 1R_")
+            lines.append(f"_Risk {sug} of your account per {px(t['ar'])} points._")
     happened = t["t"] if kind == "entry" else t["t_exit"]
     lag_h = (now - happened).total_seconds() / 3600
     if lag_h > 1:
-        lines.append(f":hourglass: _Late: the {uk_day(happened)} UK close. Check the price first._")
+        lines.append(late_line(happened, now, "the close of"))
     return Msg("\n".join(lines), cfg["ibs"]["strategy"])
 
 
@@ -2757,22 +2779,19 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                 # act; anything else is one short line that changes what you do.
                 lines = [" ".join(lead)] if lead else []
                 strategy = (e.get("idea") or {}).get("strategy", "trend")
-                if e["type"] == "signal":
-                    lines.append(f"_Cancel if the candle colour flips or {cfg['entry_expiry_bars']}h pass before entry._")
-                elif e["type"] == "ib_signal":
-                    lines.append("_Cancel both if neither fills before the daily close._")
                 if e["type"] in ("signal", "ib_signal", "h4_signal"):
                     # what you already hold matters before adding to it
-                    risk_line = open_risk(state, cfg, sizing, nursery)
+                    risk_line = open_risk(state, cfg, sizing, nursery,
+                                          skip={"signal": "idea", "ib_signal": "ib", "h4_signal": "h4"}[e["type"]])
                     if risk_line:
                         lines.append(risk_line)
                 if tier == "shadow" and e["type"] in ("signal", "ib_signal"):
                     sug = short_size(strategy, cfg)
                     if sug:
-                        lines.append(f"_Suggested risk {sug}_")
+                        lines.append(f"_Risk {sug} of your account._")
                 lag_h = (now - e["t"]).total_seconds() / 3600
                 if lag_h > cfg["late_alert_hours"]:
-                    lines.append(f":hourglass: _Late: from {uk_day(e['t'])} UK. Check the price first._")
+                    lines.append(late_line(e["t"], now))
                 if not head:
                     lines.append(msg)   # no compact form for this event: keep the full text
                 msg = "\n".join(lines)
@@ -2780,7 +2799,8 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
     if dropped:
         name = cfg.get("market_name", "Gold")
         out.append(Msg(f":fast_forward: *{name}: {len(dropped)} late setup{'s' if len(dropped) != 1 else ''} not posted.* "
-                       f"The bot ran late, and a setup more than {cfg.get('max_setup_age_hours'):g}h old isn't safe to act on: "
+                       f"The bot only ran at {uk_day(now)} UK, and a setup more than "
+                       f"{cfg.get('max_setup_age_hours'):g}h old isn't safe to act on: "
                        + "; ".join(dropped) + ". The trades are still tracked in the journal.", "reports"))
     skipped = len(new_idx) - cfg["max_catchup_bars"]
     if skipped > 0 and not cfg.get("market_name"):   # gold's warning covers the other markets
@@ -2850,7 +2870,7 @@ def post_discord(url, text, cfg=None):
         cur += ("\n" if cur else "") + line
     parts.append(cur)
     for i, part in enumerate(parts):
-        payload = {"content": part, "username": cfg.get("discord_username") or "StarkFX",
+        payload = {"content": part, "username": cfg.get("discord_username") or "LumnFx",
                    "allowed_mentions": {"parse": ["everyone"]}}
         if cfg.get("discord_avatar_url"):
             payload["avatar_url"] = cfg["discord_avatar_url"]
