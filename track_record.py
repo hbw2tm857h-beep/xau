@@ -17,7 +17,7 @@ from datetime import datetime
 GO_LIVE = "2026-11-14"
 MESSAGE_ID = "1573401910520586334"     # the post in #track-record, created by its webhook
 ALERTED = ("live", "shadow")           # tiers whose trades are posted to members
-MAX_ROWS = 30                          # keep the post under Discord's 2,000 characters
+MAX_ROWS = 20                          # keep the post under Discord's 2,000 characters
 UA = {"User-Agent": "LumnFx track record", "Content-Type": "application/json"}
 
 MARKET = {"trend": ("Gold", "trend"), "inside_day": ("Gold", "breakout"), "h4_trend": ("Gold", "4H trend"),
@@ -30,14 +30,18 @@ def how(j):
     if h == "target":
         return "TP2 hit"
     if h in ("stop", "h4_stop"):
-        return "closed at entry after TP1" if r > -0.5 else "stopped out"
+        return "TP1, then entry" if r > -0.5 else "stopped out"
     if h == "ib_stop":
         return "stopped out"
     if h == "ib_close":
-        return "closed at the daily close"
+        return "daily close"
     if h == "ibs_exit":
-        return "sold on the exit signal"
+        return "exit signal"
     return "closed"
+
+
+def price(x):
+    return f"{x:,.2f}" if x is not None else "-"
 
 
 def rows(journal, nursery):
@@ -53,20 +57,22 @@ def rows(journal, nursery):
         else:
             market, kind = MARKET.get(s, (s, ""))
         side = "BUY" if j.get("dir") == 1 else "SELL"
-        out.append((j["exit_time"], market, side, kind, j["r"], how(j)))
+        out.append((j["exit_time"], market, side, kind, j["r"], how(j), price(j.get("entry")), price(j.get("exit"))))
     return sorted(out)
 
 
-def render(rs):
+def render(rs, n=MAX_ROWS):
     head = f"## Live track record\nEvery trade closed since alerts went live on 14 November 2026.\n"
     if not rs:
         return head + "\nNo closed trades yet.\n\n-# Updated as trades close."
     w_m = max(len(r[1]) for r in rs); w_k = max(len(r[3]) for r in rs)
-    lines = [f"{datetime.fromisoformat(t):%d %b}  {m:<{w_m}}  {s:<4}  {k:<{w_k}}  {r:+.2f}R  {h}"
-             for t, m, s, k, r, h in reversed(rs[-MAX_ROWS:])]
+    w_o = max(len(r[6]) for r in rs); w_c = max(len(r[7]) for r in rs)
+    lines = [f"{datetime.fromisoformat(t):%d %b}  {m:<{w_m}}  {s:<4}  {k:<{w_k}}  "
+             f"open {o:>{w_o}}  close {c:>{w_c}}  {r:+.2f}R  {h}"
+             for t, m, s, k, r, h, o, c in reversed(rs[-n:])]
     total = sum(r[4] for r in rs)
     wins = sum(r[4] > 0 for r in rs)
-    more = f"\n-# Showing the latest {MAX_ROWS} of {len(rs)} trades." if len(rs) > MAX_ROWS else ""
+    more = f"\n-# Showing the latest {n} of {len(rs)} trades." if len(rs) > n else ""
     return (head + "```\n" + "\n".join(lines) + "\n```\n"
             f"**{len(rs)} trade{'s' if len(rs) != 1 else ''}, {wins} winner{'s' if wins != 1 else ''} · {total:+.2f}R**\n"
             f"That's {total:+.2f}% at 1% risk per trade.\n{more}\n-# Updated as trades close.").replace("\n\n\n", "\n\n")
@@ -75,7 +81,12 @@ def render(rs):
 def main():
     journal = json.load(open(os.environ.get("JOURNAL_FILE", "journal.json")))
     nursery = json.load(open(os.environ.get("NURSERY_FILE", "nursery.json")))
-    text = render(rows(journal, nursery))
+    rs = rows(journal, nursery)
+    n = MAX_ROWS
+    text = render(rs, n)
+    while len(text) > 1990 and n > 1:     # Discord's limit is 2,000 characters
+        n -= 1
+        text = render(rs, n)
     if "--dry-run" in sys.argv:
         print(text)
         return
