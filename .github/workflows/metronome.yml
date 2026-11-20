@@ -1,0 +1,78 @@
+name: Metronome
+
+# Starts the hourly signal check on time, every hour, every day, without any
+# outside scheduler, token or Claude session. GitHub's own cron often runs an
+# hour or more late; a workflow_dispatch starts within seconds.
+#
+# One job stays awake for about 5h40m. At :06 it dispatches signals.yml for the
+# candle that closed on the hour. At :25 it checks a run started that hour and,
+# if none did, dispatches again and warns in the bot-status channel. Before the
+# 6-hour job limit it dispatches the next metronome, so the chain carries on.
+# The schedule below restarts the chain if it ever breaks; the concurrency
+# group keeps it to one metronome at a time.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "41 */4 * * *"
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: metronome
+  cancel-in-progress: false
+
+jobs:
+  tick:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - name: Dispatch the signal check every hour
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          DISCORD_WEBHOOK_REPORTS: ${{ secrets.DISCORD_WEBHOOK_REPORTS }}
+        run: |
+          set -u
+          stop=$(( $(date +%s) + 340 * 60 ))
+          warn() {
+            [ -n "${DISCORD_WEBHOOK_REPORTS:-}" ] || return 0
+            curl -fsS -m 20 -H "Content-Type: application/json" \
+              -d "{\"username\":\"LumnFx\",\"content\":\"$1\"}" "$DISCORD_WEBHOOK_REPORTS" || true
+          }
+          dispatch() {
+            for i in 1 2 3; do
+              gh workflow run signals.yml -R "$REPO" --ref main -f mode=run && return 0
+              sleep 20
+            done
+            warn "🚨 The metronome could not start the signal check at $(date -u +%H:%M) UTC. GitHub's own schedule is the backup and often runs late."
+          }
+          while :; do
+            now=$(date +%s)
+            hour=$(( now / 3600 * 3600 ))
+            for m in 6 25 66; do                      # 66 = :06 of the next hour
+              at=$(( hour + m * 60 ))
+              [ "$at" -gt "$now" ] && break
+            done
+            [ "$at" -gt "$stop" ] && break
+            sleep $(( at - now ))
+            if [ "$(date -u +%M)" = "25" ]; then
+              since=$(date -u -d "@$(( at / 3600 * 3600 ))" +%Y-%m-%dT%H:%M:%SZ)
+              n=$(gh run list -R "$REPO" -w signals.yml --created ">=$since" \
+                    --json conclusion -q '[.[] | select(.conclusion != "cancelled")] | length' || echo err)
+              if [ "$n" = "0" ]; then
+                dispatch
+                warn "⚠️ No signal check had started by :25, so the metronome started one. Alerts from the $(date -u +%H):00 UTC candle may be up to 25 minutes late."
+              fi
+            else
+              dispatch
+            fi
+          done
+
+      - name: Hand over to the next metronome
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run metronome.yml -R "${{ github.repository }}" --ref main

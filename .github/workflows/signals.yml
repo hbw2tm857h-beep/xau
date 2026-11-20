@@ -4,7 +4,7 @@ on:
   schedule:
     # A few minutes after each H1 close, every day: gold sleeps at weekends but
     # Bitcoin and Ether don't, and the bot skips gold's closed hours itself.
-    # This is the backup; an external scheduler triggers the on-time runs.
+    # This is the backup; the Metronome workflow triggers the on-time runs.
     - cron: "7 * * * *"
     # Weekly scorecard, Friday after the close.
     - cron: "37 22 * * 5"
@@ -39,14 +39,6 @@ jobs:
       - name: Run
         env:
           TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_TREND: ${{ secrets.SLACK_WEBHOOK_TREND }}
-          SLACK_WEBHOOK_INSIDE_DAY: ${{ secrets.SLACK_WEBHOOK_INSIDE_DAY }}
-          SLACK_WEBHOOK_BTC: ${{ secrets.SLACK_WEBHOOK_BTC }}
-          SLACK_WEBHOOK_ETH: ${{ secrets.SLACK_WEBHOOK_ETH }}
-          SLACK_WEBHOOK_US_IBS: ${{ secrets.SLACK_WEBHOOK_US_IBS }}
-          SLACK_WEBHOOK_NDX: ${{ secrets.SLACK_WEBHOOK_NDX }}
-          SLACK_WEBHOOK_REPORTS: ${{ secrets.SLACK_WEBHOOK_REPORTS }}
           DISCORD_WEBHOOK_GOLD: ${{ secrets.DISCORD_WEBHOOK_GOLD }}
           DISCORD_WEBHOOK_BTC: ${{ secrets.DISCORD_WEBHOOK_BTC }}
           DISCORD_WEBHOOK_ETH: ${{ secrets.DISCORD_WEBHOOK_ETH }}
@@ -75,13 +67,11 @@ jobs:
 
       # About a minute later, check the run did its job: on time, the latest
       # candle processed for each market, the US ETFs checked after their
-      # close, every Slack post delivered. Silent when all is well; a warning
+      # close, every post delivered. Silent when all is well; a warning
       # in the reports channel when not.
       - name: Verify the signals went out on time
         if: always() && ((github.event_name == 'schedule' && github.event.schedule != '37 22 * * 5') || github.event.inputs.mode == 'run')
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          SLACK_WEBHOOK_REPORTS: ${{ secrets.SLACK_WEBHOOK_REPORTS }}
           DISCORD_WEBHOOK_REPORTS: ${{ secrets.DISCORD_WEBHOOK_REPORTS }}
           MODE: verify
         run: |

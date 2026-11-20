@@ -6,7 +6,7 @@
       "expected_n": 375,
       "expected_win": 57,
       "history": [],
-      "label": "Bitcoin trend setups",
+      "label": "BTC/USD trend setups",
       "note": "Round 10: the gold trend rules on Bitcoin, never tuned on it. Passed 1 of 63 market x strategy tests (p=0.0008 with weekday signals). Shadow: alerted as paper with no size until live trades back it up.",
       "tier": "shadow"
     },
@@ -15,7 +15,7 @@
       "expected_n": 327,
       "expected_win": 50,
       "history": [],
-      "label": "Ether inside-day",
+      "label": "ETH/USD inside-day",
       "note": "Round 16: the gold inside-day breakout on Ether, never tuned on it. Passed 1 of 48 market x strategy tests (p=5.5e-05), and held on 24/7 data with weekday signals (p=0.0001, 0/20 shuffles). +0.45 correlated with Bitcoin's inside-day, about 0 with the gold setups. Shadow since 19 Nov 2026: paper alerts, no size.",
       "tier": "shadow"
     },
