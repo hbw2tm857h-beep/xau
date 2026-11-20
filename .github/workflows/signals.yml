@@ -65,6 +65,14 @@ jobs:
             git push
           fi
 
+      # Every closed trade members were alerted to goes into #track-record.
+      - name: Update the track record
+        if: always()
+        continue-on-error: true
+        env:
+          DISCORD_WEBHOOK_TRACK: ${{ secrets.DISCORD_WEBHOOK_TRACK }}
+        run: python3 track_record.py
+
       # About a minute later, check the run did its job: on time, the latest
       # candle processed for each market, the US ETFs checked after their
       # close, every post delivered. Silent when all is well; a warning
