@@ -190,6 +190,14 @@ CONFIG = {
     # Silent candidates post their own cards to a staff-only channel, so their
     # progress can be followed without members ever seeing them.
     "candidate_alerts": True,
+    # Alerts ping the market's role instead of @everyone, so members only hear
+    # about the markets they picked in onboarding. Routes not listed (reports,
+    # candidates) keep their own wording.
+    "discord_role_mentions": {
+        "trend": "1573546702672236686", "h4_trend": "1573546702672236686", "inside_day": "1573546702672236686",
+        "btc_trend": "1573546792585273395", "eth_inside_day": "1573546792585273395",
+        "us_ibs": "1573546811111641098", "ndx_noise": "1573546811111641098",
+    },
     "discord_username": "LumnFx",
     # None: each webhook's own avatar (the LFX icon, set on the webhook in Discord).
     "discord_avatar_url": None,
@@ -2666,7 +2674,9 @@ def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
                         "symbol": symbol})
         st["last_exit"] = t["t_exit"].isoformat()
         if tier != "candidate" and st.get("alerted") == t["t"].isoformat():
-            msgs.append(ibs_alert("exit", t, symbol, tier, now, cfg))
+            m = ibs_alert("exit", t, symbol, tier, now, cfg)
+            m.thread = (f"{symbol}|us_ibs|{t['t'].isoformat()}", "close")
+            msgs.append(m)
     if open_t and tier != "candidate" and open_t["t"].isoformat() > st.get("alerted", ""):
         age_h = (now - open_t["t"]).total_seconds() / 3600
         if age_h > cfg.get("max_setup_age_hours", 1e9):
@@ -2677,7 +2687,9 @@ def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
                                 f"was only checked {age_h:.0f}h later, too late to buy at the close. "
                                 "The trade is still tracked in the journal.", "reports"))
         else:
-            msgs.append(ibs_alert("entry", open_t, symbol, tier, now, cfg))
+            m = ibs_alert("entry", open_t, symbol, tier, now, cfg)
+            m.thread = (f"{symbol}|us_ibs|{open_t['t'].isoformat()}", "open")
+            msgs.append(m)
             st["alerted"] = open_t["t"].isoformat()
     return msgs
 
@@ -2838,6 +2850,41 @@ def run_markets(state, journal, now, api_key, sizing, nursery, fetch=None):
     return out
 
 
+# Fills open a discussion thread in the #trade-talk forum; later events for the
+# same trade post into it, and the close ends it.
+THREAD_STAGES = {"entry": "open", "ib_entry": "open", "h4_entry": "open",
+                 "partial": "follow", "h4_partial": "follow",
+                 "target": "close", "stop": "close", "exit": "close", "ib_stop": "close",
+                 "ib_close": "close", "h4_target": "close", "h4_stop": "close"}
+
+
+def post_thread(state, m, url, cfg=None):
+    """Mirror a trade alert into its #trade-talk thread, without any ping."""
+    cfg = cfg or CONFIG
+    key, stage = m.thread
+    threads = state.setdefault("threads", {})
+    text = "\n".join(l for l in to_discord(m).split("\n") if l.strip() not in ("@everyone", "@here"))
+    payload = {"content": text[:1990], "username": cfg.get("discord_username") or "LumnFx",
+               "allowed_mentions": {"parse": []}}
+    target = url + "?wait=true"
+    if stage == "open":
+        head = next((l[3:] for l in text.split("\n") if l.startswith("## ")), "Trade")
+        payload["thread_name"] = f"{head} · {datetime.now(UTC):%-d %b}"[:100]
+        payload["content"] = (text + "\n\nQuestions about this trade go here.")[:1990]
+    elif key in threads:
+        target += f"&thread_id={threads[key]}"
+    else:
+        return   # the trade's thread was never opened (e.g. it started before threads existed)
+    req = urllib.request.Request(target, data=json.dumps(payload).encode(), headers={
+        "Content-Type": "application/json", "User-Agent": "DiscordBot (https://github.com/hbw2tm857h-beep/xau, 1.0)"})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        made = json.loads(r.read() or b"{}")
+    if stage == "open" and made.get("channel_id"):
+        threads[key] = made["channel_id"]
+    if stage == "close":
+        threads.pop(key, None)
+
+
 CANDIDATE_NOTE = "-# Candidate · tracked only, not posted to members."
 
 
@@ -2867,6 +2914,7 @@ class Msg(str):
     def __new__(cls, text, route=None):
         m = str.__new__(cls, text)
         m.route = route
+        m.thread = None      # (key, "open" | "follow" | "close") for the #trade-talk forum
         return m
 
 
@@ -2987,7 +3035,11 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                 if not head:
                     lines.append(msg)   # no compact form for this event: keep the full text
                 msg = "\n".join(lines)
-                out.append(Msg(relabel(msg, cfg), (e.get("idea") or {}).get("strategy", "trend")))
+                m = Msg(relabel(msg, cfg), (e.get("idea") or {}).get("strategy", "trend"))
+                stage = THREAD_STAGES.get(e["type"])
+                if stage and idea.get("sig_time"):
+                    m.thread = (f"{cfg.get('market_name', 'Gold')}|{m.route}|{idea['sig_time']}", stage)
+                out.append(m)
     if dropped:
         name = cfg.get("market_name", "Gold")
         out.append(Msg(f":fast_forward: *{name}: {len(dropped)} late trade{'s' if len(dropped) != 1 else ''} not posted.* "
@@ -3056,6 +3108,10 @@ def post_discord(url, text, cfg=None):
     """Post to a Discord webhook, split into 2,000-character pieces."""
     cfg = cfg or CONFIG
     body = to_discord(text)
+    role = (cfg.get("discord_role_mentions") or {}).get(getattr(text, "route", None) or "")
+    if role:
+        body = body.replace("@everyone", f"<@&{role}>")
+    allowed = {"roles": [role]} if role else {"parse": ["everyone"]}
     parts, cur = [], ""
     for line in body.split("\n"):
         if len(cur) + len(line) + 1 > 1900 and cur:
@@ -3064,7 +3120,7 @@ def post_discord(url, text, cfg=None):
     parts.append(cur)
     for i, part in enumerate(parts):
         payload = {"content": part, "username": cfg.get("discord_username") or "LumnFx",
-                   "allowed_mentions": {"parse": ["everyone"]}}
+                   "allowed_mentions": allowed}
         if cfg.get("discord_avatar_url"):
             payload["avatar_url"] = cfg["discord_avatar_url"]
         req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={
@@ -3266,6 +3322,13 @@ def main():
             except Exception as e:  # noqa: BLE001 - Discord must never block Slack
                 print(f"Discord post failed: {e}", file=sys.stderr)
                 failed.append(f"discord {getattr(m, 'route', None) or 'reports'}: {str(e)[:80]}")
+        talk = (os.environ.get("DISCORD_WEBHOOK_TALK") or "").strip()
+        if talk and getattr(m, "thread", None):
+            try:
+                post_thread(state, m, talk)
+                time.sleep(0.3)
+            except Exception as e:  # noqa: BLE001 - a discussion thread must never block an alert
+                print(f"Trade thread post failed: {e}", file=sys.stderr)
     if mode == "run":
         state["last_run"] = dict(run_record, posts=len(msgs), failed=failed,
                                  late=sum(":hourglass:" in m for m in msgs),
