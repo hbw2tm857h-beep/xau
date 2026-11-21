@@ -2779,7 +2779,7 @@ def verify_run(state, now, cfg=None):
     cfg = cfg or CONFIG
     lr = state.get("last_run") or {}
     problems = []
-    started = datetime.fromisoformat(lr["started"]) if lr.get("started") else None
+    started = datetime.fromisoformat(lr.get("hour_first") or lr["started"]) if lr.get("started") else None
     hour = now.replace(minute=0, second=0, microsecond=0)
     if started is None or started < hour - timedelta(minutes=5):
         problems.append(f"no run has started since {uk_hm(hour)} UK" + (f" (last one {uk_day(started)} UK)" if started else ""))
@@ -3128,6 +3128,14 @@ def main():
             post_discord(discord_url_for(Msg(text, "reports")), text)
         return
     run_record = {"started": now.isoformat(), "mode": mode}
+    # GitHub's backup schedule often fires well after the Metronome's on-time
+    # run. Remember when this hour's first good run started, so the verify
+    # step judges the hour by that run and not by the late backup.
+    prev = state.get("last_run") or {}
+    if mode == "run" and prev.get("started") and not prev.get("error"):
+        first = datetime.fromisoformat(prev.get("hour_first") or prev["started"])
+        if first.replace(minute=0, second=0, microsecond=0) == now.replace(minute=0, second=0, microsecond=0):
+            run_record["hour_first"] = first.isoformat()
 
     try:
         if mode == "scorecard":
