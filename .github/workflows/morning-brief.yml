@@ -1,0 +1,21 @@
+name: Morning brief
+
+# Weekdays before London opens: each market's trend, levels and which setups
+# the rules can take today, plus today's high-impact US news, posted to
+# #morning-brief.
+on:
+  schedule:
+    - cron: "40 6 * * 1-5"
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Post the brief
+        env:
+          TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
+          DISCORD_WEBHOOK_BRIEF: ${{ secrets.DISCORD_WEBHOOK_BRIEF }}
+        run: python3 morning_brief.py
