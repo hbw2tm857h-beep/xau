@@ -1,0 +1,19 @@
+name: Weekly recap
+
+# Friday night, after the markets close: the week's closed trades and what is
+# still open, posted to #announcements.
+on:
+  schedule:
+    - cron: "15 22 * * 5"
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Post the recap
+        env:
+          DISCORD_WEBHOOK_ANNOUNCEMENTS: ${{ secrets.DISCORD_WEBHOOK_ANNOUNCEMENTS }}
+        run: python3 weekly_recap.py
