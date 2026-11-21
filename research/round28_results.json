@@ -1,0 +1,54 @@
+[
+ {
+  "stage": 1,
+  "test": "N1 52-week breakout",
+  "dev_n": 16,
+  "dev_raw": 1.921,
+  "dev_adj": 1.583,
+  "dev_p": "0.016",
+  "conf_n": 21,
+  "conf_raw": 1.158,
+  "conf_adj": 0.676,
+  "conf_p": "0.19",
+  "verdict": "fail"
+ },
+ {
+  "stage": 1,
+  "test": "N2 shock continuation",
+  "dev_n": 82,
+  "dev_raw": 0.009,
+  "dev_adj": 0.011,
+  "dev_p": "0.45",
+  "conf_n": 75,
+  "conf_raw": 0.246,
+  "conf_adj": 0.246,
+  "conf_p": "0.0069",
+  "verdict": "fail"
+ },
+ {
+  "stage": 1,
+  "test": "N3 daily Heikin Ashi trend ride",
+  "dev_n": 102,
+  "dev_raw": -0.034,
+  "dev_adj": -0.081,
+  "dev_p": "0.78",
+  "conf_n": 101,
+  "conf_raw": 0.268,
+  "conf_adj": 0.149,
+  "conf_p": "0.09",
+  "verdict": "fail"
+ },
+ {
+  "stage": 1,
+  "test": "N4 Keltner breakout",
+  "dev_n": 71,
+  "dev_raw": -0.028,
+  "dev_adj": -0.088,
+  "dev_p": "0.72",
+  "conf_n": 63,
+  "conf_raw": 0.192,
+  "conf_adj": 0.042,
+  "conf_p": "0.4",
+  "verdict": "fail"
+ }
+]

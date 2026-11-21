@@ -756,6 +756,26 @@ The exit re-run reproduced the live state machine's R on all 121 trend trades, s
 - **The exits are settled.** The 1.5R partial and the chandelier trail both did nothing or worse here, as in round 24. The 1R/2R exits stay.
 - **The after-news effect can't be judged here:** only nine trades started after big US news in four years.
 
+## Round 28: a new daily gold edge from 2004, then parts of the live edge on top (21 Nov 2026)
+
+`round28_new_edge.py`, `round28_results.json`. Pre-registered and committed (c690387) before any of it was run.
+
+Bradley asked for a new edge tested from 2004, with whatever from the existing strategy improves it added afterwards. The hourly candles from 2003-2026 (round 27's file plus the existing history) were turned into daily candles closing at 17:00 New York, as the live bot builds them. Four daily edges never tested in rounds 1-27 used textbook settings, with nothing tuned. Each was searched on 2004-15 and had to be confirmed on 2016-26. Gold went from $400 to $4,000, so a rule that is mostly long makes money just by holding gold. Every trade is therefore judged after removing gold's average daily drift over the period ("adj"). Bar: p < 0.05/4 on 2004-15, then p < 0.05 on 2016-26. Stage 2 would have tried five parts of the live edge on each survivor: the daily trend, the 4H Heikin Ashi, the 4H cloud, the 12-month trend and the 1R/2R exits.
+
+| Edge | 2004-15 (search) | 2016-26 (confirm) | Verdict |
+|---|---|---|---|
+| N1 52-week closing breakout, exit on a 20-day low close | +1.58R adj, 16 trades, p = 0.016 | +0.68R adj, 21 trades, p = 0.19 | fail: far too few trades |
+| N2 Shock continuation (a day's move > 2.5 standard deviations) | +0.01R adj, 82 trades | +0.25R adj, 75 trades, p = 0.007 | fail: nothing in 2004-15 |
+| N3 Daily Heikin Ashi trend ride (live method on daily candles) | −0.08R adj, 102 trades | +0.15R adj, 101 trades | fail |
+| N4 Keltner channel breakout (20-day EMA ± 2 ATR) | −0.09R adj, 71 trades | +0.04R adj, 63 trades | fail |
+
+**0 of 4 passed, so Stage 2 was not run,** as pre-registered. hypotheses_tested rises from 1,357 to 1,361.
+
+**What it says:**
+- **The slow trend on gold shows up a third time and is still too rare to prove.** The 52-week breakout made over 1R a trade in both halves, but there were only 37 trades in 22 years. That is the same pattern as Turtle 55/20 and the 50/200 cross in round 5, and the 12-month filter in rounds 25 and 27. Gold's long trends pay, but there are too few of them to count.
+- **Edges that only worked after 2016 are the bull market, not a rule.** N2, N3 and N4 lost or did nothing in 2004-15 and made money in 2016-26. Without the 2004-15 search period, N2 would have looked like a pass (p = 0.007).
+- **The hourly timing is what makes the live strategy work.** The same Heikin Ashi trend ride on daily candles (N3) lost money in 2004-15, while the hourly version made money in every period. Moving the method to a slower timeframe loses the edge.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -801,5 +821,6 @@ python3 research/round23_events_funding_metalabel.py # news timing, funding, ses
 python3 research/round24_exits.py           # three exit changes for gold trend trades
 python3 research/round25_quant_regimes.py    # quantitative-finance regime filters
 python3 research/round27_lockbox_2004_07.py  # sealed 2004-07 test of the live rules and five near misses
+python3 research/round28_new_edge.py         # four new daily gold edges from 2004 (+ live parts on survivors)
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```
