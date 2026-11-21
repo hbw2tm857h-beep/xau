@@ -225,18 +225,22 @@ export function glossaryText(key) {
 }
 
 // /calendar: this week's high-impact US releases, saved to calendar.json by
-// the calendar workflow (Forex Factory's feed rate-limits Cloudflare).
+// the calendar workflow (Forex Factory's feed rate-limits Cloudflare). The
+// whole week is shown; releases already out are struck through.
 export function calendarText(saved, now = new Date()) {
-  const ev = saved.map((r) => ({ t: new Date(r.t), title: r.title }))
-    .filter((e) => e.t >= new Date(now.getTime() - 3600000))
-    .sort((a, b) => a.t - b.t);
-  if (!ev.length) return "## US news this week\nNo more high-impact US releases this week.";
+  const ev = saved.map((r) => ({ t: new Date(r.t), title: r.title })).sort((a, b) => a.t - b.t);
+  if (!ev.length) return "## US news this week\nNo high-impact US releases this week.\n-# Next week's list arrives on Sunday evening.";
   const days = new Map();
+  let upcoming = 0;
   for (const e of ev) {
     const d = ukDay(e.t);
     if (!days.has(d)) days.set(d, []);
-    days.get(d).push(`${ukTime(e.t)} · ${e.title}`);
+    const past = e.t < new Date(now.getTime() - 3600000);
+    if (!past) upcoming++;
+    days.get(d).push(past ? `~~${ukTime(e.t)} · ${e.title}~~` : `${ukTime(e.t)} · ${e.title}`);
   }
-  return ["## US news still to come this week", ...[...days].map(([d, ls]) => `**${d}**\n${ls.join("\n")}`),
+  const note = upcoming ? `${upcoming} still to come. Struck-through releases are already out.`
+    : "All of this week's releases are out. Next week's list arrives on Sunday evening.";
+  return ["## US news this week", ...[...days].map(([d, ls]) => `**${d}**\n${ls.join("\n")}`), note,
     "-# High-impact US releases, UK time. Gold, US indices and crypto can move fast around these."].join("\n");
 }
