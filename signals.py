@@ -207,6 +207,11 @@ CONFIG = {
     "parity_risk_pct": {"trend": 0.98, "inside_day": 1.36, "btc_trend": 1.20,
                         "eth_inside_day": 1.05, "us_ibs": 0.41},
     "shadow_risk_fraction": 0.25,
+    # Pre-approved by Bradley (21 Nov 2026): these shadow strategies move to live
+    # by themselves once they pass the gate in full (30+ live trades, positive,
+    # at least half the tested edge, bootstrap p < gate_alpha), and stay at a
+    # quarter of their risk-parity size. Gold's strategies are not on the list.
+    "auto_promote": ("btc_trend", "eth_inside_day", "us_ibs"),
     "gate_promote_min_trades": 30,   # live closed trades before promotion is considered
     "gate_demote_min_trades": 30,    # ...and before a live strategy can be demoted
     "gate_trailing": 50,             # recent live trades used to judge a live strategy
@@ -2022,6 +2027,15 @@ def tier_of(nursery, strategy):
     return t if t in TIERS else "live"
 
 
+def alert_tier(nursery, strategy):
+    """The tier as alerts treat it. A strategy the gate promoted by itself
+    (risk_fraction set) is live, but its alerts keep the quarter-risk line and
+    no lot size, exactly as before promotion: lot sizing is written for gold."""
+    t = tier_of(nursery, strategy)
+    s = nursery["strategies"].get(strategy or "trend") or {}
+    return "shadow" if t == "live" and s.get("risk_fraction") else t
+
+
 def bootstrap_p(rs, b=2000, seed=7):
     """One-sided bootstrap estimate of P(true average R <= 0), by resampling
     the trades. None when there are too few to say anything."""
@@ -2058,6 +2072,7 @@ def gate(nursery, journal, cfg, now):
         if tier == "live":
             if t["n"] >= cfg["gate_demote_min_trades"] and t["avg"] < floor:
                 s["tier"] = "shadow"
+                s.pop("risk_fraction", None)
                 s.setdefault("history", []).append({
                     "when": now.isoformat(), "from": "live", "to": "shadow",
                     "why": f"last {t['n']} trades avg {t['avg']:+.3f}R, below {floor:+.3f}R"})
@@ -2071,6 +2086,17 @@ def gate(nursery, journal, cfg, now):
         enough = a["n"] >= cfg["gate_promote_min_trades"]
         if enough and a["avg"] > 0 and a["avg"] >= floor and p is not None and p < cfg["gate_alpha"]:
             nxt = "live" if tier == "shadow" else "shadow"
+            if nxt == "live" and name in cfg.get("auto_promote", ()):
+                frac = cfg.get("shadow_risk_fraction", 0.25)
+                s["tier"], s["risk_fraction"] = "live", frac
+                s.setdefault("history", []).append({
+                    "when": now.isoformat(), "from": "shadow", "to": "live", "risk_fraction": frac,
+                    "why": f"passed the gate: {a['n']} live trades avg {a['avg']:+.3f}R, bootstrap p={p:.3f}; "
+                           "pre-approved by Bradley 21 Nov 2026"})
+                lines.append(head + f"\n   :arrow_up: *Promoted to live* (bootstrap p={p:.3f} < {cfg['gate_alpha']}), "
+                             f"pre-approved. Alerts keep the {short_size(name, cfg) or 'quarter'} risk line. "
+                             "If it later falls under half its tested edge it is demoted by itself.")
+                continue
             lines.append(head + f"\n   :arrow_up: *Ready to promote to {nxt}* (bootstrap p={p:.3f} < "
                          f"{cfg['gate_alpha']}). This one is yours to make: set \"tier\": \"{nxt}\" for "
                          f"`{name}` in `{cfg['nursery_file']}`.")
@@ -2089,7 +2115,9 @@ def gate(nursery, journal, cfg, now):
               "the rule was fixed before that data existed, so there is no multiple-testing penalty to pay. "
               f"Choosing a rule out of the {tested:,} recorded backtest searches is the part that does need the "
               f"correction, at p<{alpha_search:.6f} — which is why a candidate has to earn live evidence here "
-              "instead of arriving on a backtest alone. Demotions apply themselves; promotions never do._")
+              "instead of arriving on a backtest alone. Demotions apply themselves; promotions are yours to make, "
+              f"except the ones you pre-approved ({', '.join(cfg.get('auto_promote', ())) or 'none'}), "
+              "which move to live at a quarter size once they pass._")
 
 
 # --------------------------------------------------------------------------
@@ -2664,7 +2692,7 @@ def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
     st.setdefault("start", now.isoformat())   # state saved before "start" existed
     if open_t and open_t["t"] < datetime.fromisoformat(st["start"]) and open_t["t"].isoformat() > st.get("alerted", ""):
         st["alerted"] = open_t["t"].isoformat()   # opened before tracking began: not alerted
-    tier = tier_of(nursery, ic["strategy"]) if nursery else "candidate"
+    tier = alert_tier(nursery, ic["strategy"]) if nursery else "candidate"
     msgs = []
     for t in [t for t in closed if t["t_exit"].isoformat() > st["last_exit"]]:
         journal.append({"sig_time": t["t"].isoformat(), "entry_time": t["t"].isoformat(),
@@ -2970,7 +2998,7 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                              "h4_stop", "h4_target"):
                 journal_add(journal, e)
                 closed_trades.append(journal[-1])
-            tier = tier_of(nursery, (e.get("idea") or {}).get("strategy", "trend"))
+            tier = alert_tier(nursery, (e.get("idea") or {}).get("strategy", "trend"))
             if tier == "candidate":
                 # tracked in the journal and the ledger, never alerted to members;
                 # a card goes to the staff-only candidates channel instead
