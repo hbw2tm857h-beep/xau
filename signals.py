@@ -1598,6 +1598,23 @@ def add_field(text, field):
     return f"{text}\n{field}"
 
 
+def why_line(s):
+    """One plain line on why a trend setup qualified, from evaluate()'s own
+    checks, so members can see the reasoning without reading the rulebook."""
+    d, checks = s["dir"], s.get("checks") or {}
+    parts = [f"daily trend {'up' if d == 1 else 'down'}"]
+    if checks.get("h4", (False,))[0]:
+        parts.append("4-hour candles agree")
+    if checks.get("h4_cloud", (False,))[0]:
+        parts.append(f"4-hour price {'above' if d == 1 else 'below'} the Ichimoku cloud")
+    if s.get("broken") is not None:
+        parts.append(f"broke the daily level {px(s['broken'])}")
+    if checks.get("adx", (False,))[0]:
+        parts.append("strong trend on ADX")
+    why = ", ".join(parts)
+    return f"*Why:* {why[0].upper()}{why[1:]}. Quality checks passed: {s.get('score', 0)} of {len(EXTRAS)}."
+
+
 def card(e, cfg, sizing):
     """Discord alert for confirmed-only mode: a heading, then one labelled line
     per level (Entry, Stop loss, Take profit 1 and 2), then one plain line on
@@ -1632,6 +1649,7 @@ def card(e, cfg, sizing):
             f"*Entry:* {px(idea['entry'])}{lots_bit(idea.get('risk', 0))}",
             f"*Stop loss:* {px(idea['stop'])}",
             *targets(),
+            *([why_line(e["setup"])] if not tag and (e.get("setup") or {}).get("checks") else []),
             f"-# Valid for {hours} hours. We'll post when it fills, or tell you to delete it."])
     if base == "entry":
         return "\n".join([
@@ -2606,6 +2624,9 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
                     f"Buy now, near the close at *{px(t['entry'])}*.\n"
                     "*Stop loss:* none. This strategy buys short dips and waits for the bounce.\n"
                     f"*Exit:* we'll post when a daily close finishes above *{px(t['exit_above'])}*.\n"
+                    + (f"*Why:* It closed in the bottom {t['ibs'] * 100:.0f}% of the day's range, "
+                       f"{t['depth']:.1f} average daily ranges below its 10-day high.\n"
+                       if t.get("ibs") is not None and t.get("depth") is not None else "") +
                     "-# The exit level moves each day to the previous day's high.")
         lines = ["\n".join(lead)]
     else:
