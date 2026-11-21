@@ -705,6 +705,34 @@ Bradley asked whether anything from quantitative finance would help. The time-se
 - **Short-term measures of "trending" add nothing.** The variance ratio and the hourly autocorrelation don't pick better trades, consistent with round 6's ADX result: the hourly and 4-hour agreement the rules already require captures what these measure.
 - **Bitcoin's monthly trend agrees with nearly every trend trade already**, so there is little left to filter.
 
+## Round 26: free order-flow proxies, a cross-check of rounds 18 and 20 (21 Nov 2026)
+
+`round26_flow.py`, `results_round26_flow.csv`, data in `data/macro/cot_gold_mm_oi.csv` (adds open interest to round 20's file; from the CFTC open-data API, which accepts scripts) and `data/volume/xauusd_h1_vol.csv.gz` (round 18's copy)
+
+**Overlap, stated up front:** this round was run before rounds 13–25 were read, and two of its ideas had already been answered. Round 18 tested Dukascopy volume on gold's trend setups (including above-average trigger volume) and round 20 (B3) tested gold's COT positioning; both failed. This round's volume and positioning tests (C1–C3, V1) are independent re-checks with different definitions. Only the VWAP test (V2) is new. All five count toward `hypotheses_tested`.
+
+**Why proxies:** spot gold trades over the counter, so it has no central volume, trade direction or order book. Real order flow (footprint, delta, depth) needs paid CME gold futures tick data. Before paying for that, two free sources were tested as filters on the live trend setups:
+- **CFTC Commitments of Traders:** weekly hedge-fund ("managed money") positions in COMEX gold, 2006–2026, from CFTC's open-data API. Each report is used only from the Monday after its Tuesday date, so nothing is seen before it was public.
+- **Dukascopy's traded volume per hourly candle:** one venue, so a proxy for participation rather than the whole market.
+
+**Five pre-registered filters,** judged like round 5's (beat the live rules in all four periods, then the random-drop test at p < 0.05/5):
+
+| Filter | 2016–22 | 2023–24 | 2008–15 | 2025–26 | Trades kept | Total R, 2008–26 | |
+|---|---|---|---|---|---|---|---|
+| Live rules | +0.136 | +0.156 | +0.168 | +0.326 | 715 | +124.8 | |
+| C1 Hedge funds added in the trade's direction | +0.146 | **+0.036** | +0.167 | +0.402 | 431 | +73.0 | no |
+| C2 Skip crowded positioning (top/bottom 10% over 3 years) | +0.135 | +0.155 | +0.125 | +0.310 | 561 | +87.6 | no |
+| C3 Hedge funds' net position agrees | +0.104 | +0.187 | +0.133 | +0.380 | 467 | +76.7 | no |
+| V1 Signal candle volume above the 20-hour average | **+0.063** | +0.332 | **+0.038** | +0.231 | 404 | +41.3 | no |
+| V2 Price on the trade's side of the day's VWAP | +0.145 | +0.155 | +0.151 | +0.342 | 703 | +121.0 | no |
+
+**None passed, which agrees with rounds 18 and 20.**
+- **Positioning adds nothing hourly.** Hedge funds were net long in 95% of weeks, so C3 mostly removes sell trades. Positioning changes weekly, which is too slow to say anything about an hourly entry.
+- **High-volume signal candles are *worse*,** not better (V1, two of four periods sharply lower). That's consistent with a big-volume candle often being the end of a move rather than the start.
+- **The VWAP rule is already built in.** 98% of setups are on the right side of VWAP anyway, so it filters almost nothing.
+
+**What this means for real order flow:** the free proxies give no reason to expect hourly order-flow filters to help gold's trend setups. Paid CME tick data could still test delta and order-book imbalance, which these proxies can't measure. The literature puts that effect at seconds to minutes, though, so it would need an always-on program and a different kind of strategy, not a filter on hourly setups.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -729,6 +757,8 @@ python3 research/round10_markets.py     # the three strategies on 21 other marke
 python3 research/round10_btc_checks.py  # Bitcoin: costs, weekends, shuffle test
 python3 research/round11_literature.py  # nine published anomalies (SSRN etc.)
 python3 research/round11_noise_checks.py # stress tests on the Nasdaq noise-area pass
+python3 research/round11_noise_30.py     # the Nasdaq pass on 09:30 candles (+ 'check')
+python3 research/round26_flow.py         # COT positioning and volume/VWAP filters (re-check of 18/20)
 python3 research/round12_beyond_gold.py   # nine documented edges on other markets
 python3 research/round12_ibs_checks.py    # stress tests on the IBS index pass
 python3 research/round13_more_markets.py  # IBS on FX/commodities/Bitcoin + four more
