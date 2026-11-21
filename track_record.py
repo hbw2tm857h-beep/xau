@@ -13,6 +13,7 @@ import os
 import sys
 import urllib.request
 from datetime import datetime
+from zoneinfo import ZoneInfo
 
 GO_LIVE = "2026-11-14"
 MESSAGE_ID = "1573401910520586334"     # the post in #track-record, created by its webhook
@@ -110,9 +111,18 @@ def open_rows(state, nursery):
     return out
 
 
-def render_open(rows_):
+def last_check(state):
+    """The footer line: when the hourly check last ran cleanly, in UK time."""
+    lr = state.get("last_run") or {}
+    if not lr.get("started") or lr.get("error") or lr.get("failed"):
+        return "-# Updated every hour."
+    t = datetime.fromisoformat(lr["started"]).astimezone(ZoneInfo("Europe/London"))
+    return f"-# Markets checked every hour · last check {t:%-d %b %H:%M} UK"
+
+
+def render_open(rows_, footer="-# Updated every hour."):
     body = "\n".join(rows_) if rows_ else "No open trades right now."
-    return f"## Open now\nTrades and orders running at the moment.\n\n{body}\n\n-# Updated every hour."
+    return f"## Open now\nTrades and orders running at the moment.\n\n{body}\n\n{footer}"
 
 
 def edit(hook, mid, text):
@@ -135,7 +145,7 @@ def main():
         n -= 1
         text = render(rs, n)
     state = json.load(open(os.environ.get("STATE_FILE", "state.json")))
-    board = render_open(open_rows(state, nursery))
+    board = render_open(open_rows(state, nursery), last_check(state))
     if "--dry-run" in sys.argv:
         print(text + "\n\n" + board)
         return
