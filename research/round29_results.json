@@ -1,0 +1,677 @@
+{
+ "markets": [
+  {
+   "market": "EURUSD",
+   "class": "FX",
+   "bps": 1.0,
+   "from": "2008",
+   "n": 41,
+   "raw": 0.162,
+   "adj": 0.141,
+   "adj_2x": 0.133
+  },
+  {
+   "market": "GBPUSD",
+   "class": "FX",
+   "bps": 1.2,
+   "from": "2008",
+   "n": 38,
+   "raw": -0.416,
+   "adj": -0.413,
+   "adj_2x": -0.421
+  },
+  {
+   "market": "USDJPY",
+   "class": "FX",
+   "bps": 1.0,
+   "from": "2008",
+   "n": 33,
+   "raw": 0.127,
+   "adj": 0.037,
+   "adj_2x": 0.03
+  },
+  {
+   "market": "AUDUSD",
+   "class": "FX",
+   "bps": 1.5,
+   "from": "2008",
+   "n": 35,
+   "raw": -0.076,
+   "adj": -0.078,
+   "adj_2x": -0.086
+  },
+  {
+   "market": "USDCAD",
+   "class": "FX",
+   "bps": 1.5,
+   "from": "2008",
+   "n": 35,
+   "raw": 0.041,
+   "adj": -0.015,
+   "adj_2x": -0.026
+  },
+  {
+   "market": "USDCHF",
+   "class": "FX",
+   "bps": 1.5,
+   "from": "2008",
+   "n": 38,
+   "raw": -0.517,
+   "adj": -0.523,
+   "adj_2x": -0.533
+  },
+  {
+   "market": "NZDUSD",
+   "class": "FX",
+   "bps": 2.0,
+   "from": "2008",
+   "n": 30,
+   "raw": 0.025,
+   "adj": 0.009,
+   "adj_2x": -0.001
+  },
+  {
+   "market": "EURJPY",
+   "class": "FX",
+   "bps": 1.5,
+   "from": "2008",
+   "n": 43,
+   "raw": -0.067,
+   "adj": -0.09,
+   "adj_2x": -0.098
+  },
+  {
+   "market": "GBPJPY",
+   "class": "FX",
+   "bps": 2.5,
+   "from": "2008",
+   "n": 38,
+   "raw": -0.056,
+   "adj": -0.071,
+   "adj_2x": -0.085
+  },
+  {
+   "market": "EURGBP",
+   "class": "FX",
+   "bps": 1.5,
+   "from": "2008",
+   "n": 36,
+   "raw": -0.463,
+   "adj": -0.439,
+   "adj_2x": -0.451
+  },
+  {
+   "market": "AUDJPY",
+   "class": "FX",
+   "bps": 2.0,
+   "from": "2008",
+   "n": 36,
+   "raw": -0.286,
+   "adj": -0.328,
+   "adj_2x": -0.338
+  },
+  {
+   "market": "XAGUSD",
+   "class": "commodities",
+   "bps": 10.0,
+   "from": "2008",
+   "n": 25,
+   "raw": 1.564,
+   "adj": 1.497,
+   "adj_2x": 1.477
+  },
+  {
+   "market": "WTI oil",
+   "class": "commodities",
+   "bps": 5.0,
+   "from": "2011",
+   "n": 24,
+   "raw": -0.103,
+   "adj": -0.201,
+   "adj_2x": -0.21
+  },
+  {
+   "market": "Brent oil",
+   "class": "commodities",
+   "bps": 5.0,
+   "from": "2010",
+   "n": 25,
+   "raw": 0.64,
+   "adj": 0.636,
+   "adj_2x": 0.627
+  },
+  {
+   "market": "S&P 500",
+   "class": "indices",
+   "bps": 1.0,
+   "from": "2011",
+   "n": 36,
+   "raw": 0.275,
+   "adj": -0.452,
+   "adj_2x": -0.457
+  },
+  {
+   "market": "Nasdaq 100",
+   "class": "indices",
+   "bps": 1.0,
+   "from": "2011",
+   "n": 36,
+   "raw": 0.361,
+   "adj": -0.455,
+   "adj_2x": -0.458
+  },
+  {
+   "market": "Dow",
+   "class": "indices",
+   "bps": 1.0,
+   "from": "2013",
+   "n": 28,
+   "raw": 0.139,
+   "adj": -0.431,
+   "adj_2x": -0.435
+  },
+  {
+   "market": "DAX",
+   "class": "indices",
+   "bps": 1.0,
+   "from": "2013",
+   "n": 32,
+   "raw": -0.143,
+   "adj": -0.373,
+   "adj_2x": -0.377
+  },
+  {
+   "market": "FTSE 100",
+   "class": "indices",
+   "bps": 1.5,
+   "from": "2011",
+   "n": 33,
+   "raw": -0.374,
+   "adj": -0.532,
+   "adj_2x": -0.539
+  },
+  {
+   "market": "Nikkei 225",
+   "class": "indices",
+   "bps": 2.0,
+   "from": "2011",
+   "n": 25,
+   "raw": 0.557,
+   "adj": 0.044,
+   "adj_2x": 0.038
+  },
+  {
+   "market": "BTCUSD",
+   "class": "crypto",
+   "bps": 5.0,
+   "from": "2017",
+   "n": 23,
+   "raw": 1.791,
+   "adj": 1.328,
+   "adj_2x": 1.321
+  },
+  {
+   "market": "Russell 2000",
+   "class": "indices",
+   "bps": 2.0,
+   "from": "2018",
+   "n": 17,
+   "raw": -0.008,
+   "adj": -0.128,
+   "adj_2x": -0.133
+  },
+  {
+   "market": "Copper",
+   "class": "commodities",
+   "bps": 5.0,
+   "from": "2012",
+   "n": 25,
+   "raw": -0.016,
+   "adj": -0.057,
+   "adj_2x": -0.07
+  },
+  {
+   "market": "Platinum",
+   "class": "commodities",
+   "bps": 10.0,
+   "from": "2021",
+   "n": 7,
+   "raw": 0.549,
+   "adj": 0.427,
+   "adj_2x": 0.408
+  },
+  {
+   "market": "Palladium",
+   "class": "commodities",
+   "bps": 15.0,
+   "from": "2021",
+   "n": 8,
+   "raw": -0.359,
+   "adj": -0.432,
+   "adj_2x": -0.45
+  },
+  {
+   "market": "Natural gas",
+   "class": "commodities",
+   "bps": 10.0,
+   "from": "2012",
+   "n": 26,
+   "raw": -0.299,
+   "adj": -0.275,
+   "adj_2x": -0.286
+  },
+  {
+   "market": "Cocoa",
+   "class": "commodities",
+   "bps": 10.0,
+   "from": "2017",
+   "n": 13,
+   "raw": -0.303,
+   "adj": -0.437,
+   "adj_2x": -0.456
+  },
+  {
+   "market": "Coffee",
+   "class": "commodities",
+   "bps": 10.0,
+   "from": "2017",
+   "n": 15,
+   "raw": 0.098,
+   "adj": 0.007,
+   "adj_2x": -0.01
+  },
+  {
+   "market": "Sugar",
+   "class": "commodities",
+   "bps": 10.0,
+   "from": "2017",
+   "n": 18,
+   "raw": -0.186,
+   "adj": -0.218,
+   "adj_2x": -0.245
+  },
+  {
+   "market": "Cotton",
+   "class": "commodities",
+   "bps": 10.0,
+   "from": "2017",
+   "n": 17,
+   "raw": 0.297,
+   "adj": 0.282,
+   "adj_2x": 0.256
+  },
+  {
+   "market": "Soybeans",
+   "class": "commodities",
+   "bps": 8.0,
+   "from": "2017",
+   "n": 17,
+   "raw": 0.783,
+   "adj": 0.714,
+   "adj_2x": 0.688
+  },
+  {
+   "market": "Orange juice",
+   "class": "commodities",
+   "bps": 20.0,
+   "from": "2017",
+   "n": 21,
+   "raw": -0.124,
+   "adj": -0.163,
+   "adj_2x": -0.195
+  },
+  {
+   "market": "Diesel",
+   "class": "commodities",
+   "bps": 8.0,
+   "from": "2017",
+   "n": 11,
+   "raw": 1.57,
+   "adj": 1.449,
+   "adj_2x": 1.435
+  },
+  {
+   "market": "Ether",
+   "class": "crypto",
+   "bps": 8.0,
+   "from": "2017",
+   "n": 17,
+   "raw": 1.748,
+   "adj": 1.543,
+   "adj_2x": 1.535
+  },
+  {
+   "market": "Litecoin",
+   "class": "crypto",
+   "bps": 10.0,
+   "from": "2018",
+   "n": 17,
+   "raw": 0.223,
+   "adj": 0.287,
+   "adj_2x": 0.279
+  },
+  {
+   "market": "Bitcoin Cash",
+   "class": "crypto",
+   "bps": 10.0,
+   "from": "2021",
+   "n": 11,
+   "raw": 1.11,
+   "adj": 1.131,
+   "adj_2x": 1.121
+  },
+  {
+   "market": "Stellar",
+   "class": "crypto",
+   "bps": 15.0,
+   "from": "2021",
+   "n": 11,
+   "raw": -0.277,
+   "adj": -0.195,
+   "adj_2x": -0.206
+  },
+  {
+   "market": "Cardano",
+   "class": "crypto",
+   "bps": 15.0,
+   "from": "2021",
+   "n": 13,
+   "raw": 0.228,
+   "adj": 0.193,
+   "adj_2x": 0.182
+  },
+  {
+   "market": "Euro Stoxx 50",
+   "class": "indices",
+   "bps": 1.5,
+   "from": "2014",
+   "n": 26,
+   "raw": -0.191,
+   "adj": -0.352,
+   "adj_2x": -0.357
+  },
+  {
+   "market": "IBEX 35",
+   "class": "indices",
+   "bps": 2.0,
+   "from": "2014",
+   "n": 25,
+   "raw": 0.086,
+   "adj": -0.049,
+   "adj_2x": -0.055
+  },
+  {
+   "market": "AEX",
+   "class": "indices",
+   "bps": 2.0,
+   "from": "2017",
+   "n": 18,
+   "raw": -0.358,
+   "adj": -0.558,
+   "adj_2x": -0.566
+  },
+  {
+   "market": "FTSE MIB",
+   "class": "indices",
+   "bps": 2.0,
+   "from": "2016",
+   "n": 22,
+   "raw": -0.375,
+   "adj": -0.698,
+   "adj_2x": -0.705
+  },
+  {
+   "market": "ASX 200",
+   "class": "indices",
+   "bps": 2.0,
+   "from": "2014",
+   "n": 26,
+   "raw": -0.513,
+   "adj": -0.666,
+   "adj_2x": -0.675
+  },
+  {
+   "market": "Hang Seng",
+   "class": "indices",
+   "bps": 2.0,
+   "from": "2013",
+   "n": 21,
+   "raw": 0.102,
+   "adj": 0.063,
+   "adj_2x": 0.056
+  },
+  {
+   "market": "China A50",
+   "class": "indices",
+   "bps": 3.0,
+   "from": "2017",
+   "n": 20,
+   "raw": -0.302,
+   "adj": -0.329,
+   "adj_2x": -0.337
+  },
+  {
+   "market": "Singapore",
+   "class": "indices",
+   "bps": 3.0,
+   "from": "2017",
+   "n": 15,
+   "raw": 0.007,
+   "adj": -0.047,
+   "adj_2x": -0.057
+  },
+  {
+   "market": "WIG 20",
+   "class": "indices",
+   "bps": 3.0,
+   "from": "2017",
+   "n": 19,
+   "raw": 0.107,
+   "adj": -0.017,
+   "adj_2x": -0.025
+  },
+  {
+   "market": "USDMXN",
+   "class": "FX",
+   "bps": 5.0,
+   "from": "2008",
+   "n": 33,
+   "raw": 0.036,
+   "adj": 0.077,
+   "adj_2x": 0.052
+  },
+  {
+   "market": "USDZAR",
+   "class": "FX",
+   "bps": 8.0,
+   "from": "2008",
+   "n": 33,
+   "raw": 0.049,
+   "adj": -0.021,
+   "adj_2x": -0.049
+  },
+  {
+   "market": "USDSEK",
+   "class": "FX",
+   "bps": 4.0,
+   "from": "2008",
+   "n": 35,
+   "raw": 0.385,
+   "adj": 0.327,
+   "adj_2x": 0.308
+  },
+  {
+   "market": "USDNOK",
+   "class": "FX",
+   "bps": 4.0,
+   "from": "2008",
+   "n": 38,
+   "raw": 0.085,
+   "adj": -0.012,
+   "adj_2x": -0.032
+  },
+  {
+   "market": "USDPLN",
+   "class": "FX",
+   "bps": 5.0,
+   "from": "2008",
+   "n": 41,
+   "raw": -0.301,
+   "adj": -0.329,
+   "adj_2x": -0.355
+  },
+  {
+   "market": "USDHUF",
+   "class": "FX",
+   "bps": 6.0,
+   "from": "2008",
+   "n": 35,
+   "raw": -0.211,
+   "adj": -0.24,
+   "adj_2x": -0.269
+  },
+  {
+   "market": "USDCNH",
+   "class": "FX",
+   "bps": 4.0,
+   "from": "2012",
+   "n": 26,
+   "raw": 0.398,
+   "adj": 0.401,
+   "adj_2x": 0.338
+  },
+  {
+   "market": "USDSGD",
+   "class": "FX",
+   "bps": 3.0,
+   "from": "2008",
+   "n": 29,
+   "raw": -0.34,
+   "adj": -0.357,
+   "adj_2x": -0.392
+  },
+  {
+   "market": "USDCZK",
+   "class": "FX",
+   "bps": 6.0,
+   "from": "2016",
+   "n": 26,
+   "raw": -0.312,
+   "adj": -0.317,
+   "adj_2x": -0.351
+  },
+  {
+   "market": "AUDNZD",
+   "class": "FX",
+   "bps": 2.0,
+   "from": "2008",
+   "n": 32,
+   "raw": -0.036,
+   "adj": -0.045,
+   "adj_2x": -0.062
+  },
+  {
+   "market": "CADJPY",
+   "class": "FX",
+   "bps": 2.0,
+   "from": "2008",
+   "n": 35,
+   "raw": -0.232,
+   "adj": -0.246,
+   "adj_2x": -0.256
+  },
+  {
+   "market": "CHFJPY",
+   "class": "FX",
+   "bps": 2.0,
+   "from": "2008",
+   "n": 38,
+   "raw": 0.174,
+   "adj": -0.032,
+   "adj_2x": -0.046
+  },
+  {
+   "market": "NZDJPY",
+   "class": "FX",
+   "bps": 2.0,
+   "from": "2008",
+   "n": 43,
+   "raw": -0.404,
+   "adj": -0.42,
+   "adj_2x": -0.429
+  },
+  {
+   "market": "EURCHF",
+   "class": "FX",
+   "bps": 2.0,
+   "from": "2008",
+   "n": 32,
+   "raw": 0.089,
+   "adj": -0.037,
+   "adj_2x": -0.062
+  },
+  {
+   "market": "EURCAD",
+   "class": "FX",
+   "bps": 2.0,
+   "from": "2008",
+   "n": 39,
+   "raw": -0.054,
+   "adj": -0.05,
+   "adj_2x": -0.065
+  },
+  {
+   "market": "EURAUD",
+   "class": "FX",
+   "bps": 2.0,
+   "from": "2008",
+   "n": 34,
+   "raw": 0.108,
+   "adj": 0.11,
+   "adj_2x": 0.096
+  },
+  {
+   "market": "GBPAUD",
+   "class": "FX",
+   "bps": 2.0,
+   "from": "2008",
+   "n": 40,
+   "raw": 0.033,
+   "adj": 0.035,
+   "adj_2x": 0.023
+  },
+  {
+   "market": "GBPCAD",
+   "class": "FX",
+   "bps": 2.0,
+   "from": "2008",
+   "n": 35,
+   "raw": -0.043,
+   "adj": -0.046,
+   "adj_2x": -0.059
+  },
+  {
+   "market": "GBPCHF",
+   "class": "FX",
+   "bps": 2.0,
+   "from": "2008",
+   "n": 31,
+   "raw": -0.247,
+   "adj": -0.255,
+   "adj_2x": -0.268
+  },
+  {
+   "market": "AUDCAD",
+   "class": "FX",
+   "bps": 2.0,
+   "from": "2008",
+   "n": 41,
+   "raw": -0.493,
+   "adj": -0.509,
+   "adj_2x": -0.523
+  }
+ ],
+ "p_markets": "0.62",
+ "p_months": "0.9",
+ "verdict": "fail"
+}

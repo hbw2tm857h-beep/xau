@@ -776,6 +776,28 @@ Bradley asked for a new edge tested from 2004, with whatever from the existing s
 - **Edges that only worked after 2016 are the bull market, not a rule.** N2, N3 and N4 lost or did nothing in 2004-15 and made money in 2016-26. Without the 2004-15 search period, N2 would have looked like a pass (p = 0.007).
 - **The hourly timing is what makes the live strategy work.** The same Heikin Ashi trend ride on daily candles (N3) lost money in 2004-15, while the hourly version made money in every period. Moving the method to a slower timeframe loses the edge.
 
+## Round 29: the 52-week breakout on 67 other markets (21 Nov 2026)
+
+`round29_52wk_markets.py`, `round29_results.json`. Pre-registered and committed (d0b3102) before it was run. **Research only:** Bradley asked that the live system not be touched, so `signals.py`, `nursery.json`, the EA and the workflows are unchanged. That includes the `hypotheses_tested` counter in `signals.py`; this round's +1 (1,361 to 1,362) is recorded here only.
+
+Round 28's 52-week breakout made over 1R a trade on gold in both halves of 2004-26, but with only 37 trades. This round ran the identical rule on every other market with a cost from rounds 10, 16 and 17: 31 FX pairs, 16 indices, 14 commodities and 6 cryptocurrencies, 1,842 trades in all. Each market was charged its own costs, and each trade was judged after removing that market's average drift. To pass, the edge had to be positive across markets (p < 0.05), across months (p < 0.05, which allows for markets moving together), in both halves, in 3 of 4 asset classes and at double costs.
+
+| | Trades | Drift-adjusted R per trade |
+|---|---|---|
+| All 67 markets | 1,842 | **−0.077** (22 of 67 markets positive; p = 0.62 across markets, 0.90 across months) |
+| FX | 1,099 | −0.128 |
+| Indices | 399 | −0.338 (+0.1R before the drift adjustment: the equity uptrend, not the rule) |
+| Commodities | 252 | +0.236 (silver +1.50, diesel +1.45, soybeans +0.71, Brent +0.64) |
+| Crypto | 92 | +0.809 (Ether +1.54, Bitcoin +1.33) |
+| Before 2017 / from 2017 | 536 / 1,306 | +0.004 / −0.110 |
+
+**Fail.** The breakout is not a general edge: it loses on currencies and on stock indices once their drift is removed, and does nothing overall.
+
+**What it says:**
+- **Gold's result was not luck in the rule, but it is not a rule for everything either.** The breakout worked where markets have long, one-way trends, such as gold, silver, some commodities and crypto. It failed where prices tend to snap back, such as currencies and indices. That fits the trend-following literature, where commodities carry most of the profit.
+- **"Commodities and crypto only" is a lead, not a result.** It was picked after seeing this table, and that subgroup has about 340 trades across 20 markets, mostly from 2017. Testing it properly would need data none of this has touched, for example earlier commodity history; most of the commodity and crypto files here start in 2017 or later.
+- **Nothing changes in the bot.**
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -822,5 +844,6 @@ python3 research/round24_exits.py           # three exit changes for gold trend 
 python3 research/round25_quant_regimes.py    # quantitative-finance regime filters
 python3 research/round27_lockbox_2004_07.py  # sealed 2004-07 test of the live rules and five near misses
 python3 research/round28_new_edge.py         # four new daily gold edges from 2004 (+ live parts on survivors)
+python3 research/round29_52wk_markets.py     # the 52-week breakout on 67 other markets (research only)
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```
