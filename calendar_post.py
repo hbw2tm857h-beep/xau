@@ -7,6 +7,7 @@ Forex Factory's public weekly feed. Standard library only, like signals.py.
     python3 calendar_post.py week     # this week's releases
     python3 calendar_post.py today    # today's releases, if any (posts nothing otherwise)
     python3 calendar_post.py week --dry-run
+    python3 calendar_post.py today --save   # also write calendar.json for the Discord bot's /calendar
 """
 import json
 import os
@@ -80,6 +81,10 @@ def main():
     mode = sys.argv[1] if len(sys.argv) > 1 else "week"
     now = datetime.now(timezone.utc)
     ev = events()
+    if "--save" in sys.argv:          # the bot reads this from the repo: the feed blocks Cloudflare
+        with open("calendar.json", "w") as f:
+            json.dump([{"t": t.isoformat(), "title": title, "forecast": fc, "previous": prev}
+                       for t, title, fc, prev in ev], f, indent=1)
     text = week_post(ev, now) if mode == "week" else today_post(ev, now)
     if text is None:
         print("Nothing due today.")

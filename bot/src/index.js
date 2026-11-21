@@ -1,17 +1,26 @@
 // LumnFx Discord app: slash commands over Discord's HTTP interactions API,
 // running as a Cloudflare Worker. No gateway connection and no dependencies.
 //
-//   /open    trades and orders running now
-//   /stats   the live track record in numbers, with the latest trades
-//   /alerts  choose which markets ping you (Gold, Crypto, US indices)
-//   /help    what the bot does
+//   /open      trades and orders running now
+//   /stats     the live track record in numbers, with the latest trades
+//   /month     this month so far
+//   /history   closed trades for one market
+//   /backtest  what testing expects from each strategy, beside live results
+//   /status    whether the bot is running and when it last checked
+//   /calendar  this week's high-impact US news
+//   /hours     which markets are open now
+//   /glossary  a trading term explained
+//   /alerts    choose which markets ping you (Gold, Crypto, US indices)
+//   /help      what the bot does
 //
 // Data comes from the public repo's state.json, journal.json and nursery.json,
 // which the hourly run commits, so answers match #track-record.
 // Secrets (set with `wrangler secret put`): DISCORD_BOT_TOKEN.
 // Vars (wrangler.toml): DISCORD_APP_ID, DISCORD_PUBLIC_KEY, GUILD_ID.
 
-import { openText, statsText } from "./data.js";
+import {
+  openText, statsText, statusText, historyText, monthText, backtestText, hoursText, glossaryText, calendarText, GLOSSARY,
+} from "./data.js";
 
 const RAW = "https://raw.githubusercontent.com/hbw2tm857h-beep/xau/main/";
 const API = "https://discord.com/api/v10";
@@ -24,9 +33,24 @@ const ROLES = [
   { key: "us", label: "US indices", id: "1573546811111641098" },
 ];
 
+const MARKETS = [
+  { name: "Gold", value: "gold" }, { name: "Bitcoin", value: "btc" },
+  { name: "Ether", value: "eth" }, { name: "US indices", value: "us" },
+];
+
 export const COMMANDS = [
   { name: "open", description: "Trades and orders running right now", type: 1 },
   { name: "stats", description: "The live track record in numbers", type: 1 },
+  { name: "month", description: "This month's results so far", type: 1 },
+  { name: "history", description: "Closed trades for one market", type: 1, options: [
+    { type: 3, name: "market", description: "Which market", required: true, choices: MARKETS }] },
+  { name: "backtest", description: "What testing expects from each strategy, beside live results", type: 1 },
+  { name: "status", description: "Is the bot running, and when did it last check?", type: 1 },
+  { name: "calendar", description: "This week's high-impact US news", type: 1 },
+  { name: "hours", description: "Which markets are open right now", type: 1 },
+  { name: "glossary", description: "A trading term explained", type: 1, options: [
+    { type: 3, name: "term", description: "Which term", required: true,
+      choices: Object.entries(GLOSSARY).map(([value, [name]]) => ({ name, value })) }] },
   { name: "alerts", description: "Choose which markets ping you", type: 1 },
   { name: "help", description: "What the LumnFx bot can do", type: 1 },
 ];
@@ -35,6 +59,13 @@ const HELP = [
   "## LumnFx bot",
   "`/open` Trades and orders running right now.",
   "`/stats` The live track record: win rate, total R, profit factor, biggest drop and the latest trades.",
+  "`/month` This month's results so far.",
+  "`/history` Closed trades for one market.",
+  "`/backtest` What testing expects from each strategy, beside live results.",
+  "`/status` Whether the bot is running and when it last checked.",
+  "`/calendar` This week's high-impact US news, in UK time.",
+  "`/hours` Which markets are open right now.",
+  "`/glossary` A trading term explained.",
   "`/alerts` Choose which markets ping you: Gold, Crypto, US indices.",
   "-# Only you can see the bot's replies. Alerts themselves are posted in the signal channels.",
 ].join("\n");
@@ -76,6 +107,8 @@ function alertButtons(memberRoles) {
 
 const ALERTS_TEXT = "## Your alerts\nTap a market to turn its pings on or off. Green means you'll be pinged.";
 
+const option = (i, name) => (i.data.options || []).find((o) => o.name === name)?.value;
+
 async function command(i, env) {
   const name = i.data.name;
   try {
@@ -87,13 +120,24 @@ async function command(i, env) {
       const [journal, nursery] = await Promise.all([load("journal.json"), load("nursery.json")]);
       return reply(statsText(journal, nursery));
     }
+    if (name === "month" || name === "history" || name === "backtest") {
+      const [journal, nursery] = await Promise.all([load("journal.json"), load("nursery.json")]);
+      if (name === "month") return reply(monthText(journal, nursery));
+      if (name === "backtest") return reply(backtestText(journal, nursery));
+      return reply(historyText(journal, nursery, option(i, "market")));
+    }
+    if (name === "status") return reply(statusText(await load("state.json")));
+    if (name === "calendar") return reply(calendarText(await load("calendar.json")));
   } catch (e) {
+    console.log(`/${name} failed: ${e.message}`);
     return reply("Couldn't load the latest data just now. Try again in a minute.");
   }
   if (name === "alerts") {
     if (!i.member) return reply("Use this in the LumnFx server.");
     return reply(ALERTS_TEXT, { components: alertButtons(i.member.roles) });
   }
+  if (name === "hours") return reply(hoursText());
+  if (name === "glossary") return reply(glossaryText(option(i, "term")));
   if (name === "help") return reply(HELP);
   return reply("Unknown command.");
 }
