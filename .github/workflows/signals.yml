@@ -44,6 +44,7 @@ jobs:
           DISCORD_WEBHOOK_ETH: ${{ secrets.DISCORD_WEBHOOK_ETH }}
           DISCORD_WEBHOOK_US_IBS: ${{ secrets.DISCORD_WEBHOOK_US_IBS }}
           DISCORD_WEBHOOK_REPORTS: ${{ secrets.DISCORD_WEBHOOK_REPORTS }}
+          DISCORD_WEBHOOK_CANDIDATES: ${{ secrets.DISCORD_WEBHOOK_CANDIDATES }}
           ACCOUNT_SIZE: ${{ secrets.ACCOUNT_SIZE }}
           ACCOUNT_CCY: ${{ secrets.ACCOUNT_CCY }}
           RISK_PCT: ${{ secrets.RISK_PCT }}

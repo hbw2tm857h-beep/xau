@@ -185,7 +185,11 @@ CONFIG = {
         "btc_trend": "DISCORD_WEBHOOK_BTC", "eth_inside_day": "DISCORD_WEBHOOK_ETH",
         "us_ibs": "DISCORD_WEBHOOK_US_IBS", "ndx_noise": "DISCORD_WEBHOOK_US_IBS",
         "reports": "DISCORD_WEBHOOK_REPORTS",
+        "candidates": "DISCORD_WEBHOOK_CANDIDATES",
     },
+    # Silent candidates post their own cards to a staff-only channel, so their
+    # progress can be followed without members ever seeing them.
+    "candidate_alerts": True,
     "discord_username": "LumnFx",
     # None: each webhook's own avatar (the LFX icon, set on the webhook in Discord).
     "discord_avatar_url": None,
@@ -2834,6 +2838,28 @@ def run_markets(state, journal, now, api_key, sizing, nursery, fetch=None):
     return out
 
 
+CANDIDATE_NOTE = "-# Candidate · tracked only, not posted to members."
+
+
+def candidate_closes(entries, nursery, cfg=None):
+    """Cards for candidate trades closed this run by trackers that have no
+    alert events of their own (Nasdaq noise-area, the 200-day US variant)."""
+    cfg = cfg or CONFIG
+    if not cfg.get("candidate_alerts") or not nursery:
+        return []
+    out = []
+    for j in entries:
+        s = j.get("strategy", "trend")
+        if s == "h4_trend" or tier_of(nursery, s) != "candidate":
+            continue
+        label = ((nursery.get("strategies") or {}).get(s) or {}).get("label", s).replace(" (tracking)", "")
+        where = f" · {IBS_NAMES.get(j['symbol'], (j['symbol'],))[0]}" if j.get("symbol") else ""
+        out.append(Msg(f"## {label}{where} · {side_word(j['dir'])} closed\n"
+                       f"Open {px(j['entry'])} · Close {px(j['exit'])}: *{j['r']:+.2f}R*\n{CANDIDATE_NOTE}",
+                       "candidates"))
+    return out
+
+
 class Msg(str):
     """A Slack message that knows which strategy it belongs to, so main() can
     post it to that strategy's channel. Behaves as a plain string everywhere else."""
@@ -2898,7 +2924,12 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                 closed_trades.append(journal[-1])
             tier = tier_of(nursery, (e.get("idea") or {}).get("strategy", "trend"))
             if tier == "candidate":
-                continue   # tracked in the journal and the ledger, never alerted
+                # tracked in the journal and the ledger, never alerted to members;
+                # a card goes to the staff-only candidates channel instead
+                head = card(e, cfg, None) if cfg.get("candidate_alerts") else None
+                if head:
+                    out.append(Msg(relabel(head, cfg) + "\n" + CANDIDATE_NOTE, "candidates"))
+                continue
             idea = e.get("idea") or {}
             confirmed = cfg.get("confirmed_only")
             if confirmed and e["type"] in ("signal", "ib_signal", "h4_signal") and \
@@ -3181,6 +3212,7 @@ def main():
                 else:
                     sizing = sizing_from_env(api_key) if os.environ.get("ACCOUNT_SIZE") else None
                     nursery = load_nursery(CONFIG)
+                    j0 = len(journal)
                     msgs = run_live(state, journal, h1_raw, now, CONFIG, sizing, fetch_news, nursery)
                     msgs += run_markets(state, journal, now, api_key, sizing, nursery)
                     if CONFIG["noise"]["enabled"]:
@@ -3197,6 +3229,7 @@ def main():
                                             f"{nst['fail_count']} runs in a row: {e}")
                     if CONFIG["ibs"]["enabled"]:
                         msgs += run_ibs_due(state, journal, now, api_key, nursery)
+                    msgs += candidate_closes(journal[j0:], nursery)
         state["fail_count"] = 0
     except Exception as e:  # noqa: BLE001 - report every failure the same way
         print(f"ERROR: {e}", file=sys.stderr)
