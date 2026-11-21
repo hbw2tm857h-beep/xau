@@ -1,0 +1,6 @@
+test,tune_R,val_R,2008-15_R,2025-26_R,tune_n,val_n,2008-15_n,2025-26_n,all_n,all_total,perm_p,verdict
+C1 COT flow agrees,0.146,0.036,0.167,0.402,151,44,193,43,431,73.0,,no
+C2 COT not crowded,0.135,0.155,0.125,0.31,192,44,248,77,561,87.6,,no
+C3 COT net position agrees,0.104,0.187,0.133,0.38,163,57,181,66,467,76.7,,no
+V1 Signal candle volume above average,0.063,0.332,0.038,0.231,136,42,173,53,404,41.3,,no
+V2 Right side of session VWAP,0.145,0.155,0.151,0.342,241,72,306,84,703,121.0,,no
