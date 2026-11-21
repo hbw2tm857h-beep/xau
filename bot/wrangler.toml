@@ -1,0 +1,12 @@
+# Cloudflare Worker for the LumnFx Discord app (slash commands).
+# Deploy from this folder: npx wrangler deploy
+# The bot token is a secret: npx wrangler secret put DISCORD_BOT_TOKEN
+name = "lumnfx-bot"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+workers_dev = true
+
+[vars]
+DISCORD_APP_ID = "1573780915195482252"        # from the developer portal, General Information
+DISCORD_PUBLIC_KEY = "2a32a61ef556285149500aa308280c64e3563dd3f9dbc73fac270d7fd03b3ad9"    # from the developer portal, General Information (public, not a secret)
+GUILD_ID = "1573090531838402742"
