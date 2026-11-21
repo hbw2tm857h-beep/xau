@@ -160,6 +160,19 @@ async function component(i, env) {
   return { type: 7, data: { content: ALERTS_TEXT, components: alertButtons(now) } };
 }
 
+// Commands that need no network call answer directly.
+const INSTANT = new Set(["alerts", "hours", "glossary", "help"]);
+
+async function followUp(i, env) {
+  const out = await command(i, env);
+  const r = await fetch(`${API}/webhooks/${env.DISCORD_APP_ID}/${i.token}/messages/@original`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content: out.data.content, allowed_mentions: { parse: [] } }),
+  });
+  if (!r.ok) console.log(`/${i.data.name} follow-up: HTTP ${r.status}`);
+}
+
 // Registers the commands on the server. Runs after Discord's signed PING,
 // which it sends whenever the interactions URL is saved in the developer portal.
 async function register(env) {
@@ -185,7 +198,13 @@ export default {
       if (env.DISCORD_BOT_TOKEN) ctx.waitUntil(register(env));
       return json({ type: 1 });
     }
-    if (i.type === 2) return json(await command(i, env));
+    if (i.type === 2) {
+      // Answer at once with "thinking..." and fill the reply in afterwards, so a
+      // slow GitHub fetch or a cold start can't hit Discord's 3-second limit.
+      if (INSTANT.has(i.data.name)) return json(await command(i, env));
+      ctx.waitUntil(followUp(i, env));
+      return json({ type: 5, data: { flags: EPHEMERAL } });
+    }
     if (i.type === 3) return json(await component(i, env));
     return json(reply("Unsupported interaction."));
   },
