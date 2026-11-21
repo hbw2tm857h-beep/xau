@@ -733,6 +733,29 @@ Bradley asked whether anything from quantitative finance would help. The time-se
 
 **What this means for real order flow:** the free proxies give no reason to expect hourly order-flow filters to help gold's trend setups. Paid CME tick data could still test delta and order-book imbalance, which these proxies can't measure. The literature puts that effect at seconds to minutes, though, so it would need an always-on program and a different kind of strategy, not a filter on hourly setups.
 
+## Round 27: a sealed test on 2004-07, a period no round had used (21 Nov 2026)
+
+`round27_lockbox_2004_07.py`, `round27_results.json`, data in `data/xauusd_h1_2003_2007.csv.gz` (Dukascopy XAUUSD hourly, May 2003 to Dec 2007; 2003 is warm-up only)
+
+Bradley asked how the bot could be pushed further. Every earlier round used 2008-2026, so the near misses from rounds 23-25 could only be settled on data none of them had seen. Dukascopy serves gold back to May 2003. The six tests were committed (868d26a) after checking only row counts per year and before any 2004-07 trade was simulated. The live rules and costs are used unchanged. Gold was $340-$842 then, so the fixed $0.35 cost and $0.30 buffers are a bigger share of price than in any period tested before. That makes the test harder, by design. Bar: p < 0.05 / 6 = 0.0083.
+
+| Test | Result, 2004-07 | p | Verdict |
+|---|---|---|---|
+| L1 Gold trend rules hold | +0.057R (121 trades, 55% winners); 2004 −0.19, 2005 +0.16, 2006 +0.09, 2007 +0.13 | 0.28 | fail |
+| L2 Gold inside-day holds | +0.194R (158 trades); 2004 −0.07, 2005 +0.02, 2006 +0.94, 2007 +0.13 | 0.061 | fail |
+| L3 Trade with the 12-month trend (round 25 Q1) | +0.181R (86) vs −0.165R (27) | 0.065 | fail |
+| L4 First partial at 1.5R (round 24 X1) | +0.000R a trade | 0.5 | fail |
+| L5 Chandelier trail on the second half (round 24 X2) | −0.024R a trade | 0.77 | fail |
+| L6 Signal within 24h after FOMC or jobs (round 23 E2) | +0.163R (9) vs +0.048R (112) | 0.37 | fail |
+
+The exit re-run reproduced the live state machine's R on all 121 trend trades, so L4 and L5 are valid. **0 of 6 passed.** hypotheses_tested rises from 1,351 to 1,357.
+
+**What it says:**
+- **Both live gold strategies made money in a third independent period, but too little to prove anything on four years.** The trend rules were positive in three of the four years. Before costs they averaged +0.128R a trade; the fixed $0.35 cost took 0.071R of that, because stops were only about $5 wide with gold at $400 (median risk $4.90). Today's ~$33 stops make the same cost about 0.01R. The inside-day breakout did better (+0.19R), but most of it came from 2006.
+- **The 12-month trend filter pointed the right way for the third time running.** Trades with the year's trend made +0.18R and trades against it lost 0.17R, the same direction as 2008-15, 2016-24 and 2025-26, but p = 0.065 on 113 trades. It still isn't proven. Every period agrees on direction, so it is the strongest candidate to watch in the live record. It would also remove about a quarter of the trades.
+- **The exits are settled.** The 1.5R partial and the chandelier trail both did nothing or worse here, as in round 24. The 1R/2R exits stay.
+- **The after-news effect can't be judged here:** only nine trades started after big US news in four years.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -777,5 +800,6 @@ python3 research/round22_springs_upthrusts.py # David Paul's springs and upthrus
 python3 research/round23_events_funding_metalabel.py # news timing, funding, sessions, meta-label
 python3 research/round24_exits.py           # three exit changes for gold trend trades
 python3 research/round25_quant_regimes.py    # quantitative-finance regime filters
+python3 research/round27_lockbox_2004_07.py  # sealed 2004-07 test of the live rules and five near misses
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```

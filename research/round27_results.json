@@ -1,0 +1,66 @@
+[
+ {
+  "test": "L1 gold trend rules hold",
+  "n": 121,
+  "avg": 0.057,
+  "win": 55,
+  "t": 0.58,
+  "p": "0.28",
+  "years_pos": "3/4",
+  "2004": -0.188,
+  "2005": 0.158,
+  "2006": 0.086,
+  "2007": 0.132,
+  "verdict": "fail"
+ },
+ {
+  "test": "L2 gold inside-day holds",
+  "n": 158,
+  "avg": 0.194,
+  "win": 48,
+  "t": 1.55,
+  "p": "0.061",
+  "years_pos": "3/4",
+  "2004": -0.068,
+  "2005": 0.021,
+  "2006": 0.943,
+  "2007": 0.128,
+  "verdict": "fail"
+ },
+ {
+  "test": "L3 12-month trend agrees (round 25 Q1)",
+  "n_fav": 86,
+  "avg_fav": 0.181,
+  "n_rest": 27,
+  "avg_rest": -0.165,
+  "t": 1.51,
+  "p": "0.065",
+  "verdict": "fail"
+ },
+ {
+  "test": "L4 first partial at 1.5R (round 24 X1)",
+  "n": 121,
+  "gain": 0.0,
+  "t": 0.0,
+  "p": "0.5",
+  "verdict": "fail"
+ },
+ {
+  "test": "L5 chandelier trail (round 24 X2)",
+  "n": 121,
+  "gain": -0.024,
+  "t": -0.73,
+  "p": "0.77",
+  "verdict": "fail"
+ },
+ {
+  "test": "L6 signal within 24h after FOMC/jobs (round 23 E2)",
+  "n_fav": 9,
+  "avg_fav": 0.163,
+  "n_rest": 112,
+  "avg_rest": 0.048,
+  "t": 0.33,
+  "p": "0.37",
+  "verdict": "fail"
+ }
+]
