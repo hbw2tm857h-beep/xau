@@ -1,0 +1,19 @@
+name: Monthly report
+
+# The 1st of each month, 09:00 UTC: last month's report card for the alerted
+# trades, posted to #announcements.
+on:
+  schedule:
+    - cron: "0 9 1 * *"
+  workflow_dispatch:
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Post the report card
+        env:
+          DISCORD_WEBHOOK_ANNOUNCEMENTS: ${{ secrets.DISCORD_WEBHOOK_ANNOUNCEMENTS }}
+        run: python3 monthly_report.py
