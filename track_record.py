@@ -16,6 +16,7 @@ from datetime import datetime
 
 GO_LIVE = "2026-11-14"
 MESSAGE_ID = "1573401910520586334"     # the post in #track-record, created by its webhook
+OPEN_MESSAGE_ID = "1573559130092871782"   # the "Open now" post in the same channel, same webhook
 ALERTED = ("live", "shadow")           # tiers whose trades are posted to members
 MAX_ROWS = 20                          # keep the post under Discord's 2,000 characters
 UA = {"User-Agent": "LumnFx track record", "Content-Type": "application/json"}
@@ -76,6 +77,54 @@ def render(rs, n=MAX_ROWS):
             f"That's {total:+.2f}% at 1% risk per trade.\n{more}\n-# Updated as trades close.").replace("\n\n\n", "\n\n")
 
 
+MARKET_NAMES = {"btc": "BTC/USD", "eth": "ETH/USD"}
+
+
+def open_rows(state, nursery):
+    """Positions and pending orders members were alerted to, from state.json."""
+    tiers = {k: (v.get("tier") if isinstance(v, dict) else v)
+             for k, v in (nursery.get("strategies") or nursery).items()}
+    books = [("Gold", state)] + [(MARKET_NAMES.get(k, k), m) for k, m in (state.get("markets") or {}).items()]
+    out = []
+    for market, book in books:
+        for key in ("idea", "ib"):
+            p = (book or {}).get(key)
+            if not p or tiers.get(p.get("strategy", "trend" if key == "idea" else "inside_day")) not in ALERTED:
+                continue
+            if key == "ib" and not p.get("triggered"):
+                out.append(f"**{market} breakout** · orders waiting\n"
+                           f"-# Buy-stop {price(p.get('hi'))} · Sell-stop {price(p.get('lo'))}")
+                continue
+            side = "BUY" if p.get("dir") == 1 else "SELL"
+            if not p.get("triggered"):
+                out.append(f"**{market} {side}** · order waiting at {price(p.get('entry'))}\n"
+                           f"-# Stop loss {price(p.get('stop'))}")
+                continue
+            if key == "ib":
+                out.append(f"**{market} {side}** · in from {price(p.get('entry'))}\n"
+                           f"-# Stop loss {price(p.get('stop'))} · Exit at the daily close")
+                continue
+            stage = "TP1 hit, stop at entry" if p.get("done") else f"TP1 {price(p.get('partial'))}"
+            out.append(f"**{market} {side}** · in from {price(p.get('entry'))}\n"
+                       f"-# Stop loss {price(p.get('stop'))} · {stage} · TP2 {price(p.get('target'))}")
+    return out
+
+
+def render_open(rows_):
+    body = "\n".join(rows_) if rows_ else "No open trades right now."
+    return f"## Open now\nTrades and orders running at the moment.\n\n{body}\n\n-# Updated every hour."
+
+
+def edit(hook, mid, text):
+    url = f"{hook}/messages/{mid}"
+    current = json.load(urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=20))["content"]
+    if current == text:
+        return False
+    body = json.dumps({"content": text, "allowed_mentions": {"parse": []}}).encode()
+    urllib.request.urlopen(urllib.request.Request(url, data=body, headers=UA, method="PATCH"), timeout=20)
+    return True
+
+
 def main():
     journal = json.load(open(os.environ.get("JOURNAL_FILE", "journal.json")))
     nursery = json.load(open(os.environ.get("NURSERY_FILE", "nursery.json")))
@@ -85,21 +134,18 @@ def main():
     while len(text) > 1990 and n > 1:     # Discord's limit is 2,000 characters
         n -= 1
         text = render(rs, n)
+    state = json.load(open(os.environ.get("STATE_FILE", "state.json")))
+    board = render_open(open_rows(state, nursery))
     if "--dry-run" in sys.argv:
-        print(text)
+        print(text + "\n\n" + board)
         return
     hook = os.environ.get("DISCORD_WEBHOOK_TRACK", "").strip()
     if not hook:
         print("DISCORD_WEBHOOK_TRACK is not set; nothing posted.")
         return
-    url = f"{hook}/messages/{MESSAGE_ID}"
-    current = json.load(urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=20))["content"]
-    if current == text:
-        print("Track record already up to date.")
-        return
-    body = json.dumps({"content": text, "allowed_mentions": {"parse": []}}).encode()
-    urllib.request.urlopen(urllib.request.Request(url, data=body, headers=UA, method="PATCH"), timeout=20)
-    print("Track record updated.")
+    print("Track record updated." if edit(hook, MESSAGE_ID, text) else "Track record already up to date.")
+    if OPEN_MESSAGE_ID:
+        print("Open trades updated." if edit(hook, OPEN_MESSAGE_ID, board) else "Open trades already up to date.")
 
 
 if __name__ == "__main__":
