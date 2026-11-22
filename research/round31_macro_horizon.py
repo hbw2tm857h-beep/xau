@@ -381,7 +381,7 @@ def main():
             g12 = prob
     tr12 = [t for t in tr if t["t"] >= datetime(2012, 1, 1, tzinfo=UTC)]
     rows.append(welch("B7 gold trend, 12H forecast agrees", tr12,
-                      lambda t: None if t["t"] not in g12 else (g12[t["t"]] > 0.5) == (t["d"] == 1),
+                      lambda t: None if t["t"] not in g12 else bool(g12[t["t"]] > 0.5) == (t["d"] == 1),
                       datetime(2019, 1, 1, tzinfo=UTC)))
     passed = [r["test"] for r in rows if r["verdict"] == "PASS"]
     print(f"\n{len(passed)} of {len(rows)} pass" + (": " + ", ".join(passed) if passed else ""))
