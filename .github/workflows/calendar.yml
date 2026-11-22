@@ -2,7 +2,9 @@ name: Economic calendar
 
 # Posts the week's high-impact US releases to #economic-calendar on Sunday
 # evening, and a reminder on weekday mornings when something is due that day.
-# GitHub's schedule can run late; a calendar post a little late is harmless.
+# The metronome starts these on time (Sunday 20:06 and weekdays 06:06 UTC); the
+# schedule below is the backup, since GitHub's own schedule can run late or not
+# at all. calendar_posted.json stops the same post going out twice.
 on:
   schedule:
     - cron: "15 20 * * 0"      # Sunday 20:15 UTC: the week ahead
@@ -12,6 +14,10 @@ on:
       mode:
         description: "week or today"
         default: "week"
+
+concurrency:
+  group: calendar
+  cancel-in-progress: false
 
 permissions:
   contents: write   # commits calendar.json for the Discord bot's /calendar
@@ -31,7 +37,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add calendar.json
+          git add calendar.json calendar_posted.json 2>/dev/null || git add calendar.json
           if ! git diff --cached --quiet; then
             git commit -m "Update the economic calendar"
             git pull --rebase --quiet origin "${GITHUB_REF_NAME}" || true
