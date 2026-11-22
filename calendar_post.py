@@ -21,7 +21,7 @@ from zoneinfo import ZoneInfo
 FEED = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
 POSTED = "calendar_posted.json"
 UK = ZoneInfo("Europe/London")
-FOOTER = ("-# High-impact US releases from Forex Factory. Times are UK. Gold, the US indices and crypto "
+FOOTER = ("-# High-impact US releases from Forex Factory. Times show in your own time zone. Gold, the US indices and crypto "
           "can move fast around these, and a pending order can fill on the spike. The bot doesn't pause "
           "for news.")
 
@@ -45,10 +45,23 @@ def events():
     return sorted(out)
 
 
+def ts(t, style):
+    """A Discord timestamp: each reader sees it in their own time zone."""
+    return f"<t:{int(t.timestamp())}:{style}>"
+
+
 def line(t, title, forecast, previous):
     extra = ", ".join(x for x in (f"forecast {forecast}" if forecast else "",
                                   f"previous {previous}" if previous else "") if x)
-    return f"{t:%H:%M} · {title}" + (f" · {extra}" if extra else "")
+    return title + (f" · {extra}" if extra else "")
+
+
+def grouped(ev, style):
+    """Releases at the same moment share one time heading."""
+    at = {}
+    for e in ev:
+        at.setdefault(e[0], []).append(e)
+    return [f"**{ts(t, style)}**\n" + "\n".join(line(*e) for e in es) for t, es in sorted(at.items())]
 
 
 def week_post(ev, now):
@@ -56,18 +69,15 @@ def week_post(ev, now):
     monday = d + timedelta(days=1) if d.weekday() == 6 else d - timedelta(days=d.weekday())
     if not ev:
         return f"## US news, week of {monday:%-d %B}\nNo high-impact US releases this week.\n\n{FOOTER}"
-    days = {}
-    for e in ev:
-        days.setdefault(e[0].date(), []).append(e)
-    blocks = [f"**{d:%a %-d %b}**\n" + "\n".join(line(*e) for e in es) for d, es in sorted(days.items())]
-    return f"## US news, week of {monday:%-d %B}\n\n" + "\n\n".join(blocks) + f"\n\n{FOOTER}"
+    return f"## US news, week of {monday:%-d %B}\n\n" + "\n\n".join(grouped(ev, "F")) + f"\n\n{FOOTER}"
 
 
 def today_post(ev, now):
     today = [e for e in ev if e[0].date() == now.astimezone(UK).date()]
     if not today:
         return None
-    return "## Today's US news\n" + "\n".join(line(*e) for e in today) + f"\n\n{FOOTER}"
+    blocks = [b.replace("**\n", f"** ({ts(t, 'R')})\n", 1) for b, t in zip(grouped(today, "t"), sorted({e[0] for e in today}))]
+    return "## Today's US news\n\n" + "\n\n".join(blocks) + f"\n\n{FOOTER}"
 
 
 def post(text):

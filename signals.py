@@ -846,7 +846,7 @@ def evaluate(F, i, d, cfg, news=None):
         if nn:
             et, title, mins = nn
             when = f"in {mins:.0f} min" if mins >= 0 else f"{-mins:.0f} min ago"
-            checks["news"] = (False, f"US {title} at {et.astimezone(UK):%H:%M} UK ({when}): spreads may jump")
+            checks["news"] = (False, f"US {title} at <!date^{int(et.timestamp())}^{{time}}|{et.astimezone(UK):%H:%M} UK> ({when}): spreads may jump")
         else:
             checks["news"] = (True, f"No major US news within {cfg['news_window_min']} min")
 
@@ -3117,6 +3117,7 @@ def to_discord(text):
     t = re.sub(r", about [\d.]+% of the account", "", t)
     t = "\n".join(line for line in t.split("\n") if "at risk)" not in line)
     t = t.replace("<!channel>", "@everyone").replace("<!here>", "@here")
+    t = re.sub(r"<!date\^(\d+)\^\{time\}\|[^>]*>", r"<t:\1:t>", t)   # each reader's own time zone
     t = re.sub(r"<(https?://[^|>]+)\|([^>]+)>", r"[\2](\1)", t)
     t = re.sub(r"<(https?://[^>]+)>", r"\1", t)
     t = re.sub(r"(?<![*A-Za-z0-9])\*([^*\n]+?)\*(?![*A-Za-z0-9])", r"**\1**", t)
