@@ -8,6 +8,7 @@ name: Metronome
 # candle that closed on the hour. At :25 it checks a run started that hour and,
 # if none did, dispatches again and warns in the bot-status channel. Before the
 # 6-hour job limit it dispatches the next metronome, so the chain carries on.
+# It also starts the economic calendar posts (Sunday 20:06, weekdays 06:06 UTC).
 # The schedule below restarts the chain if it ever breaks; the concurrency
 # group keeps it to one metronome at a time.
 
@@ -68,6 +69,10 @@ jobs:
               fi
             else
               dispatch
+              case "$(date -u +%u%H)" in                # GitHub's own schedule for the calendar can be skipped
+                720) gh workflow run calendar.yml -R "$REPO" --ref main -f mode=week || true ;;
+                [1-5]06) gh workflow run calendar.yml -R "$REPO" --ref main -f mode=today || true ;;
+              esac
             fi
           done
 

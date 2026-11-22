@@ -19,6 +19,7 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 FEED = "https://nfs.faireconomy.media/ff_calendar_thisweek.json"
+POSTED = "calendar_posted.json"
 UK = ZoneInfo("Europe/London")
 FOOTER = ("-# High-impact US releases from Forex Factory. Times are UK. Gold, the US indices and crypto "
           "can move fast around these, and a pending order can fill on the spike. The bot doesn't pause "
@@ -91,9 +92,23 @@ def main():
         return
     if "--dry-run" in sys.argv:
         print(text)
-    else:
-        post(text)
-        print(f"Posted the {mode} calendar ({len(ev)} releases this week).")
+        return
+    # The metronome starts this on time and GitHub's schedule is the backup, so the
+    # same post can be asked for twice; calendar_posted.json remembers what went out.
+    d = now.astimezone(UK).date()
+    key = (d + timedelta(days=1) if d.weekday() == 6 else d - timedelta(days=d.weekday())) if mode == "week" else d
+    try:
+        done = json.load(open(POSTED))
+    except (OSError, ValueError):
+        done = {}
+    if done.get(mode) == key.isoformat():
+        print(f"The {mode} calendar for {key} was already posted.")
+        return
+    post(text)
+    done[mode] = key.isoformat()
+    with open(POSTED, "w") as f:
+        json.dump(done, f, indent=1)
+    print(f"Posted the {mode} calendar ({len(ev)} releases this week).")
 
 
 if __name__ == "__main__":
