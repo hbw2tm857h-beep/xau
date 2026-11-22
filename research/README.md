@@ -798,6 +798,23 @@ Round 28's 52-week breakout made over 1R a trade on gold in both halves of 2004-
 - **"Commodities and crypto only" is a lead, not a result.** It was picked after seeing this table, and that subgroup has about 340 trades across 20 markets, mostly from 2017. Testing it properly would need data none of this has touched, for example earlier commodity history; most of the commodity and crypto files here start in 2017 or later.
 - **Nothing changes in the bot.**
 
+## Round 30: reverse after a breakeven stop (22 Nov 2026)
+
+`round30_reverse_after_breakeven.py`, `round30_results.json`. Pre-registered and committed (f87ca67) before it was run. **Research only:** nothing in the bot changed, including the `hypotheses_tested` counter in `signals.py`. This round's +4 (1,362 to 1,366) is recorded here only.
+
+Bradley's Bitcoin short (20 Nov) took half off at 1R near 55k, and the rest was stopped at entry (58,761) as price turned and rose to 61.4k. He asked whether the bot could have caught that move. The live rules trade only with the daily trend, so they never take the turn. This round tests the rule that would have caught it. Every time a trend trade's second half is stopped at entry after the first half was booked, it enters the other way at that price. The stop goes beyond the extreme the first trade reached, and the live exits are used (half at 1R, rest at 2R). V2 also requires the 4H Heikin Ashi candle to agree with the new direction. Bar: p < 0.05/4, 30+ trades, positive in both halves.
+
+| Test | Trades | Avg R | Win | p | First half / second half | Verdict |
+|---|---|---|---|---|---|---|
+| V1 gold, stop and reverse (2004-26) | 237 | −0.029 | 51% | 0.66 | +0.035 / −0.092 | fail |
+| V2 gold, only if 4H HA agrees | 90 | +0.029 | 53% | 0.40 | −0.063 / +0.138 | fail |
+| V1 Bitcoin, stop and reverse | 98 | +0.097 | 56% | 0.18 | −0.028 / +0.203 | fail |
+| V2 Bitcoin, only if 4H HA agrees | 26 | +0.102 | 54% | 0.32 | −0.311 / +0.360 | fail |
+
+**0 of 4 passed.**
+
+**What it says:** a breakeven stop is not a reliable sign that the trend has turned. On gold, reversing after one is a coin flip that loses slightly after costs over 22 years. On Bitcoin it made money after 2022 and lost before. That swing between periods is what noise looks like, and 98 trades is too few to tell. The move from 55k to 61.4k was one of the winners, but the rule loses on as many as it wins. The live rules stay as they are: take half at 1R, move the stop to entry, and wait for the next with-trend setup.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -845,5 +862,6 @@ python3 research/round25_quant_regimes.py    # quantitative-finance regime filte
 python3 research/round27_lockbox_2004_07.py  # sealed 2004-07 test of the live rules and five near misses
 python3 research/round28_new_edge.py         # four new daily gold edges from 2004 (+ live parts on survivors)
 python3 research/round29_52wk_markets.py     # the 52-week breakout on 67 other markets (research only)
+python3 research/round30_reverse_after_breakeven.py # reverse after a breakeven stop (research only)
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```

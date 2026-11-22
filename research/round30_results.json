@@ -1,0 +1,46 @@
+[
+ {
+  "test": "V1 gold, stop and reverse",
+  "n": 237,
+  "avg": -0.029,
+  "win": 51,
+  "total": -6.8,
+  "p": "0.66",
+  "first_half": 0.035,
+  "second_half": -0.092,
+  "verdict": "fail"
+ },
+ {
+  "test": "V2 gold, reverse if 4H HA agrees",
+  "n": 90,
+  "avg": 0.029,
+  "win": 53,
+  "total": 2.6,
+  "p": "0.4",
+  "first_half": -0.063,
+  "second_half": 0.138,
+  "verdict": "fail"
+ },
+ {
+  "test": "V1 Bitcoin, stop and reverse",
+  "n": 98,
+  "avg": 0.097,
+  "win": 56,
+  "total": 9.5,
+  "p": "0.18",
+  "first_half": -0.028,
+  "second_half": 0.203,
+  "verdict": "fail"
+ },
+ {
+  "test": "V2 Bitcoin, reverse if 4H HA agrees",
+  "n": 26,
+  "avg": 0.102,
+  "win": 54,
+  "total": 2.7,
+  "p": "0.32",
+  "first_half": -0.311,
+  "second_half": 0.36,
+  "verdict": "fail"
+ }
+]
