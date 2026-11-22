@@ -815,6 +815,40 @@ Bradley's Bitcoin short (20 Nov) took half off at 1R near 55k, and the rest was 
 
 **What it says:** a breakeven stop is not a reliable sign that the trend has turned. On gold, reversing after one is a coin flip that loses slightly after costs over 22 years. On Bitcoin it made money after 2022 and lost before. That swing between periods is what noise looks like, and 98 trades is too few to tell. The move from 55k to 61.4k was one of the winners, but the rule loses on as many as it wins. The live rules stay as they are: take half at 1R, move the stop to entry, and wait for the next with-trend setup.
 
+## Round 31: macro context and horizon forecasts (22 Nov 2026)
+
+`round31_macro_horizon.py`, `round31_results.json`, new data in `data/macro/` (FRED DGS10, DGS2, T10YIE, VIXCLS; CPI release dates from ALFRED). Pre-registered and committed (5041321) before the new data was downloaded or any test was run. Two reader fixes followed, neither changing a rule: ALFRED returns at most 12 vintages per request, so the first CPI scan misdated releases; S&P 500 and oil candles start in 2012, so their columns are dropped from the 2008-11 training years. B7 was re-run after a numpy-bool comparison fix.
+
+Bradley shared a trader's account of what improved their FX models: macro context alongside price action (Treasury yields, inflation expectations, US data releases, sentiment, cross-asset moves) and "horizon" models that call the direction 3, 6 or 12 hours ahead (their live EURUSD 3H/6H and GBPUSD 12H). Everything not already covered by rounds 20 and 23 was tested. 14 tests, bar p < 0.05 / 14 = 0.0036.
+
+| Test | Favoured | Rest | p | Verdict |
+|---|---|---|---|---|
+| A1 10-year yield 5-day change agrees | +0.197R (508) | +0.147R (303) | 0.26 | fail |
+| A2 2-year yield 5-day change agrees | +0.163R (501) | +0.119R (302) | 0.29 | fail |
+| A3 10-year breakeven inflation agrees | +0.155R (419) | +0.130R (366) | 0.37 | fail |
+| A4 VIX 5-day change agrees | +0.166R (415) | +0.162R (437) | 0.48 | fail |
+| A5 silver's last 24 hours agree | +0.196R (481) | +0.235R (100) | 0.62 | fail |
+| A6 S&P 500 risk-off in the last 24 hours | +0.191R (185) | +0.214R (185) | 0.58 | fail |
+| A7 FOMC, jobs or CPI in the 24 hours before | +0.375R (83) | +0.143R (771) | 0.024 | fail, ahead in both halves |
+| B7 gold trend, 12H forecast agrees | +0.151R (182) | +0.190R (363) | 0.66 | fail |
+
+| Horizon model (walk-forward 2012-26) | Forecasts | Hit rate | Per forecast after costs, drift-adjusted | Profitable years | Median move against first | Verdict |
+|---|---|---|---|---|---|---|
+| B1 gold 3H | 29,728 | 52.5% | −1.5 bp | 0/15 | 14.5 bp | fail |
+| B2 gold 6H | 14,540 | 51.4% | −1.6 bp | 2/15 | 22.0 bp | fail |
+| B3 gold 12H | 6,881 | 50.2% | −2.0 bp | 3/15 | 34.3 bp | fail |
+| B4 EURUSD 3H | 30,119 | 51.5% | −0.8 bp | 0/15 | 7.3 bp | fail |
+| B5 EURUSD 6H | 14,664 | 51.1% | −0.5 bp | 1/15 | 11.0 bp | fail |
+| B6 GBPUSD 12H | 6,938 | 49.8% | −1.6 bp | 4/15 | 20.1 bp | fail |
+
+**0 of 14 pass.** hypotheses_tested rises from 1,366 to 1,380 (recorded here only; the counter in `signals.py` is left alone).
+
+**What it says:**
+- **Macro context doesn't sort gold's trend trades.** Yields, breakevens and VIX agreeing with the trade lift the average by +0.00 to +0.05R, nowhere near significant; silver and the S&P 500 make it slightly worse. With round 20 (real yields, dollar, volatility, positioning), that is ten macro filters with no edge: the daily trend and multi-timeframe checks already carry what these measure.
+- **The horizon models call direction slightly better than a coin (up to 52.5%) and still lose after costs on every market and horizon, in almost every year.** A small hit-rate edge on short horizons is smaller than a spread. They also show the weakness the write-up names: before a 6-hour gold call is scored, price typically moves 22 bp (about $9 at $4,000) against it.
+- **Big US news is the one recurring signal.** Gold trends that start within 24 hours after an FOMC statement, jobs report or CPI release averaged +0.38R against +0.14R, ahead before and after 2015. That's the third look (round 23 E2 p 0.003 on 40 trades; round 27 L6 had 9), and it still misses the bar. The trades overlap with E2, so this isn't independent confirmation. It stays a note for the live record, not a rule.
+- **What the bot already does from the write-up:** every alert stays in the journal (`data/outcomes.csv`), win or lose, and new strategies run on paper (the shadow tier) until enough live trades judge them.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -863,5 +897,6 @@ python3 research/round27_lockbox_2004_07.py  # sealed 2004-07 test of the live r
 python3 research/round28_new_edge.py         # four new daily gold edges from 2004 (+ live parts on survivors)
 python3 research/round29_52wk_markets.py     # the 52-week breakout on 67 other markets (research only)
 python3 research/round30_reverse_after_breakeven.py # reverse after a breakeven stop (research only)
+python3 research/round31_macro_horizon.py         # macro filters and 3/6/12-hour forecasts (needs scikit-learn, ~25 min)
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```
