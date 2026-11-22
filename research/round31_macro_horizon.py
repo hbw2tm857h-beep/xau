@@ -123,6 +123,14 @@ def cpi_dates():
     last = None
     while (y, m) <= (2026, 11):
         days = [date(y, m, d) for d in range(1, 32) if _ok(y, m, d)]
+        for c0 in range(0, len(days), 10):   # ALFRED returns at most 12 vintages per request
+            last = _scan(days[c0:c0 + 10], y, out, last)
+        y, m = (y + 1, 1) if m == 12 else (y, m + 1)
+    json.dump([d.isoformat() for d in out], open(path, "w"))
+    return out
+
+
+def _scan(days, y, out, last):
         q = urllib.parse.urlencode({"id": ",".join(["CPIAUCSL"] * len(days)),
                                     "vintage_date": ",".join(d.isoformat() for d in days),
                                     "cosd": f"{y - 1}-01-01"})
@@ -134,9 +142,7 @@ def cpi_dates():
                 out.append(d)
             if newest:
                 last = newest if last is None else max(last, newest)
-        y, m = (y + 1, 1) if m == 12 else (y, m + 1)
-    json.dump([d.isoformat() for d in out], open(path, "w"))
-    return out
+        return last
 
 
 def _ok(y, m, d):
@@ -281,8 +287,11 @@ def horizon(name, bars, rows, T, H, cost_bp):
             continue
         mdl = HistGradientBoostingClassifier(max_iter=200, learning_rate=0.05, max_depth=3, min_samples_leaf=500,
                                              l2_regularization=1.0, early_stopping=False, random_state=0)
-        mdl.fit(np.array([rows[i] for i in tr], float), np.array([fut[i] > 0 for i in tr]))
-        pr = mdl.predict_proba(np.array([rows[i] for i in te], float))[:, 1]
+        Xtr = np.array([rows[i] for i in tr], float)
+        # a column with no data yet in the training years (S&P 500 and oil start in 2012) is dropped for that year
+        keep = [j for j in range(Xtr.shape[1]) if len(np.unique(Xtr[~np.isnan(Xtr[:, j]), j])) > 1]
+        mdl.fit(Xtr[:, keep], np.array([fut[i] > 0 for i in tr]))
+        pr = mdl.predict_proba(np.array([rows[i] for i in te], float)[:, keep])[:, 1]
         for i, p in zip(te, pr):
             prob[T[i]] = p
             if fut[i] is None or T[i].hour % H:
