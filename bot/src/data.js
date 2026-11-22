@@ -230,17 +230,18 @@ export function glossaryText(key) {
 export function calendarText(saved, now = new Date()) {
   const ev = saved.map((r) => ({ t: new Date(r.t), title: r.title })).sort((a, b) => a.t - b.t);
   if (!ev.length) return "## US news this week\nNo high-impact US releases this week.\n-# Next week's list arrives on Sunday evening.";
-  const days = new Map();
+  // Discord timestamps show each member the time in their own time zone.
+  const at = new Map();
   let upcoming = 0;
   for (const e of ev) {
-    const d = ukDay(e.t);
-    if (!days.has(d)) days.set(d, []);
+    const k = Math.floor(e.t.getTime() / 1000);
+    if (!at.has(k)) at.set(k, []);
     const past = e.t < new Date(now.getTime() - 3600000);
     if (!past) upcoming++;
-    days.get(d).push(past ? `~~${ukTime(e.t)} · ${e.title}~~` : `${ukTime(e.t)} · ${e.title}`);
+    at.get(k).push(past ? `~~${e.title}~~` : e.title);
   }
   const note = upcoming ? `${upcoming} still to come. Struck-through releases are already out.`
     : "All of this week's releases are out. Next week's list arrives on Sunday evening.";
-  return ["## US news this week", ...[...days].map(([d, ls]) => `**${d}**\n${ls.join("\n")}`), note,
-    "-# High-impact US releases, UK time. Gold, US indices and crypto can move fast around these."].join("\n");
+  return ["## US news this week", ...[...at].map(([k, ls]) => `**<t:${k}:F>** (<t:${k}:R>)\n${ls.join("\n")}`), note,
+    "-# High-impact US releases. Times show in your own time zone. Gold, US indices and crypto can move fast around these."].join("\n");
 }

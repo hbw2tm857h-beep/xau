@@ -63,7 +63,7 @@ const HELP = [
   "`/history` Closed trades for one market.",
   "`/backtest` What testing expects from each strategy, beside live results.",
   "`/status` Whether the bot is running and when it last checked.",
-  "`/calendar` This week's high-impact US news, in UK time.",
+  "`/calendar` This week's high-impact US news, in your own time zone.",
   "`/hours` Which markets are open right now.",
   "`/glossary` A trading term explained.",
   "`/alerts` Choose which markets ping you: Gold, Crypto, US indices.",
