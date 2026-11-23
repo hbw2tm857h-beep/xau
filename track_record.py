@@ -74,7 +74,7 @@ def rows(journal, nursery):
     out = []
     for j in journal:
         s = j.get("strategy", "trend")
-        if tiers.get(s) not in ALERTED or (j.get("exit_time") or "") < GO_LIVE:
+        if tiers.get(s) not in ALERTED or (j.get("exit_time") or "") < GO_LIVE or j.get("pre_tracking"):
             continue
         if s == "us_ibs":
             market, kind = IBS.get(j.get("symbol"), j.get("symbol") or "US index"), "rebound"
