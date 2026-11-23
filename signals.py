@@ -2659,6 +2659,192 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
     return Msg("\n".join(lines), cfg["ibs"]["strategy"])
 
 
+# --------------------------------------------------------------------------
+# Near-miss candidates (research rounds 11, 13 and 32; round 13's Bitcoin
+# IBS dip was left out: in R, with no stop, it averages -0.10R). Ideas that were
+# positive in every period of the research but missed its pass mark. They are
+# run forward on live prices the bot already fetches, journalled silently as
+# candidates and shown only in the staff channel, so live trades decide.
+# 1R for the time-based ones is the 25-day average daily range at entry, the
+# unit the US index rebounds use.
+# --------------------------------------------------------------------------
+def utc_days(h1, now):
+    """Complete UTC calendar days from hourly candles (Bitcoin trades all week)."""
+    days = {}
+    for b in h1:
+        d = b["t"].date()
+        x = days.get(d)
+        if x is None:
+            days[d] = dict(b, t_close=datetime(d.year, d.month, d.day, tzinfo=UTC) + timedelta(days=1))
+        else:
+            x["h"], x["l"], x["c"] = max(x["h"], b["h"]), min(x["l"], b["l"]), b["c"]
+    return [days[d] for d in sorted(days) if days[d]["t_close"] <= now]
+
+
+def _avg_range_at(days, t, n=25):
+    """The n-day average range of the days that closed before t."""
+    past = [d for d in days if d["t_close"] <= t][-n:]
+    return sum(d["h"] - d["l"] for d in past) / len(past) if len(past) == n else None
+
+
+def btc_monday_trades(h1, now, cost_bps=5.0):
+    """Round 11 L4 (Concretum): long Bitcoin from Sunday 19:00 New York for 24 hours."""
+    idx = {b["t"]: b for b in h1}
+    days = utc_days(h1, now)
+    out = []
+    for b in h1:
+        tn = b["t"].astimezone(NY)
+        if tn.weekday() == 6 and tn.hour == 19:
+            x = idx.get(b["t"] + 23 * H1)
+            ar = _avg_range_at(days, b["t"])
+            if x and ar and x["t"] + H1 <= now:
+                out.append({"t": b["t"], "t_exit": x["t"] + H1, "d": 1, "entry": b["o"], "exit": x["c"],
+                            "r": (x["c"] - b["o"] - cost_bps * 1e-4 * b["o"]) / ar})
+    return out
+
+
+def gold_fix_trades(h1, now, cost_bps=1.75):
+    """Round 11 L5 (Bell): long gold from the 15:00 London candle's open (the PM
+    fix) to the close of the 10:00 London candle next morning (the AM fix)."""
+    daily = [dict(d, t_close=d["end"]) for d in aggregate(h1, trading_day, day_end)]
+    out, i, n = [], 0, len(h1)
+    while i < n:
+        t = h1[i]["t"].astimezone(UK)
+        if t.hour == 15 and t.weekday() < 5:
+            j = i + 1
+            while j < n and not (h1[j]["t"].astimezone(UK).hour == 10 and h1[j]["t"] > h1[i]["t"] + 12 * H1):
+                j += 1
+            ar = _avg_range_at(daily, h1[i]["t"])
+            if j < n and h1[j]["t"] - h1[i]["t"] < timedelta(days=4) and ar and h1[j]["t"] + H1 <= now:
+                e, x = h1[i]["o"], h1[j]["c"]
+                out.append({"t": h1[i]["t"], "t_exit": h1[j]["t"] + H1, "d": 1, "entry": e, "exit": x,
+                            "r": (x - e - cost_bps * 1e-4 * e) / ar})
+                i = j
+        i += 1
+    return out
+
+
+def skipped_trend_trades(h1, cfg, now):
+    """Round 32 S2: trend setups the live rules skip because a trade is already
+    open (or closes on that candle), each run on its own through step()."""
+    F = Features(h1, cfg)
+    close = ("exit", "stop", "target")
+    st, out = {}, []
+    for i in range(len(h1)):
+        if not F.warm(i):
+            continue
+        evs = step(F, i, st, cfg)
+        if any(e["type"] == "signal" for e in evs):
+            continue
+        if not (any(e["type"] in close for e in evs) or (st.get("idea") and st["idea"]["triggered"])):
+            continue
+        for d in (1, -1):
+            sg = evaluate(F, i, d, cfg, None)
+            if not sg:
+                continue
+            risk = sg["risk"]
+            idea = {"dir": d, "entry": round(sg["entry"], 2), "stop": round(sg["stop"], 2), "risk": round(risk, 4),
+                    "triggered": False, "age": 0,
+                    "partial": round(sg["entry"] + d * cfg["partial_r"] * risk, 2) if cfg["partial_r"] else None,
+                    "target": round(sg["entry"] + d * cfg["target_r"] * risk, 2) if cfg["target_r"] else None,
+                    "sig_time": sg["t_close"].isoformat(), "strategy": "skipped"}
+            sst = {"idea": dict(idea)}
+            for j in range(i + 1, len(h1)):
+                done = False
+                for e in step(F, j, sst, cfg):
+                    if (e.get("idea") or {}).get("sig_time") != idea["sig_time"]:
+                        continue
+                    if e["type"] in close:
+                        out.append({"t": sg["t_close"], "t_exit": e["t"], "d": d, "entry": idea["entry"],
+                                    "exit": e["price"], "r": e["r"]})
+                        done = True
+                    elif e["type"] == "cancel":
+                        done = True
+                cur = sst.get("idea")
+                if done or not cur or cur.get("sig_time") != idea["sig_time"]:
+                    break
+            break
+    return out
+
+
+NEAR_MISS = {   # strategy: (how, market or None for gold, trades function)
+    "btc_skipped": ("skipped_close", "btc", lambda h1, now: skipped_trend_trades(h1, market_cfg("btc"), now)),
+    "btc_monday": ("time_exit", "btc", btc_monday_trades),
+    "gold_fixes": ("time_exit", None, gold_fix_trades),
+}
+
+
+def journal_new(slot, journal, trades, strategy, how, now, symbol=None):
+    """Journal trades closed since the last run. The first run only sets the
+    starting point, so history is never journalled as if it were live."""
+    if "last_exit" not in slot:
+        slot["last_exit"] = max((t["t_exit"] for t in trades), default=now).isoformat()
+        return 0
+    new = sorted((t for t in trades if t["t_exit"].isoformat() > slot["last_exit"]), key=lambda t: t["t_exit"])
+    for t in new:
+        j = {"sig_time": t["t"].isoformat(), "entry_time": t["t"].isoformat(),
+             "exit_time": t["t_exit"].isoformat(), "dir": t.get("d", 1), "grade": None,
+             "entry": round(t["entry"], 2), "exit": round(t["exit"], 2),
+             "r": round(t["r"], 3), "how": how, "strategy": strategy}
+        if symbol:
+            j["symbol"] = symbol
+        journal.append(j)
+        slot["last_exit"] = t["t_exit"].isoformat()
+    return len(new)
+
+
+def run_near_misses(state, journal, now, bars, cfg=None):
+    """Track the near-miss candidates on the candles this run already fetched
+    (bars: {None: gold hourly, "btc": Bitcoin hourly}). Never alerts members,
+    and a failure never stops anything else."""
+    cfg = cfg or CONFIG
+    if not cfg.get("near_misses", True):
+        return
+    nst = state.setdefault("near_miss", {})
+    for name, (how, market, fn) in NEAR_MISS.items():
+        h1 = bars.get(market)
+        if not h1:
+            continue
+        try:
+            if market is None:
+                h1 = closed_h1(h1, now)
+            else:
+                h1 = [b for b in h1 if b["t"] + H1 <= now]
+            journal_new(nst.setdefault(name, {}), journal, fn(h1, now), name, how, now)
+        except Exception as e:  # noqa: BLE001 - tracking must never stop the alerts
+            print(f"ERROR (near miss {name}): {e}", file=sys.stderr)
+
+
+def gap_fill_trades(sessions):
+    """Round 13 N7 (Reddit catalogue #12): after three sessions where session 3's
+    low is above session 1's high, session 2's low below session 3's low and its
+    high above session 1's high, buy the next open if it gaps below session 3's
+    low. Out at the first close at or above session 3's low, or a close below
+    entry - 5 x ATR(14). 1R = the 25-day average range."""
+    out, i = [], 25
+    days = sessions
+    tr = [None] + [max(days[k]["h"], days[k - 1]["c"]) - min(days[k]["l"], days[k - 1]["c"]) for k in range(1, len(days))]
+    while i < len(days) - 1:
+        c1, c2, c3, nx = days[i - 2], days[i - 1], days[i], days[i + 1]
+        if c3["l"] > c1["h"] and c2["l"] < c3["l"] and c2["h"] > c1["h"] and nx["o"] < c3["l"]:
+            atr = sum(tr[i - 13:i + 1]) / 14
+            ar = sum(d["h"] - d["l"] for d in days[i - 24:i + 1]) / 25
+            entry, j, x = nx["o"], i + 1, None
+            while j < len(days):
+                if days[j]["c"] >= c3["l"] or days[j]["c"] < entry - 5 * atr:
+                    x = days[j]
+                    break
+                j += 1
+            if x is None:
+                break                                # still open
+            out.append({"t": nx["t_close"] - timedelta(hours=6, minutes=30), "t_exit": x["t_close"], "d": 1,
+                        "entry": entry, "exit": x["c"], "r": (x["c"] - entry - 1e-4 * entry) / ar})
+            i = j + 1
+            continue
+        i += 1
+    return out
+
+
 def journal_ibs_200(state, journal, symbol, sessions, now, ic):
     """The 200-day variant (silent candidate us_ibs_200): journal its closed
     trades so live results can be compared with the base rule. Never alerts."""
@@ -2686,6 +2872,12 @@ def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
     sessions = ibs_sessions(bars_raw, now)
     trades = ibs_trades(sessions, ic["cost_bps"], include_open=True)
     journal_ibs_200(state, journal, symbol, sessions, now, ic)
+    if symbol in ("SPY", "QQQ", "DIA") and cfg.get("near_misses", True):   # round 13 N7's three indices
+        try:
+            journal_new(state.setdefault("near_miss", {}).setdefault(f"gap_fill_{symbol}", {}), journal,
+                        gap_fill_trades(sessions), "us_gap_fill", "gap_exit", now, symbol)
+        except Exception as e:  # noqa: BLE001
+            print(f"ERROR (gap fill {symbol}): {e}", file=sys.stderr)
     closed = [t for t in trades if t["t_exit"] is not None]
     open_t = trades[-1] if trades and trades[-1]["t_exit"] is None else None
     st = state.setdefault("ibs", {}).setdefault(symbol, {})
@@ -2865,16 +3057,20 @@ def verify_run(state, now, cfg=None):
     return problems
 
 
-def run_markets(state, journal, now, api_key, sizing, nursery, fetch=None):
+def run_markets(state, journal, now, api_key, sizing, nursery, fetch=None, fetched=None):
     """Run each extra market on its own state. One market failing never stops
-    the others, or the gold alerts that already went out."""
+    the others, or the gold alerts that already went out. fetched, if given,
+    collects each market's candles for the near-miss trackers."""
     fetch = fetch or (lambda sym: fetch_h1(api_key, sym, CONFIG["h1_bars"]))
     out = []
     for key in CONFIG.get("markets", {}):
         cfg = market_cfg(key)
         st = state.setdefault("markets", {}).setdefault(key, {})
         try:
-            out += run_live(st, journal, fetch(cfg["symbol"]), now, cfg, sizing, None, nursery)
+            bars = fetch(cfg["symbol"])
+            if fetched is not None:
+                fetched[key] = bars
+            out += run_live(st, journal, bars, now, cfg, sizing, None, nursery)
             st["fail_count"] = 0
         except Exception as e:  # noqa: BLE001
             print(f"ERROR ({key}): {e}", file=sys.stderr)
@@ -3448,7 +3644,9 @@ def main():
                     nursery = load_nursery(CONFIG)
                     j0 = len(journal)
                     msgs = run_live(state, journal, h1_raw, now, CONFIG, sizing, fetch_news, nursery)
-                    msgs += run_markets(state, journal, now, api_key, sizing, nursery)
+                    fetched = {None: h1_raw}
+                    msgs += run_markets(state, journal, now, api_key, sizing, nursery, fetched=fetched)
+                    run_near_misses(state, journal, now, fetched)
                     if CONFIG["noise"]["enabled"]:
                         nst = state.setdefault("noise", {})
                         try:

@@ -1,6 +1,24 @@
 {
   "hypotheses_tested": 1361,
   "strategies": {
+    "btc_monday": {
+      "expected_avg_r": 0.075,
+      "expected_n": 481,
+      "expected_win": 49,
+      "history": [],
+      "label": "Bitcoin Monday Asia open (tracking)",
+      "note": "Round 11 L4 (Concretum 2025): long Bitcoin from Sunday 19:00 New York for 24 hours. +0.075R over 481 weeks (1R = 25-day average daily range), p 0.019 in the research. Candidate: journalled, never alerted.",
+      "tier": "candidate"
+    },
+    "btc_skipped": {
+      "expected_avg_r": 0.116,
+      "expected_n": 213,
+      "expected_win": 54,
+      "history": [],
+      "label": "Bitcoin skipped setups (tracking)",
+      "note": "Round 32 S2: Bitcoin trend setups the live rules skip because a trade is already open, each run on its own. +0.116R over 213 trades, positive in every period, p 0.064. Candidate: journalled, never alerted.",
+      "tier": "candidate"
+    },
     "btc_trend": {
       "expected_avg_r": 0.18,
       "expected_n": 375,
@@ -18,6 +36,15 @@
       "label": "ETH/USD inside-day",
       "note": "Round 16: the gold inside-day breakout on Ether, never tuned on it. Passed 1 of 48 market x strategy tests (p=5.5e-05), and held on 24/7 data with weekday signals (p=0.0001, 0/20 shuffles). +0.45 correlated with Bitcoin's inside-day, about 0 with the gold setups. Shadow since 19 Nov 2026: paper alerts, no size.",
       "tier": "shadow"
+    },
+    "gold_fixes": {
+      "expected_avg_r": 0.026,
+      "expected_n": 4855,
+      "expected_win": 52,
+      "history": [],
+      "label": "Gold between the London fixes (tracking)",
+      "note": "Round 11 L5 (Bell, SSRN 6077836): long gold from the 15:00 London candle to the close of the 10:00 candle next morning. +0.026R a day over 4,855 days (1R = 25-day average daily range), p 0.007 in the research. Thin per trade. Candidate: journalled, never alerted.",
+      "tier": "candidate"
     },
     "h4_trend": {
       "expected_avg_r": 0.143,
@@ -54,6 +81,15 @@
       "label": "Trend setups",
       "note": "Rounds 1-4: Heikin Ashi trend-ride, 4H agreement + Ichimoku cloud",
       "tier": "live"
+    },
+    "us_gap_fill": {
+      "expected_avg_r": 0.305,
+      "expected_n": 263,
+      "expected_win": 94,
+      "history": [],
+      "label": "US index gap fills (tracking)",
+      "note": "Round 13 N7 (Reddit catalogue #12): buy a gap down below a recent breakout on SPY, QQQ and DIA, out when the gap fills or at 5 ATR below entry. +0.305R over 263 trades (1R = 25-day average range), 94% winners, p 0.041 in the research. Candidate: journalled, never alerted.",
+      "tier": "candidate"
     },
     "us_ibs": {
       "expected_avg_r": 0.478,

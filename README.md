@@ -72,6 +72,18 @@ So each run also fetches BTC/USD and runs the same trend code on it, with its ow
 ## Nasdaq noise-area momentum (candidate, silent)
 Research round 11 found one published edge that survives this project's tests: Zarattini, Aziz & Barbon's intraday "noise area" momentum on the Nasdaq 100. Over 2011–2026, on the 09:30 cash-session candles a live feed provides, that's about 3 trades a week at +4.4 bp each after costs (p = 0.0004). Each run fetches QQQ's hourly candles and journals the trades the rules would have made, as `ndx_noise` at tier `candidate`. It never alerts: the trades have to be acted on within the hour, and the scheduler runs late. The weekly gate judges it on these live trades. Set `CONFIG["noise"]["enabled"]` to `False` to turn it off.
 
+
+## Near-miss candidates (silent)
+Four research ideas that were positive in every period but missed the pass mark now run forward on live prices, as candidates: journalled, shown only in #candidate-tracking, judged by the weekly gate on live trades. They use candles each run already fetches, so they cost no extra Twelve Data calls.
+
+| Strategy | Rule | Research | Per week |
+|---|---|---|---|
+| `btc_skipped` | Bitcoin trend setups skipped because a trade is already open (round 32) | +0.12R, p 0.064 | 0.4 |
+| `btc_monday` | Long Bitcoin from Sunday 19:00 New York for 24h (round 11, Concretum) | +0.08R | 1.0 |
+| `gold_fixes` | Long gold from the 15:00 London candle to the 10:00 close next morning (round 11, Bell) | +0.03R | 5.0 |
+| `us_gap_fill` | Buy a gap down below a recent breakout on SPY, QQQ, DIA (round 13) | +0.31R, 94% winners | 0.34 |
+
+For the time-based rules, 1R is the 25-day average daily range. Round 13's Bitcoin IBS dip was left out: measured in R, with no stop, it averages −0.10R. Set `CONFIG["near_misses"] = False` to switch all four off.
 ## US index IBS reversion (shadow)
 Research rounds 12–15 looked beyond gold: 23 pre-registered tests of documented edges on FX, commodities, stock indices and Bitcoin. One survived: **IBS band reversion on US stock indices**. Buy the cash close when the index has fallen more than 2.5 average daily ranges below its 10-day high *and* closed in the bottom 30% of the day's range. Sell at the first close above the previous day's high. Over 2011–2026 on the S&P 500, Nasdaq 100, Dow and Russell 2000 that's 616 trades, 72% winners, about +62 bp per trade before financing, uncorrelated with the gold strategies (monthly −0.03 to −0.07). It failed on ten non-US indices, so it is a US effect (`research/README.md`, rounds 12 and 15).
 
