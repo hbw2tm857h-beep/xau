@@ -863,6 +863,30 @@ Bradley shared a trader's account of what improved their FX models: macro contex
 - **Gold's skipped setups have little edge left.** A setup that forms while a trade is already running is late in the move. It averaged +0.04R against the taken trades' +0.17R, and lost in 2004-15. It was positive in every period since 2016 (+0.09 to +0.18R), but a split like that, after a flat decade, isn't something to trade.
 - **Bitcoin's skipped setups are the closer miss:** positive in every period (+0.08 to +0.35R) but p 0.064 on 213 trades. They would also double the risk on the same move: in 14% of cases both trades lost.
 
+## Round 33: gold's trend rules with a 15-minute trigger (23 Nov 2026)
+
+`round33_m15_trigger.py`, `round33_results.json`, data `data/xauusd_m15_*.csv.gz` (Dukascopy, 2008-2026, 451,923 candles). Pre-registered and committed (2dad1f3) before the data was downloaded. The live state machine runs on 15-minute candles, with every candle count unchanged and the daily and 4-hour checks unchanged. Bar p < 0.05 / 2; 300+ trades; positive in every period.
+
+| Test | Trades | Per week | Avg R | p | 2008-15 | 2016-22 | 2023-24 | 2025-26 | Verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| F1 15-minute trigger | 2,638 | 2.72 | +0.003 | 0.44 | +0.003 | −0.005 | −0.114 | +0.139 | fail |
+| F2 F1 + the 1-hour Heikin Ashi agrees | 1,631 | 1.68 | +0.074 | 0.0032 | +0.085 | +0.033 | −0.025 | +0.239 | fail: 2023-24 negative |
+
+On its own, the faster trigger has no edge. Adding the 1-hour candle's agreement makes it positive and significant, but it lost in 2023-24 (192 trades). 36% of its trades come while an hourly trade is already open in the same direction.
+
+## Round 34: new rules for 15-minute gold (23 Nov 2026)
+
+`round34_m15_new_rules.py`, `round34_results.json`. Pre-registered and committed (cdb0cd0) before round 33's results and before any 15-minute candle was read. Four families of intraday rules, with 15 variants between them. The best variant per family was picked on 2008-18 and judged once on 2019-26 (bar p < 0.05 / 4).
+
+| Family | Best on 2008-18 | Search avg | Hold-out trades | Hold-out avg | p | Verdict |
+|---|---|---|---|---|---|---|
+| P Trend pullback (RSI) | RSI(14) < 30 | −0.141R | 231 | −0.034R | 0.70 | fail |
+| D Donchian breakout | 96 candles | +0.036R | 702 | +0.030R | 0.20 | fail |
+| A Asian-range breakout | either side, range < 1 ADR | −0.009R | 1,934 | −0.004R | 0.58 | fail |
+| N New York opening range | 13:30-14:30, either side | −0.040R | 1,938 | −0.013R | 0.74 | fail |
+
+**0 of 4 pass.** Every pullback variant lost heavily (−0.14 to −0.20R): buying 15-minute dips inside gold's trend is the wrong side of it. The opening-range breakouts are flat after costs. hypotheses_tested rises from 1,382 to 1,399 (2 + 15; recorded here only).
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -911,6 +935,8 @@ python3 research/round27_lockbox_2004_07.py  # sealed 2004-07 test of the live r
 python3 research/round28_new_edge.py         # four new daily gold edges from 2004 (+ live parts on survivors)
 python3 research/round29_52wk_markets.py     # the 52-week breakout on 67 other markets (research only)
 python3 research/round30_reverse_after_breakeven.py # reverse after a breakeven stop (research only)
+python3 research/round33_m15_trigger.py          # gold rules with a 15-minute trigger (research only)
+python3 research/round34_m15_new_rules.py        # new 15-minute rules, searched then held out (research only)
 python3 research/round32_skipped_setups.py      # setups skipped while a trade is open (research only)
 python3 research/round31_macro_horizon.py         # macro filters and 3/6/12-hour forecasts (needs scikit-learn, ~25 min)
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
