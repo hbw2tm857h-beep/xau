@@ -2684,7 +2684,7 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
 
 
 # --------------------------------------------------------------------------
-# Near-miss candidates (research rounds 11, 13 and 32; round 13's Bitcoin
+# Near-miss candidates (research rounds 11, 13, 32 and 33; round 13's Bitcoin
 # IBS dip was left out: in R, with no stop, it averages -0.10R). Ideas that were
 # positive in every period of the research but missed its pass mark. They are
 # run forward on live prices the bot already fetches, journalled silently as
@@ -2791,6 +2791,58 @@ def skipped_trend_trades(h1, cfg, now):
     return out
 
 
+def gold_m15_trades(m15, h1, now, cfg=None):
+    """Round 33 F2: the live trend rules with the trigger on 15-minute candles,
+    taken only when the last closed 1-hour Heikin Ashi candle agrees. The daily
+    and 4-hour context come from the hourly candles (one 15-minute fetch is only
+    ~54 days, short of the 60 daily candles the trend needs); they are the same
+    candles grouped the same way. signals.H1 is the trigger candle's length in
+    the shared code, so it is 15 minutes for this replay only."""
+    global H1
+    cfg = cfg or CONFIG
+    m15 = [b for b in m15 if b["t"] + timedelta(minutes=15) <= now and market_open(b["t"])]
+    h1 = closed_h1(h1, now)
+    if len(m15) < 200 or len(h1) < 500:
+        return []
+    saved, H1 = H1, timedelta(minutes=15)
+    try:
+        F = Features(m15, cfg)
+        F.daily = aggregate(h1, trading_day, day_end)
+        F.h4 = aggregate(h1, h4_key, h4_end)
+        F.h4_ha, F.h4_cloud, F._dctx = heikin_ashi(F.h4), ichimoku_cloud_dir(F.h4), {}
+        hh = heikin_ashi(h1)
+        h1_end = [b["t"] + timedelta(hours=1) for b in h1]
+        dj = hj = k = -1
+        last = []
+        for i, b in enumerate(m15):
+            close = b["t"] + timedelta(minutes=15)
+            while dj + 1 < len(F.daily) and F.daily[dj + 1]["end"] <= close:
+                dj += 1
+            while hj + 1 < len(F.h4) and F.h4[hj + 1]["end"] <= close:
+                hj += 1
+            while k + 1 < len(h1) and h1_end[k + 1] <= close:
+                k += 1
+            F.d_idx[i], F.h4_idx[i] = dj, hj
+            last.append(k)
+        st_, out = {}, []
+        for i in range(len(m15)):
+            if not F.warm(i):
+                continue
+            before = dict(st_["idea"]) if st_.get("idea") else None
+            for e in step(F, i, st_, cfg):
+                if e["type"] == "signal":
+                    x = hh[last[i]] if last[i] >= 0 else None
+                    d = e["idea"]["dir"]
+                    if not x or not ((x["c"] > x["o"]) if d == 1 else (x["c"] < x["o"])):
+                        st_["idea"] = before if before and not before.get("triggered") else None
+                elif e["type"] in ("exit", "stop", "target"):
+                    out.append({"t": datetime.fromisoformat(e["idea"]["sig_time"]), "t_exit": e["t"],
+                                "d": e["idea"]["dir"], "entry": e["idea"]["entry"], "exit": e["price"], "r": e["r"]})
+        return out
+    finally:
+        H1 = saved
+
+
 NEAR_MISS = {   # strategy: (how, market or None for gold, trades function)
     "btc_skipped": ("skipped_close", "btc", lambda h1, now: skipped_trend_trades(h1, market_cfg("btc"), now)),
     "btc_monday": ("time_exit", "btc", btc_monday_trades),
@@ -2825,6 +2877,12 @@ def run_near_misses(state, journal, now, bars, cfg=None):
     if not cfg.get("near_misses", True):
         return
     nst = state.setdefault("near_miss", {})
+    if bars.get("m15") and bars.get(None):
+        try:
+            journal_new(nst.setdefault("gold_m15", {}), journal, gold_m15_trades(bars["m15"], bars[None], now, cfg),
+                        "gold_m15", "m15_close", now)
+        except Exception as e:  # noqa: BLE001 - tracking must never stop the alerts
+            print(f"ERROR (near miss gold_m15): {e}", file=sys.stderr)
     for name, (how, market, fn) in NEAR_MISS.items():
         h1 = bars.get(market)
         if not h1:
@@ -3678,6 +3736,11 @@ def main():
                     msgs = run_live(state, journal, h1_raw, now, CONFIG, sizing, fetch_news, nursery)
                     fetched = {None: h1_raw}
                     msgs += run_markets(state, journal, now, api_key, sizing, nursery, fetched=fetched)
+                    if CONFIG.get("near_misses", True):
+                        try:          # one more call a run, for the 15-minute candidate
+                            fetched["m15"] = td_time_series(api_key, CONFIG["symbol"], 5000, interval="15min")
+                        except Exception as e:  # noqa: BLE001
+                            print(f"ERROR (15-minute candles): {e}", file=sys.stderr)
                     run_near_misses(state, journal, now, fetched)
                     if CONFIG["noise"]["enabled"]:
                         nst = state.setdefault("noise", {})

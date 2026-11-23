@@ -46,6 +46,15 @@
       "note": "Round 11 L5 (Bell, SSRN 6077836): long gold from the 15:00 London candle to the close of the 10:00 candle next morning. +0.026R a day over 4,855 days (1R = 25-day average daily range), p 0.007 in the research. Thin per trade. Candidate: journalled, never alerted.",
       "tier": "candidate"
     },
+    "gold_m15": {
+      "expected_avg_r": 0.074,
+      "expected_n": 1631,
+      "expected_win": 56,
+      "history": [],
+      "label": "Gold 15-minute trigger (tracking)",
+      "note": "Round 33 F2: gold's trend rules with the trigger on 15-minute candles, taken only when the 1-hour Heikin Ashi agrees. +0.074R over 1,631 trades 2008-26 (1.7/week, p 0.0032) but negative in 2023-24, so it missed the pass mark. Candidate: journalled, never alerted.",
+      "tier": "candidate"
+    },
     "h4_trend": {
       "expected_avg_r": 0.143,
       "expected_n": 526,
