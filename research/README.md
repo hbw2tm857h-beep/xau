@@ -849,6 +849,20 @@ Bradley shared a trader's account of what improved their FX models: macro contex
 - **Big US news is the one recurring signal.** Gold trends that start within 24 hours after an FOMC statement, jobs report or CPI release averaged +0.38R against +0.14R, ahead before and after 2015. That's the third look (round 23 E2 p 0.003 on 40 trades; round 27 L6 had 9), and it still misses the bar. The trades overlap with E2, so this isn't independent confirmation. It stays a note for the live record, not a rule.
 - **What the bot already does from the write-up:** every alert stays in the journal (`data/outcomes.csv`), win or lose, and new strategies run on paper (the shadow tier) until enough live trades judge them.
 
+## Round 32: the setups the live rules skip (23 Nov 2026)
+
+`round32_skipped_setups.py`, `round32_results.json`. Pre-registered and committed before it was run. The trend rules take one trade at a time, so a setup that passes every check while a trend trade is open (or on the candle one closes) is thrown away. Each skipped setup was run on its own through the live state machine, with the same order, expiry, cancel-on-flip, exits and costs. Bar p < 0.05 / 2.
+
+| Test | Trades | Per week | Avg R | p | Halves | Verdict |
+|---|---|---|---|---|---|---|
+| S1 gold, 2004-26 | 452 | 0.39 | +0.036 | 0.23 | −0.033 before 2015, +0.097 from | fail |
+| S2 Bitcoin, 2016-26 | 213 | 0.44 | +0.116 | 0.064 | +0.081 before 2022, +0.157 from | fail |
+
+**0 of 2 pass.** hypotheses_tested rises from 1,380 to 1,382 (recorded here only).
+
+- **Gold's skipped setups have little edge left.** A setup that forms while a trade is already running is late in the move. It averaged +0.04R against the taken trades' +0.17R, and lost in 2004-15. It was positive in every period since 2016 (+0.09 to +0.18R), but a split like that, after a flat decade, isn't something to trade.
+- **Bitcoin's skipped setups are the closer miss:** positive in every period (+0.08 to +0.35R) but p 0.064 on 213 trades. They would also double the risk on the same move: in 14% of cases both trades lost.
+
 ## Reproduce
 ```
 python3 research/stage1.py   # video rules with different exits
@@ -897,6 +911,7 @@ python3 research/round27_lockbox_2004_07.py  # sealed 2004-07 test of the live r
 python3 research/round28_new_edge.py         # four new daily gold edges from 2004 (+ live parts on survivors)
 python3 research/round29_52wk_markets.py     # the 52-week breakout on 67 other markets (research only)
 python3 research/round30_reverse_after_breakeven.py # reverse after a breakeven stop (research only)
+python3 research/round32_skipped_setups.py      # setups skipped while a trade is open (research only)
 python3 research/round31_macro_horizon.py         # macro filters and 3/6/12-hour forecasts (needs scikit-learn, ~25 min)
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```
