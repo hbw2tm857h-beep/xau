@@ -1,6 +1,6 @@
 {
   "fail_count": 0,
-  "h4_last_k": 888,
+  "h4_last_end": "2026-11-23T06:00:00+00:00",
   "ib": null,
   "ibs": {
     "DIA": {
@@ -36,27 +36,38 @@
   },
   "idea": null,
   "last_daily_k_end": "2026-11-20T22:00:00+00:00",
-  "last_h1": "2026-11-23T07:00:00+00:00",
+  "last_h1": "2026-11-23T08:00:00+00:00",
   "last_run": {
     "failed": [],
     "late": 0,
     "mode": "run",
     "posts": 0,
     "skipped": 0,
-    "started": "2026-11-23T08:06:16.250356+00:00"
+    "started": "2026-11-23T09:06:13.497969+00:00"
   },
   "markets": {
     "btc": {
       "fail_count": 0,
       "idea": null,
       "last_daily_k_end": "2026-11-22T22:00:00+00:00",
-      "last_h1": "2026-11-23T07:00:00+00:00"
+      "last_h1": "2026-11-23T08:00:00+00:00"
     },
     "eth": {
       "fail_count": 0,
       "ib": null,
       "last_daily_k_end": "2026-11-22T22:00:00+00:00",
-      "last_h1": "2026-11-23T07:00:00+00:00"
+      "last_h1": "2026-11-23T08:00:00+00:00"
+    }
+  },
+  "near_miss": {
+    "btc_monday": {
+      "last_exit": "2026-11-17T00:00:00+00:00"
+    },
+    "btc_skipped": {
+      "last_exit": "2026-10-27T13:00:00+00:00"
+    },
+    "gold_fixes": {
+      "last_exit": "2026-11-20T11:00:00+00:00"
     }
   },
   "noise": {
