@@ -1,0 +1,52 @@
+name: Trade watch
+
+# Every 10 minutes between the hourly checks, the metronome starts this. If a
+# trade or pending order is open, it reads 5-minute candles and posts a fill,
+# stop or target straight away instead of waiting for the next hourly check.
+# The hourly run still records every trade; it just doesn't post again what
+# the watch already posted. With nothing open it ends without calling the API.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: xau-signals          # shared with the hourly run: never both at once
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pull the latest state
+        run: git pull --ff-only --quiet origin "${GITHUB_REF_NAME}" || true
+
+      - name: Watch open trades
+        env:
+          TWELVEDATA_API_KEY: ${{ secrets.TWELVEDATA_API_KEY }}
+          DISCORD_WEBHOOK_GOLD: ${{ secrets.DISCORD_WEBHOOK_GOLD }}
+          DISCORD_WEBHOOK_BTC: ${{ secrets.DISCORD_WEBHOOK_BTC }}
+          DISCORD_WEBHOOK_ETH: ${{ secrets.DISCORD_WEBHOOK_ETH }}
+          DISCORD_WEBHOOK_REPORTS: ${{ secrets.DISCORD_WEBHOOK_REPORTS }}
+          DISCORD_WEBHOOK_TALK: ${{ secrets.DISCORD_WEBHOOK_TALK }}
+          ACCOUNT_SIZE: ${{ secrets.ACCOUNT_SIZE }}
+          ACCOUNT_CCY: ${{ secrets.ACCOUNT_CCY }}
+          RISK_PCT: ${{ secrets.RISK_PCT }}
+          MODE: watch
+        run: python3 signals.py
+
+      - name: Save what was posted
+        if: always()
+        run: |
+          git add state.json
+          if ! git diff --cached --quiet; then
+            git config user.name "xau-signals-bot"
+            git config user.email "xau-signals-bot@users.noreply.github.com"
+            git commit -m "Trade watch: record posted alerts"
+            git pull --rebase --quiet origin "${GITHUB_REF_NAME}" || true
+            git push
+          fi
