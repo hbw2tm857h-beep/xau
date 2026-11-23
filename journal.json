@@ -94,5 +94,70 @@
     "r": 0.56,
     "sig_time": "2026-11-20T15:00:00+00:00",
     "strategy": "gold_fixes"
+  },
+  {
+    "dir": 1,
+    "entry": 739.95,
+    "entry_time": "2026-11-16T21:00:00+00:00",
+    "exit": 722.56,
+    "exit_time": "2026-11-23T21:00:00+00:00",
+    "grade": null,
+    "how": "ibs_exit",
+    "r": -1.912,
+    "sig_time": "2026-11-16T21:00:00+00:00",
+    "strategy": "us_ibs_200",
+    "symbol": "SPY"
+  },
+  {
+    "dir": 1,
+    "entry": 739.95,
+    "entry_time": "2026-11-16T21:00:00+00:00",
+    "exit": 722.56,
+    "exit_time": "2026-11-23T21:00:00+00:00",
+    "grade": null,
+    "how": "ibs_exit",
+    "r": -1.912,
+    "sig_time": "2026-11-16T21:00:00+00:00",
+    "strategy": "us_ibs",
+    "symbol": "SPY"
+  },
+  {
+    "dir": 1,
+    "entry": 661.75,
+    "entry_time": "2026-11-16T21:00:00+00:00",
+    "exit": 651.18,
+    "exit_time": "2026-11-23T21:00:00+00:00",
+    "grade": null,
+    "how": "ibs_exit",
+    "r": -0.821,
+    "sig_time": "2026-11-16T21:00:00+00:00",
+    "strategy": "us_ibs",
+    "symbol": "QQQ"
+  },
+  {
+    "dir": 1,
+    "entry": 522.47,
+    "entry_time": "2026-11-12T21:00:00+00:00",
+    "exit": 495.71,
+    "exit_time": "2026-11-23T21:00:00+00:00",
+    "grade": null,
+    "how": "ibs_exit",
+    "r": -4.758,
+    "sig_time": "2026-11-12T21:00:00+00:00",
+    "strategy": "us_ibs_200",
+    "symbol": "DIA"
+  },
+  {
+    "dir": 1,
+    "entry": 522.47,
+    "entry_time": "2026-11-12T21:00:00+00:00",
+    "exit": 495.71,
+    "exit_time": "2026-11-23T21:00:00+00:00",
+    "grade": null,
+    "how": "ibs_exit",
+    "r": -4.758,
+    "sig_time": "2026-11-12T21:00:00+00:00",
+    "strategy": "us_ibs",
+    "symbol": "DIA"
   }
 ]
