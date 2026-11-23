@@ -1412,11 +1412,17 @@ def h4_step(F, i, st, cfg):
                     st["h4"] = idea = None
                     closed = True
 
-    # one evaluation per closed 4-hour candle, acted on only when flat
+    # one evaluation per closed 4-hour candle, acted on only when flat. The candle
+    # is remembered by its close time: its position k shifts as the live window of
+    # candles slides forward, so a stored position missed or repeated candles.
     k = F.h4_idx[i]
-    new_k = k >= 1 and st.get("h4_last_k") != k
-    if new_k:
-        st["h4_last_k"] = k
+    end = F.h4[k]["end"].isoformat() if k >= 0 else None
+    new_k = k >= 1 and st.get("h4_last_end") != end
+    if new_k and "h4_last_k" in st:      # first run after the fix: start from this candle, don't act on it
+        st.pop("h4_last_k")
+        new_k = False
+    if k >= 1:
+        st["h4_last_end"] = end
     if not closed and not st.get("h4") and new_k:
         for d in (1, -1):
             s = h4_setup(F, i, k, d, cfg)
