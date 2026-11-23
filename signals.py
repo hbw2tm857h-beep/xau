@@ -345,8 +345,8 @@ def _get_json(url, timeout=30):
         return json.loads(r.read().decode())
 
 
-def td_time_series(api_key, symbol, n, end_date=None):
-    params = {"symbol": symbol, "interval": "1h", "outputsize": n,
+def td_time_series(api_key, symbol, n, end_date=None, interval="1h"):
+    params = {"symbol": symbol, "interval": interval, "outputsize": n,
               "timezone": "UTC", "order": "ASC", "apikey": api_key}
     if end_date:
         params["end_date"] = end_date.strftime("%Y-%m-%d %H:%M:%S")
@@ -2954,6 +2954,63 @@ def webhook_for(msg, default, cfg=None, env=None):
     return (env.get(name) or "").strip() or default if name else default
 
 
+def announce_key(e):
+    """Identifies one alert for one trade, shared by the hourly run and the watch."""
+    idea = e.get("idea") or {}
+    return f"{idea.get('strategy', 'trend')}|{idea.get('sig_time')}|{e['type']}|{idea.get('dir')}"
+
+
+def event_alert(e, state, cfg, sizing, tier, now, nursery):
+    """The member alert for one trade event, or None. Used by the hourly run and
+    by the 10-minute watch, so both post exactly the same message."""
+    idea = e.get("idea") or {}
+    confirmed = cfg.get("confirmed_only")
+    if e["type"] in ("entry", "ib_entry", "h4_entry") and not cfg["alert_entry_hit"]:
+        return None
+    # shadow tier gets no size: it is being watched, not traded
+    size_for = sizing if tier == "live" else None
+    msg = fmt_event(e, cfg, size_for)
+    if msg:
+        # first line: mention (so it pushes) then the numbers (so the
+        # preview is enough to act on). Notes and detail follow.
+        lead = []
+        if cfg.get("slack_mention") and e["type"] in cfg["mention_events"]:
+            lead.append(cfg["slack_mention"])
+        head = headline(e, cfg, size_for)
+        if head:
+            lead.append(head)
+        # Short by design: the first line carries everything needed to
+        # act; anything else is one short line that changes what you do.
+        # a card starts with a heading, which must begin its own line
+        lines = [("\n" if head and head.startswith("## ") else " ").join(lead)] if lead else []
+        strategy = (e.get("idea") or {}).get("strategy", "trend")
+        if e["type"] in ("signal", "ib_signal", "h4_signal") and not confirmed:
+            # what you already hold matters before adding to it
+            risk_line = open_risk(state, cfg, sizing, nursery,
+                                  skip={"signal": "idea", "ib_signal": "ib", "h4_signal": "h4"}[e["type"]])
+            if risk_line:
+                lines.append(risk_line)
+        if tier == "shadow" and e["type"] in ("signal", "ib_signal"):   # sized when the order is placed
+            sug = short_size(strategy, cfg)
+            if sug:
+                if confirmed:
+                    lines[0] = add_field(lines[0], f"*Risk:* {sug} of your account")
+                else:
+                    lines.append(f"_Risk {sug} of your account._")
+        lag_h = (now - e["t"]).total_seconds() / 3600
+        if lag_h > cfg["late_alert_hours"]:
+            lines.append(late_line(e["t"], now))
+        if not head:
+            lines.append(msg)   # no compact form for this event: keep the full text
+        msg = "\n".join(lines)
+        m = Msg(relabel(msg, cfg), (e.get("idea") or {}).get("strategy", "trend"))
+        stage = THREAD_STAGES.get(e["type"])
+        if stage and idea.get("sig_time"):
+            m.thread = (f"{cfg.get('market_name', 'Gold')}|{m.route}|{idea['sig_time']}", stage)
+        return m
+    return None
+
+
 def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nursery=None):
     out = []
     if nursery is None:
@@ -3025,48 +3082,10 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                 continue
             if idea.get("unannounced"):
                 continue   # a follow-up to a setup that was too late to post
-            if e["type"] in ("entry", "ib_entry", "h4_entry") and not cfg["alert_entry_hit"]:
-                continue
-            # shadow tier gets no size: it is being watched, not traded
-            size_for = sizing if tier == "live" else None
-            msg = fmt_event(e, cfg, size_for)
-            if msg:
-                # first line: mention (so it pushes) then the numbers (so the
-                # preview is enough to act on). Notes and detail follow.
-                lead = []
-                if cfg.get("slack_mention") and e["type"] in cfg["mention_events"]:
-                    lead.append(cfg["slack_mention"])
-                head = headline(e, cfg, size_for)
-                if head:
-                    lead.append(head)
-                # Short by design: the first line carries everything needed to
-                # act; anything else is one short line that changes what you do.
-                # a card starts with a heading, which must begin its own line
-                lines = [("\n" if head and head.startswith("## ") else " ").join(lead)] if lead else []
-                strategy = (e.get("idea") or {}).get("strategy", "trend")
-                if e["type"] in ("signal", "ib_signal", "h4_signal") and not confirmed:
-                    # what you already hold matters before adding to it
-                    risk_line = open_risk(state, cfg, sizing, nursery,
-                                          skip={"signal": "idea", "ib_signal": "ib", "h4_signal": "h4"}[e["type"]])
-                    if risk_line:
-                        lines.append(risk_line)
-                if tier == "shadow" and e["type"] in ("signal", "ib_signal"):   # sized when the order is placed
-                    sug = short_size(strategy, cfg)
-                    if sug:
-                        if confirmed:
-                            lines[0] = add_field(lines[0], f"*Risk:* {sug} of your account")
-                        else:
-                            lines.append(f"_Risk {sug} of your account._")
-                lag_h = (now - e["t"]).total_seconds() / 3600
-                if lag_h > cfg["late_alert_hours"]:
-                    lines.append(late_line(e["t"], now))
-                if not head:
-                    lines.append(msg)   # no compact form for this event: keep the full text
-                msg = "\n".join(lines)
-                m = Msg(relabel(msg, cfg), (e.get("idea") or {}).get("strategy", "trend"))
-                stage = THREAD_STAGES.get(e["type"])
-                if stage and idea.get("sig_time"):
-                    m.thread = (f"{cfg.get('market_name', 'Gold')}|{m.route}|{idea['sig_time']}", stage)
+            if announce_key(e) in (state.get("announced") or {}):
+                continue   # the 10-minute watch already posted it
+            m = event_alert(e, state, cfg, sizing, tier, now, nursery)
+            if m:
                 out.append(m)
     if dropped:
         name = cfg.get("market_name", "Gold")
@@ -3088,7 +3107,123 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
             outcomes_append(cfg["outcomes_csv"], closed_trades)
         except (OSError, ValueError) as e:  # noqa: BLE001
             print(f"ledger write failed: {e}", file=sys.stderr)
+    if state.get("announced"):
+        live = {f"{x.get('strategy', 'trend')}|{x.get('sig_time')}|" for x in
+                (state.get("idea"), state.get("ib"), state.get("h4")) if x}
+        state["announced"] = {k: v for k, v in state["announced"].items() if any(k.startswith(p) for p in live)}
     state["last_h1"] = last_t
+    return out
+
+
+# --------------------------------------------------------------------------
+# The 10-minute watch
+#
+# The hourly run decides everything from closed 1-hour candles. Between runs,
+# the watch reads 5-minute candles for any market with an open trade or a
+# pending order and posts a fill, stop or target as soon as it happens. It
+# applies the hourly rules to the part of the hour so far, so anything it
+# posts is what the hourly run will record when the hour closes; the hourly
+# run then records the trade as usual but doesn't post it again. The watch
+# never changes the trade itself, only which alerts have gone out.
+# --------------------------------------------------------------------------
+def watch_events(st, bars5, cfg, now):
+    """Events the hourly rules give for the current hour so far."""
+    if not st.get("last_h1"):
+        return []
+    start = datetime.fromisoformat(st["last_h1"]) + H1          # the hour the hourly run hasn't seen
+    bars = [b for b in bars5 if start <= b["t"] < start + H1 and b["t"] + timedelta(minutes=5) <= now]
+    if not cfg.get("all_hours"):
+        bars = [b for b in bars if market_open(b["t"])]
+    if not bars:
+        return []
+    b = {"o": bars[0]["o"], "h": max(x["h"] for x in bars), "l": min(x["l"] for x in bars), "c": bars[-1]["c"]}
+    t = bars[-1]["t"] + timedelta(minutes=5)
+    cost = cfg["cost_per_trade"]
+    ev = []
+
+    def hit(level, d, side):
+        if side == "favour":
+            return b["h"] >= level if d == 1 else b["l"] <= level
+        return b["l"] <= level if d == 1 else b["h"] >= level
+
+    for key, pre, frac, pr in (("idea", "", cfg.get("partial_frac"), cfg.get("partial_r")),
+                               ("h4", "h4_", cfg.get("h4_partial_frac"), cfg.get("h4_partial_r"))):
+        idea = dict(st.get(key) or {}) or None
+        if not idea or (key == "idea" and cfg["exit_mode"] != "targets"):
+            continue
+        d = idea["dir"]
+        if not idea["triggered"]:                       # as step(): the fill, and a stop on the same candle
+            if hit(idea["entry"], d, "favour"):
+                idea.update(triggered=True, entry_time=t.isoformat())
+                ev.append({"type": pre + "entry", "idea": dict(idea), "t": t})
+                if hit(idea["stop"], d, "against"):
+                    ev.append({"type": pre + "stop", "idea": dict(idea), "t": t,
+                               "r": _close_r(idea, idea["stop"], cost), "price": idea["stop"]})
+        elif hit(idea["stop"], d, "against"):           # the stop first, then the partial, then the target
+            ev.append({"type": pre + "stop", "idea": dict(idea), "t": t,
+                       "r": _close_r(idea, idea["stop"], cost), "price": idea["stop"]})
+        else:
+            if pr and idea.get("partial") and not idea.get("done") and hit(idea["partial"], d, "favour"):
+                idea.update(done=frac, booked=frac * pr, stop=idea["entry"])
+                ev.append({"type": pre + "partial", "idea": dict(idea), "t": t})
+            if idea.get("target") and hit(idea["target"], d, "favour"):
+                ev.append({"type": pre + "target", "idea": dict(idea), "t": t,
+                           "r": _close_r(idea, idea["target"], cost), "price": idea["target"]})
+    ib = dict(st.get("ib") or {}) or None
+    if ib and cfg.get("inside_day"):                   # as ib_step()
+        if not ib["triggered"]:
+            up, dn = b["h"] >= ib["hi"], b["l"] <= ib["lo"]
+            if up or dn:
+                d = (1 if up else -1) if up != dn else (1 if b["o"] >= (ib["hi"] + ib["lo"]) / 2 else -1)
+                entry = max(b["o"], ib["hi"]) if d == 1 else min(b["o"], ib["lo"])
+                stop = ib["lo"] if d == 1 else ib["hi"]
+                ib.update(triggered=True, dir=d, entry=round(entry, 2), stop=stop,
+                          risk=round(abs(entry - stop), 4), entry_time=t.isoformat())
+                ev.append({"type": "ib_entry", "idea": dict(ib), "t": t})
+                if up and dn:
+                    ev.append({"type": "ib_stop", "idea": dict(ib), "t": t,
+                               "r": _close_r(ib, stop, cost), "price": stop})
+        elif (b["l"] <= ib["stop"]) if ib["dir"] == 1 else (b["h"] >= ib["stop"]):
+            ev.append({"type": "ib_stop", "idea": dict(ib), "t": t,
+                       "r": _close_r(ib, ib["stop"], cost), "price": ib["stop"]})
+    return ev
+
+
+def watch_market(st, bars5, cfg, now, sizing, nursery):
+    """Post what the watch found that hasn't been posted yet."""
+    out = []
+    for e in watch_events(st, bars5, cfg, now):
+        k = announce_key(e)
+        if k in (st.get("announced") or {}):
+            continue
+        idea = e.get("idea") or {}
+        tier = alert_tier(nursery, idea.get("strategy", "trend"))
+        if tier == "candidate" or idea.get("unannounced"):
+            continue                                   # the hourly run handles these as before
+        m = event_alert(e, st, cfg, sizing, tier, now, nursery)
+        if m:
+            out.append(m)
+            st.setdefault("announced", {})[k] = now.isoformat()
+    return out
+
+
+def has_open(st):
+    return any(st.get(k) for k in ("idea", "ib", "h4"))
+
+
+def run_watch(state, now, api_key, sizing, nursery, fetch=None):
+    """One pass of the watch over gold and the extra markets. A failure is
+    printed and skipped: the hourly run still covers everything."""
+    fetch = fetch or (lambda sym: td_time_series(api_key, sym, 24, interval="5min"))
+    out = []
+    for st, cfg in [(state, CONFIG)] + [(state.setdefault("markets", {}).setdefault(k, {}), market_cfg(k))
+                                       for k in CONFIG.get("markets", {})]:
+        if not has_open(st):
+            continue
+        try:
+            out += watch_market(st, fetch(cfg["symbol"]), cfg, now, sizing, nursery)
+        except Exception as e:  # noqa: BLE001
+            print(f"watch ({cfg.get('market_name', 'Gold')}): {e}", file=sys.stderr)
     return out
 
 
@@ -3264,6 +3399,14 @@ def main():
             nursery = load_nursery(CONFIG)
             msgs = [gate(nursery, journal, CONFIG, now)]
             save_json(CONFIG["nursery_file"], nursery)
+        elif mode == "watch":
+            if not api_key:
+                raise RuntimeError("TWELVEDATA_API_KEY secret is missing")
+            if not any(has_open(x) for x in [state] + list((state.get("markets") or {}).values())):
+                print("Nothing open to watch.")
+                return
+            sizing = sizing_from_env(api_key) if os.environ.get("ACCOUNT_SIZE") else None
+            msgs = run_watch(state, now, api_key, sizing, load_nursery(CONFIG))
         elif mode == "backfill":
             h1 = closed_h1(load_history(CONFIG), now)
             out_path = CONFIG["ledger_backfill_csv"]
@@ -3321,6 +3464,9 @@ def main():
         state["fail_count"] = state.get("fail_count", 0) + 1
         if mode == "run":
             state["last_run"] = dict(run_record, error=str(e)[:200], failed=[], late=0)
+        if mode == "watch":
+            print("The watch failed; the hourly run still covers every trade.", file=sys.stderr)
+            sys.exit(1)
         if mode != "run" or state["fail_count"] == CONFIG["fail_alert_after"]:
             msgs = [f":warning: Gold signals bot failed ({mode}, {state['fail_count']} in a row): {e}"]
         else:

@@ -8,7 +8,8 @@ name: Metronome
 # candle that closed on the hour. At :25 it checks a run started that hour and,
 # if none did, dispatches again and warns in the bot-status channel. Before the
 # 6-hour job limit it dispatches the next metronome, so the chain carries on.
-# It also starts the economic calendar posts (Sunday 20:06, weekdays 06:06 UTC).
+# It also starts the economic calendar posts (Sunday 20:06, weekdays 06:06 UTC)
+# and, at :16, :25, :36, :46 and :56, the trade watch (watch.yml).
 # The schedule below restarts the chain if it ever breaks; the concurrency
 # group keeps it to one metronome at a time.
 
@@ -53,13 +54,21 @@ jobs:
           while :; do
             now=$(date +%s)
             hour=$(( now / 3600 * 3600 ))
-            for m in 6 25 66; do                      # 66 = :06 of the next hour
+            for m in 6 16 25 36 46 56 66; do          # 66 = :06 of the next hour
               at=$(( hour + m * 60 ))
               [ "$at" -gt "$now" ] && break
             done
             [ "$at" -gt "$stop" ] && break
             sleep $(( at - now ))
-            if [ "$(date -u +%M)" = "25" ]; then
+            slot=$(( m % 60 ))                         # the slot planned above, not the clock after waking
+            if [ "$slot" != "6" ]; then                # between hourly checks: watch open trades
+              # Both share a concurrency group, and GitHub cancels a waiting run when a newer
+              # one queues, so never queue the watch behind a signal check.
+              busy=$(gh run list -R "$REPO" -w signals.yml -L 5 --json status \
+                       -q '[.[] | select(.status != "completed")] | length' || echo 1)
+              [ "$busy" = "0" ] && { gh workflow run watch.yml -R "$REPO" --ref main || true; }
+            fi
+            if [ "$slot" = "25" ]; then
               since=$(date -u -d "@$(( at / 3600 * 3600 ))" +%Y-%m-%dT%H:%M:%SZ)
               n=$(gh run list -R "$REPO" -w signals.yml --created ">=$since" \
                     --json conclusion -q '[.[] | select(.conclusion != "cancelled")] | length' || echo err)
@@ -67,7 +76,7 @@ jobs:
                 dispatch
                 warn "⚠️ No signal check had started by :25, so the metronome started one. Alerts from the $(date -u +%H):00 UTC candle may be up to 25 minutes late."
               fi
-            else
+            elif [ "$slot" = "6" ]; then
               dispatch
               case "$(date -u +%u%H)" in                # GitHub's own schedule for the calendar can be skipped
                 720) gh workflow run calendar.yml -R "$REPO" --ref main -f mode=week || true ;;
