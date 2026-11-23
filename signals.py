@@ -3616,11 +3616,14 @@ def main():
 
     try:
         if mode == "scorecard":
-            week = now.astimezone(NY).strftime("%G-W%V")
-            if state.get("scorecard_week") == week:      # the metronome and the schedule both start it
-                print(f"Scorecard for {week} already posted.")
-                return
-            state["scorecard_week"] = week
+            # The metronome and the schedule both start Friday's run: post it once.
+            # A manual run on another day doesn't count, so Friday's still goes out.
+            if now.astimezone(NY).weekday() == 4:
+                week = now.astimezone(NY).strftime("%G-W%V")
+                if state.get("scorecard_week") == week:
+                    print(f"Scorecard for {week} already posted.")
+                    return
+                state["scorecard_week"] = week
             nursery = load_nursery(CONFIG)
             m = scorecard(journal, now, nursery)
             msgs = [m] if m else []
