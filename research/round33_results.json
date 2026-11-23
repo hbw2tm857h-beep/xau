@@ -1,0 +1,32 @@
+[
+ {
+  "test": "F1 trigger on 15-minute candles",
+  "n": 2638,
+  "per_week": 2.72,
+  "avg": 0.003,
+  "p": "0.44",
+  "periods": [
+   0.003,
+   -0.005,
+   -0.114,
+   0.139
+  ],
+  "overlap_pct": 29,
+  "verdict": "fail"
+ },
+ {
+  "test": "F2 F1 + the 1-hour Heikin Ashi agrees",
+  "n": 1631,
+  "per_week": 1.68,
+  "avg": 0.074,
+  "p": "0.0032",
+  "periods": [
+   0.085,
+   0.033,
+   -0.025,
+   0.239
+  ],
+  "overlap_pct": 36,
+  "verdict": "fail"
+ }
+]
