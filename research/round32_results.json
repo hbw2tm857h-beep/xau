@@ -1,0 +1,26 @@
+[
+ {
+  "test": "S1 gold, setups skipped while a trend trade was open",
+  "n": 452,
+  "per_week": 0.39,
+  "avg": 0.036,
+  "total": 16.4,
+  "p": "0.23",
+  "first_half": -0.033,
+  "second_half": 0.097,
+  "both_lost_pct": 14,
+  "verdict": "fail"
+ },
+ {
+  "test": "S2 Bitcoin, setups skipped while a trend trade was open",
+  "n": 213,
+  "per_week": 0.44,
+  "avg": 0.116,
+  "total": 24.6,
+  "p": "0.064",
+  "first_half": 0.081,
+  "second_half": 0.157,
+  "both_lost_pct": 14,
+  "verdict": "fail"
+ }
+]
