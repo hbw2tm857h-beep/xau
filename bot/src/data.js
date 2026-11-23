@@ -55,7 +55,7 @@ export function rows(journal, nursery) {
   const out = [];
   for (const j of journal) {
     const s = j.strategy || "trend";
-    if (!ALERTED.has(tier[s]) || (j.exit_time || "") < GO_LIVE) continue;
+    if (!ALERTED.has(tier[s]) || (j.exit_time || "") < GO_LIVE || j.pre_tracking) continue;
     const [market, kind] = s === "us_ibs" ? [IBS[j.symbol] || j.symbol || "US index", "rebound"] : MARKET[s] || [s, ""];
     out.push({ s, t: j.exit_time, market, side: j.dir === 1 ? "BUY" : "SELL", kind, r: j.r, how: how(j),
       open: px(j.entry), close: px(j.exit), pct: j.r * riskPct(s, nursery) });

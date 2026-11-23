@@ -49,7 +49,7 @@ def strategy_keys(journal, nursery, since, until):
     tiers = {k: (v.get("tier") if isinstance(v, dict) else v)
              for k, v in (nursery.get("strategies") or nursery).items()}
     return [j.get("strategy", "trend") for j in journal
-            if tiers.get(j.get("strategy", "trend")) in T.ALERTED
+            if tiers.get(j.get("strategy", "trend")) in T.ALERTED and not j.get("pre_tracking")
             and since <= (j.get("exit_time") or "") < until and (j.get("exit_time") or "") >= T.GO_LIVE]
 
 

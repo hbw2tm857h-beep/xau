@@ -1888,6 +1888,7 @@ def stats(rs):
 
 
 def scorecard(journal, now, nursery=None):
+    journal = [j for j in journal if not j.get("pre_tracking")]
     # The headline totals count only trades members were alerted to (live and
     # shadow). Silent candidates are listed per strategy below, but their R is in
     # other units and never reached members, so it stays out of the totals.
@@ -2084,7 +2085,7 @@ def gate(nursery, journal, cfg, now):
         tier = tier_of(nursery, name)
         label = s.get("label", name)
         exp = s.get("expected_avg_r")
-        rs = [j["r"] for j in journal if j.get("strategy", "trend") == name]
+        rs = [j["r"] for j in journal if j.get("strategy", "trend") == name and not j.get("pre_tracking")]
         if not rs:
             lines.append(f"• *{label}* ({tier}): no closed live trades yet; tested {exp:+.2f}R.")
             continue
@@ -2655,7 +2656,8 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
             lead.append(f"*BUY {name} ({cfd})* · Entry {px(t['entry'])} (the close) · No stop · "
                         f"Exit on a daily close above {px(t['exit_above'])}")
         else:
-            lead.append(f"*{name} ({cfd}) · Sell now at {px(t['exit'])}* · Closed {t['bps'] / 100:+.2f}% in {days}")
+            lead.append(f"*{name} ({cfd}) · Close your BUY at {px(t['exit'])}* (bought {px(t['entry'])}) · "
+                        f"{t['bps'] / 100:+.2f}% in {days}. Not a new sell.")
         lines = [" ".join(lead)]
         if kind == "entry":
             lines.append("_The exit level moves each day to the previous day's high. We'll post when to sell._")
@@ -2667,7 +2669,9 @@ def ibs_alert(kind, t, symbol, tier, now, cfg):
                     "-# The exit level moves each day to the previous day's high.")
         lines = ["\n".join(lead)]
     else:
-        lead.append(f"## {name} ({cfd}) · sell now\nSell at *{px(t['exit'])}*: *{t['bps'] / 100:+.2f}%* in {days}.")
+        lead.append(f"## {name} ({cfd}) · close your BUY\n"
+                    f"Close the buy from {px(t['entry'])} at about *{px(t['exit'])}*: *{t['bps'] / 100:+.2f}%* after {days}.\n"
+                    "-# This exits the rebound trade. It is not a new sell.")
         lines = ["\n".join(lead)]
     if tier == "shadow" and kind == "entry":
         sug = short_size(cfg["ibs"]["strategy"], cfg)
@@ -2974,14 +2978,20 @@ def run_ibs(state, journal, symbol, bars_raw, now, cfg=None, nursery=None):
         st["alerted"] = open_t["t"].isoformat()   # opened before tracking began: not alerted
     tier = alert_tier(nursery, ic["strategy"]) if nursery else "candidate"
     msgs = []
+    start = datetime.fromisoformat(st["start"])
     for t in [t for t in closed if t["t_exit"].isoformat() > st["last_exit"]]:
-        journal.append({"sig_time": t["t"].isoformat(), "entry_time": t["t"].isoformat(),
-                        "exit_time": t["t_exit"].isoformat(), "dir": 1, "grade": None,
-                        "entry": round(t["entry"], 2), "exit": round(t["exit"], 2),
-                        "r": round(t["r"], 3), "how": "ibs_exit", "strategy": ic["strategy"],
-                        "symbol": symbol})
+        j = {"sig_time": t["t"].isoformat(), "entry_time": t["t"].isoformat(),
+             "exit_time": t["t_exit"].isoformat(), "dir": 1, "grade": None,
+             "entry": round(t["entry"], 2), "exit": round(t["exit"], 2),
+             "r": round(t["r"], 3), "how": "ibs_exit", "strategy": ic["strategy"],
+             "symbol": symbol}
+        if t["t"] < start:
+            j["pre_tracking"] = True     # bought before tracking began: members never saw it
+        journal.append(j)
         st["last_exit"] = t["t_exit"].isoformat()
-        if tier != "candidate" and st.get("alerted") == t["t"].isoformat():
+        # only exits of entries members were sent; "alerted" also marks a trade that
+        # was already open when tracking began, which was never posted
+        if tier != "candidate" and st.get("alerted") == t["t"].isoformat() and t["t"] >= start:
             m = ibs_alert("exit", t, symbol, tier, now, cfg)
             m.thread = (f"{symbol}|us_ibs|{t['t'].isoformat()}", "close")
             msgs.append(m)
