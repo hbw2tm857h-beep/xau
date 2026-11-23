@@ -1,6 +1,6 @@
 {
   "fail_count": 0,
-  "h4_last_k": 899,
+  "h4_last_k": 888,
   "ib": null,
   "ibs": {
     "DIA": {
@@ -50,27 +50,27 @@
     "triggered": true
   },
   "last_daily_k_end": "2026-11-20T22:00:00+00:00",
-  "last_h1": "2026-11-20T21:00:00+00:00",
+  "last_h1": "2026-11-22T23:00:00+00:00",
   "last_run": {
     "failed": [],
     "late": 0,
     "mode": "run",
     "posts": 0,
     "skipped": 0,
-    "started": "2026-11-22T23:06:13.416660+00:00"
+    "started": "2026-11-23T00:06:10.222110+00:00"
   },
   "markets": {
     "btc": {
       "fail_count": 0,
       "idea": null,
       "last_daily_k_end": "2026-11-22T22:00:00+00:00",
-      "last_h1": "2026-11-22T22:00:00+00:00"
+      "last_h1": "2026-11-22T23:00:00+00:00"
     },
     "eth": {
       "fail_count": 0,
       "ib": null,
       "last_daily_k_end": "2026-11-22T22:00:00+00:00",
-      "last_h1": "2026-11-22T22:00:00+00:00"
+      "last_h1": "2026-11-22T23:00:00+00:00"
     }
   },
   "noise": {
