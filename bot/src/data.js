@@ -35,6 +35,21 @@ function how(j) {
 }
 
 // Closed trades members were alerted to, oldest first.
+// % of the account risked per 1R at the sizes the alerts suggest, with gold's
+// trend trades at 1%: inside-day at half; a strategy alerted on paper (shadow,
+// or auto-promoted at a quarter size) at a quarter of its risk-parity size.
+// Mirrors track_record.risk_pct and signals.CONFIG (parity_risk_pct).
+const PARITY = { trend: 0.98, inside_day: 1.36, btc_trend: 1.20, eth_inside_day: 1.05, us_ibs: 0.41 };
+function riskPct(s, nursery) {
+  const d = ((nursery || {}).strategies || {})[s] || {};
+  if (d.tier === "live" && !d.risk_fraction) return s === "inside_day" ? 0.5 : 1.0;
+  return PARITY[s] != null ? PARITY[s] * 0.25 : 1.0;
+}
+const pctLine = (rs) => {
+  const pct = rs.reduce((a, r) => a + r.pct, 0);
+  return `That's ${sgn(pct)}% of the account at the suggested sizes (1% risk on gold trend trades).`;
+};
+
 export function rows(journal, nursery) {
   const tier = tiers(nursery);
   const out = [];
@@ -43,7 +58,7 @@ export function rows(journal, nursery) {
     if (!ALERTED.has(tier[s]) || (j.exit_time || "") < GO_LIVE) continue;
     const [market, kind] = s === "us_ibs" ? [IBS[j.symbol] || j.symbol || "US index", "rebound"] : MARKET[s] || [s, ""];
     out.push({ s, t: j.exit_time, market, side: j.dir === 1 ? "BUY" : "SELL", kind, r: j.r, how: how(j),
-      open: px(j.entry), close: px(j.exit) });
+      open: px(j.entry), close: px(j.exit), pct: j.r * riskPct(s, nursery) });
   }
   return out.sort((a, b) => (a.t < b.t ? -1 : a.t > b.t ? 1 : 0));
 }
@@ -106,7 +121,7 @@ export function statsText(journal, nursery) {
     `## Track record since 14 November 2026`,
     `**${s.n} trade${s.n === 1 ? "" : "s"}, ${s.wins} winner${s.wins === 1 ? "" : "s"} · ${sgn(s.total)}R**`,
     `Average ${sgn(s.avg)}R per trade · Profit factor ${pf} · Biggest drop ${s.dd.toFixed(2)}R · Longest losing run ${s.streak}`,
-    `That's ${sgn(s.total)}% at 1% risk per trade.`,
+    pctLine(rs),
     "",
     "**Latest trades**",
     ...last,
@@ -169,7 +184,7 @@ export function monthText(journal, nursery, now = new Date()) {
   const pf = s.pf == null ? "no losses" : s.pf.toFixed(2);
   return [`## ${name} so far`, summary(rs),
     `Average ${sgn(s.avg)}R per trade · Profit factor ${pf} · Biggest drop ${s.dd.toFixed(2)}R`,
-    `That's ${sgn(s.total)}% at 1% risk per trade.`, "", ...rs.slice().reverse().map(tradeLine)].join("\n");
+    pctLine(rs), "", ...rs.slice().reverse().map(tradeLine)].join("\n");
 }
 
 const STRATEGY_NAMES = { trend: "Gold trend", inside_day: "Gold breakout", btc_trend: "Bitcoin trend",
