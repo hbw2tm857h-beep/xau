@@ -1888,11 +1888,18 @@ def stats(rs):
 
 
 def scorecard(journal, now, nursery=None):
-    week = [j for j in journal if datetime.fromisoformat(j["exit_time"]) >= now - timedelta(days=7)]
+    # The headline totals count only trades members were alerted to (live and
+    # shadow). Silent candidates are listed per strategy below, but their R is in
+    # other units and never reached members, so it stays out of the totals.
+    if nursery:
+        journal = [j for j in journal if tier_of(nursery, j.get("strategy", "trend")) != "candidate"] + \
+                  [dict(j, _cand=True) for j in journal if tier_of(nursery, j.get("strategy", "trend")) == "candidate"]
+    shown = [j for j in journal if not j.get("_cand")]
+    week = [j for j in shown if datetime.fromisoformat(j["exit_time"]) >= now - timedelta(days=7)]
     if not week:
         return None
     w = stats([j["r"] for j in week])
-    a = stats([j["r"] for j in journal])
+    a = stats([j["r"] for j in shown])
     best = max(week, key=lambda j: j["r"])
     worst = min(week, key=lambda j: j["r"])
     by = []
@@ -1903,7 +1910,8 @@ def scorecard(journal, now, nursery=None):
         if not js:
             continue
         s = stats([j["r"] for j in js])
-        wk = [j["r"] for j in week if j.get("strategy", "trend") == key]
+        wk = [j["r"] for j in journal if j.get("strategy", "trend") == key
+              and datetime.fromisoformat(j["exit_time"]) >= now - timedelta(days=7)]
         bench = f"{d.get('expected_win', 0):.0f}% winners, {d.get('expected_avg_r', 0):+.2f}R"
         tier = d.get("tier", "live")
         by.append(f"• {d.get('label', key)}{'' if tier == 'live' else f' [{tier}]'}: this week "
@@ -1917,7 +1925,8 @@ def scorecard(journal, now, nursery=None):
             f"All time: {a['n']} trades, {a['win']:.0f}% winners, {a['total']:+.1f}R, "
             f"biggest drop {a['dd']:.1f}R\n"
             + "\n".join(by) + ("\n" if by else "")
-            + "_Backtest benchmarks are 2008-2026 after costs. R = multiples of the risk on each trade; "
+            + "_Totals count the trades members were alerted to; [candidate] lines are tracked silently. "
+            "Backtest benchmarks are 2008-2026 after costs. R = multiples of the risk on each trade; "
             "results assume every signal was taken at the alert levels._")
 
 
@@ -2055,6 +2064,16 @@ def bootstrap_p(rs, b=2000, seed=7):
     return hits / b
 
 
+def upper_bound(rs, z=1.645):
+    """One-sided 95% upper bound on the average R of these trades."""
+    n = len(rs)
+    if n < 2:
+        return float("inf")
+    m = sum(rs) / n
+    sd = (sum((r - m) ** 2 for r in rs) / (n - 1)) ** 0.5
+    return m + z * sd / n ** 0.5
+
+
 def gate(nursery, journal, cfg, now):
     """Judge every strategy on its live trades. Mutates the registry for
     demotions only; returns the Slack message."""
@@ -2076,19 +2095,24 @@ def gate(nursery, journal, cfg, now):
         head = (f"• *{label}* ({tier}): {a['n']} live trade{'s' if a['n'] != 1 else ''}, "
                 f"avg {a['avg']:+.2f}R | last {t['n']} avg {t['avg']:+.2f}R | tested {exp:+.2f}R")
         if tier == "live":
-            if t["n"] >= cfg["gate_demote_min_trades"] and t["avg"] < floor:
+            # Demote only when the recent trades are clearly below the floor: their
+            # one-sided 95% upper bound is under it. A plain "average under the
+            # floor" test would have demoted gold's trend setups 20 times over
+            # 2008-26 from ordinary losing streaks, while they worked (audit, 23 Nov 2026).
+            if t["n"] >= cfg["gate_demote_min_trades"] and upper_bound(trail) < floor:
                 s["tier"] = "shadow"
                 s.pop("risk_fraction", None)
                 s.setdefault("history", []).append({
                     "when": now.isoformat(), "from": "live", "to": "shadow",
-                    "why": f"last {t['n']} trades avg {t['avg']:+.3f}R, below {floor:+.3f}R"})
+                    "why": f"last {t['n']} trades avg {t['avg']:+.3f}R, 95% upper bound {upper_bound(trail):+.3f}R, below {floor:+.3f}R"})
                 lines.append(head + f"\n   :arrow_down: *Demoted to shadow.* The last {t['n']} trades average "
-                             f"{t['avg']:+.2f}R, under half the {exp:+.2f}R it was promoted on. Alerts carry on, "
+                             f"{t['avg']:+.2f}R, clearly under half the {exp:+.2f}R it was promoted on "
+                             f"(95% upper bound {upper_bound(trail):+.2f}R). Alerts carry on, "
                              "without a size, until it earns its way back.")
             else:
                 lines.append(head + " — holding.")
             continue
-        p = bootstrap_p(trail, cfg["gate_bootstrap"])
+        p = bootstrap_p(rs, cfg["gate_bootstrap"])          # the same trades as the average it is judged on
         enough = a["n"] >= cfg["gate_promote_min_trades"]
         if enough and a["avg"] > 0 and a["avg"] >= floor and p is not None and p < cfg["gate_alpha"]:
             nxt = "live" if tier == "shadow" else "shadow"
@@ -3266,6 +3290,8 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                     out.append(Msg(relabel(head, cfg) + "\n" + CANDIDATE_NOTE, "candidates"))
                 continue
             idea = e.get("idea") or {}
+            if announce_key(e) in (state.get("announced") or {}):
+                continue   # the 10-minute watch already posted it, on time
             confirmed = cfg.get("confirmed_only")
             if confirmed and e["type"] in ("signal", "ib_signal", "h4_signal") and \
                     (now - e["t"]).total_seconds() / 3600 > cfg.get("max_setup_age_hours", 1e9):
@@ -3284,8 +3310,6 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
                 continue
             if idea.get("unannounced"):
                 continue   # a follow-up to a setup that was too late to post
-            if announce_key(e) in (state.get("announced") or {}):
-                continue   # the 10-minute watch already posted it
             m = event_alert(e, state, cfg, sizing, tier, now, nursery)
             if m:
                 out.append(m)
@@ -3592,6 +3616,11 @@ def main():
 
     try:
         if mode == "scorecard":
+            week = now.astimezone(NY).strftime("%G-W%V")
+            if state.get("scorecard_week") == week:      # the metronome and the schedule both start it
+                print(f"Scorecard for {week} already posted.")
+                return
+            state["scorecard_week"] = week
             nursery = load_nursery(CONFIG)
             m = scorecard(journal, now, nursery)
             msgs = [m] if m else []

@@ -1,11 +1,16 @@
 name: Weekly recap
 
-# Friday night, after the markets close: the week's closed trades and what is
+# Friday night, after the markets close (the metronome starts it at 22:06 UTC;
+# the schedule is the backup): the week's closed trades and what is
 # still open, posted to #announcements.
 on:
   schedule:
     - cron: "15 22 * * 5"
   workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
 
 jobs:
   post:
@@ -13,7 +18,17 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+      - name: Skip if already posted
+        id: once
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The metronome starts this on time and the schedule is the backup: post once.
+          n=$(gh run list -R "${{ github.repository }}" -w "${{ github.workflow }}" --status success \
+                --created ">=$(date -u -d '-20 hours' +%Y-%m-%dT%H:%M:%SZ)" --json databaseId -q length || echo 0)
+          echo "done=$([ "$n" != "0" ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
       - name: Post the recap
+        if: steps.once.outputs.done != 'yes'
         env:
           DISCORD_WEBHOOK_ANNOUNCEMENTS: ${{ secrets.DISCORD_WEBHOOK_ANNOUNCEMENTS }}
         run: python3 weekly_recap.py

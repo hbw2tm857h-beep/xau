@@ -25,9 +25,9 @@ def recap(journal, nursery, state, now):
         total = sum(r[4] for r in week)
         wins = sum(r[4] > 0 for r in week)
         lines = [f"**{r:+.2f}R** · {m} {sd} {k} · {datetime.fromisoformat(t):%a %-d %b}"
-                 for t, m, sd, k, r, h, o, c in week]
+                 for t, m, sd, k, r, h, o, c, _ in week]
         body = (f"**{len(week)} trade{'s' if len(week) != 1 else ''} closed, {wins} winner{'s' if wins != 1 else ''}"
-                f" · {total:+.2f}R**\nThat's {total:+.2f}% at 1% risk per trade.\n\n" + "\n".join(lines))
+                f" · {total:+.2f}R**\n{T.pct_line(week)}\n\n" + "\n".join(lines))
     else:
         body = "No trades closed this week."
     still = T.open_rows(state, nursery) if hasattr(T, "open_rows") else []

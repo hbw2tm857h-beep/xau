@@ -46,6 +46,28 @@ def price(x):
     return f"{x:,.2f}" if x is not None else "-"
 
 
+def risk_pct(strategy, nursery):
+    """The % of the account the alerts suggest risking per 1R on this strategy,
+    with gold's trend trades at 1%: inside-day at half, and a strategy alerted
+    on paper (shadow, or auto-promoted at a quarter size) at a quarter of its
+    risk-parity size, the figure its alerts show. The % totals use these, so
+    they match what following the alerts at the suggested sizes made."""
+    import signals as S                      # standard library only, no side effects on import
+    cfg = S.CONFIG
+    s = (nursery.get("strategies") or {}).get(strategy) or {}
+    base = cfg["default_risk_pct"]
+    if s.get("tier") == "live" and not s.get("risk_fraction"):
+        return base * (cfg.get("inside_day_risk_mult", 1.0) if strategy == "inside_day" else 1.0)
+    parity = (cfg.get("parity_risk_pct") or {}).get(strategy)
+    return parity * cfg.get("shadow_risk_fraction", 0.25) if parity is not None else base
+
+
+def pct_line(rs):
+    """One sentence on what the trades made at the suggested sizes."""
+    pct = sum(r[8] for r in rs)
+    return f"That's {pct:+.2f}% of the account at the suggested sizes (1% risk on gold trend trades)."
+
+
 def rows(journal, nursery):
     tiers = {k: (v.get("tier") if isinstance(v, dict) else v)
              for k, v in (nursery.get("strategies") or nursery).items()}
@@ -59,7 +81,8 @@ def rows(journal, nursery):
         else:
             market, kind = MARKET.get(s, (s, ""))
         side = "BUY" if j.get("dir") == 1 else "SELL"
-        out.append((j["exit_time"], market, side, kind, j["r"], how(j), price(j.get("entry")), price(j.get("exit"))))
+        out.append((j["exit_time"], market, side, kind, j["r"], how(j), price(j.get("entry")), price(j.get("exit")),
+                    j["r"] * risk_pct(s, nursery)))
     return sorted(out)
 
 
@@ -69,13 +92,13 @@ def render(rs, n=MAX_ROWS):
         return head + "\nNo closed trades yet.\n\n-# Updated as trades close."
     lines = [f"**{r:+.2f}R** · {m} {sd} {k} · {datetime.fromisoformat(t):%-d %b}\n"
              f"-# Open {o} · Close {c} · {h}"
-             for t, m, sd, k, r, h, o, c in reversed(rs[-n:])]
+             for t, m, sd, k, r, h, o, c, _ in reversed(rs[-n:])]
     total = sum(r[4] for r in rs)
     wins = sum(r[4] > 0 for r in rs)
     more = f"\n-# Showing the latest {n} of {len(rs)} trades." if len(rs) > n else ""
     return (head + "\n" + "\n".join(lines) + "\n\n"
             f"**{len(rs)} trade{'s' if len(rs) != 1 else ''}, {wins} winner{'s' if wins != 1 else ''} · {total:+.2f}R**\n"
-            f"That's {total:+.2f}% at 1% risk per trade.\n{more}\n-# Updated as trades close.").replace("\n\n\n", "\n\n")
+            f"{pct_line(rs)}\n{more}\n-# Updated as trades close.").replace("\n\n\n", "\n\n")
 
 
 MARKET_NAMES = {"btc": "BTC/USD", "eth": "ETH/USD"}

@@ -1,11 +1,16 @@
 name: Monthly report
 
-# The 1st of each month, 09:00 UTC: last month's report card for the alerted
+# The 1st of each month, 09:00 UTC (the metronome starts it at 09:06; the schedule
+# is the backup): last month's report card for the alerted
 # trades, posted to #announcements.
 on:
   schedule:
     - cron: "0 9 1 * *"
   workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
 
 jobs:
   post:
@@ -13,7 +18,17 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+      - name: Skip if already posted
+        id: once
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The metronome starts this on time and the schedule is the backup: post once.
+          n=$(gh run list -R "${{ github.repository }}" -w "${{ github.workflow }}" --status success \
+                --created ">=$(date -u -d '-20 hours' +%Y-%m-%dT%H:%M:%SZ)" --json databaseId -q length || echo 0)
+          echo "done=$([ "$n" != "0" ] && echo yes || echo no)" >> "$GITHUB_OUTPUT"
       - name: Post the report card
+        if: steps.once.outputs.done != 'yes'
         env:
           DISCORD_WEBHOOK_ANNOUNCEMENTS: ${{ secrets.DISCORD_WEBHOOK_ANNOUNCEMENTS }}
         run: python3 monthly_report.py

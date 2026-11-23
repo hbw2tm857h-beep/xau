@@ -84,7 +84,7 @@ def report(journal, nursery, year, month):
     markets = "\n".join(f"{m}: {len(v)} trade{'s' if len(v) != 1 else ''} · {sum(v):+.2f}R"
                         for m, v in sorted(by_market.items(), key=lambda kv: -sum(kv[1])))
     life = stats([r[4] for r in all_rows if r[0] < end.isoformat()])
-    return (f"{head}\n{fmt(s)}\nThat's {s['total']:+.2f}% at 1% risk per trade.{exp_line}\n\n"
+    return (f"{head}\n{fmt(s)}\n{T.pct_line(rows)}{exp_line}\n\n"
             f"**By market**\n{markets}\n\n"
             f"**Since alerts went live on 14 November 2026**\n"
             f"{life['n']} trades · {life['wins']} winners · {life['total']:+.2f}R · "

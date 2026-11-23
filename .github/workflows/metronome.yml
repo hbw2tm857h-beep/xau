@@ -9,7 +9,8 @@ name: Metronome
 # if none did, dispatches again and warns in the bot-status channel. Before the
 # 6-hour job limit it dispatches the next metronome, so the chain carries on.
 # It also starts the economic calendar posts (Sunday 20:06, weekdays 06:06 UTC)
-# and, at :16, :25, :36, :46 and :56, the trade watch (watch.yml).
+# and, at :16, :25, :36, :46 and :56, the trade watch (watch.yml); Friday 22:06 the
+# weekly recap and from 22:36 the scorecard; the 1st at 09:06 the monthly report.
 # The schedule below restarts the chain if it ever breaks; the concurrency
 # group keeps it to one metronome at a time.
 
@@ -67,6 +68,11 @@ jobs:
               busy=$(gh run list -R "$REPO" -w signals.yml -L 5 --json status \
                        -q '[.[] | select(.status != "completed")] | length' || echo 1)
               [ "$busy" = "0" ] && { gh workflow run watch.yml -R "$REPO" --ref main || true; }
+              # Friday after the close: the weekly scorecard and nursery gate. It shares the
+              # signal check's queue, so it also waits for a free slot; signals.py runs it once a week.
+              if [ "$(date -u +%u%H)" = "522" ] && [ "$slot" != "25" ] && [ "$busy" = "0" ]; then
+                gh workflow run signals.yml -R "$REPO" --ref main -f mode=scorecard || true
+              fi
             fi
             if [ "$slot" = "25" ]; then
               since=$(date -u -d "@$(( at / 3600 * 3600 ))" +%Y-%m-%dT%H:%M:%SZ)
@@ -81,7 +87,9 @@ jobs:
               case "$(date -u +%u%H)" in                # GitHub's own schedule for the calendar can be skipped
                 720) gh workflow run calendar.yml -R "$REPO" --ref main -f mode=week || true ;;
                 [1-5]06) gh workflow run calendar.yml -R "$REPO" --ref main -f mode=today || true ;;
+                522) gh workflow run weekly-recap.yml -R "$REPO" --ref main || true ;;
               esac
+              [ "$(date -u +%d%H)" = "0109" ] && { gh workflow run monthly-report.yml -R "$REPO" --ref main || true; }
             fi
           done
 
