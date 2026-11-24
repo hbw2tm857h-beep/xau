@@ -162,5 +162,17 @@
     "sig_time": "2026-11-12T21:00:00+00:00",
     "strategy": "us_ibs",
     "symbol": "DIA"
+  },
+  {
+    "dir": 1,
+    "entry": 61271.09,
+    "entry_time": "2026-11-23T00:00:00+00:00",
+    "exit": 61270.93,
+    "exit_time": "2026-11-24T00:00:00+00:00",
+    "grade": null,
+    "how": "time_exit",
+    "r": -0.01,
+    "sig_time": "2026-11-23T00:00:00+00:00",
+    "strategy": "btc_monday"
   }
 ]
