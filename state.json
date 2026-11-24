@@ -1,7 +1,7 @@
 {
   "fail_count": 0,
   "h4": {
-    "age": 3,
+    "age": 4,
     "dir": -1,
     "entry": 3607.33,
     "grade": null,
@@ -14,7 +14,7 @@
     "target": 3443.23,
     "triggered": false
   },
-  "h4_last_end": "2026-11-24T10:00:00+00:00",
+  "h4_last_end": "2026-11-24T14:00:00+00:00",
   "ib": null,
   "ibs": {
     "DIA": {
@@ -50,27 +50,27 @@
   },
   "idea": null,
   "last_daily_k_end": "2026-11-23T22:00:00+00:00",
-  "last_h1": "2026-11-24T12:00:00+00:00",
+  "last_h1": "2026-11-24T13:00:00+00:00",
   "last_run": {
     "failed": [],
     "late": 0,
     "mode": "run",
-    "posts": 1,
+    "posts": 0,
     "skipped": 0,
-    "started": "2026-11-24T13:06:11.453186+00:00"
+    "started": "2026-11-24T14:06:10.712059+00:00"
   },
   "markets": {
     "btc": {
       "fail_count": 0,
       "idea": null,
       "last_daily_k_end": "2026-11-23T22:00:00+00:00",
-      "last_h1": "2026-11-24T12:00:00+00:00"
+      "last_h1": "2026-11-24T13:00:00+00:00"
     },
     "eth": {
       "fail_count": 0,
       "ib": null,
       "last_daily_k_end": "2026-11-23T22:00:00+00:00",
-      "last_h1": "2026-11-24T12:00:00+00:00"
+      "last_h1": "2026-11-24T13:00:00+00:00"
     }
   },
   "near_miss": {
