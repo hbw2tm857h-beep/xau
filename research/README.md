@@ -941,3 +941,19 @@ python3 research/round32_skipped_setups.py      # setups skipped while a trade i
 python3 research/round31_macro_horizon.py         # macro filters and 3/6/12-hour forecasts (needs scikit-learn, ~25 min)
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 ```
+
+## Round 35: swing high/low strategies on 31 FX pairs (24 Nov 2026)
+
+`round35_fx_swings.py`, `round35_results.json`. Pre-registered and committed (77c36a2) before it was run. Bradley asked whether a swing high/low strategy would work on forex. Swing points are daily highs (lows) above (below) the two days either side, used only once confirmed. Each pair was charged its own costs, and each trade was judged after removing the pair's average drift. Target 2R, out after 20 days at most, one trade at a time per pair.
+
+| Test | Trades | Per week (31 pairs) | Drift-adjusted R | Pairs positive | p (pairs / months) | Before 2017 / from 2017 | Double costs |
+|---|---|---|---|---|---|---|---|
+| W1 breakout of the last swing, with the 50-day trend, stop at the last opposite swing | 6,146 | 6.3 | **−0.020** | 14 of 31 | 0.85 / 0.83 | −0.013 / −0.025 | −0.035 |
+| W2 sweep and reclaim: trade back inside after a poke beyond a swing, stop at that day's extreme | 7,392 | 7.6 | **−0.016** | 16 of 31 | 0.78 / 0.80 | +0.003 / −0.032 | −0.056 |
+
+**0 of 2 pass.** hypotheses_tested rises from 1,399 to 1,401 (recorded here only).
+
+**What it says:**
+- **Both are coin flips minus the spread.** Over 13,500 trades, the average is within a few hundredths of an R of zero, about half the pairs are up and half down, and both get worse from 2017. That is what a market with no edge in the rule looks like.
+- **The "liquidity grab" reversal does not work on daily FX.** Before 2017 it was flat at best; since then it loses.
+- **Nothing changes in the bot.** FX now has eight failed strategy families.
