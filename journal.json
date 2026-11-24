@@ -198,5 +198,19 @@
     "r": -1.015,
     "sig_time": "2026-11-24T06:15:00+00:00",
     "strategy": "gold_m15"
+  },
+  {
+    "dir": 1,
+    "entry": 272.94,
+    "entry_time": "2026-11-16T21:00:00+00:00",
+    "exit": 267.23,
+    "exit_time": "2026-11-24T21:00:00+00:00",
+    "grade": null,
+    "how": "ibs_exit",
+    "pre_tracking": true,
+    "r": -1.338,
+    "sig_time": "2026-11-16T21:00:00+00:00",
+    "strategy": "us_ibs",
+    "symbol": "IWM"
   }
 ]
