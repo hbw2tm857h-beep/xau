@@ -1,0 +1,30 @@
+[
+ {
+  "test": "W1 swing breakout with the trend",
+  "n": 6146,
+  "per_week": 6.3,
+  "raw": -0.016,
+  "adj": -0.02,
+  "pairs_positive": "14/31",
+  "p_pairs": "0.85",
+  "p_months": "0.83",
+  "before_2017": -0.013,
+  "from_2017": -0.025,
+  "double_costs": -0.035,
+  "verdict": "fail"
+ },
+ {
+  "test": "W2 swing sweep and reclaim",
+  "n": 7392,
+  "per_week": 7.6,
+  "raw": -0.018,
+  "adj": -0.016,
+  "pairs_positive": "16/31",
+  "p_pairs": "0.78",
+  "p_months": "0.8",
+  "before_2017": 0.003,
+  "from_2017": -0.032,
+  "double_costs": -0.056,
+  "verdict": "fail"
+ }
+]
