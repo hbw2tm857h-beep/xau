@@ -1,6 +1,20 @@
 {
   "fail_count": 0,
-  "h4_last_end": "2026-11-24T06:00:00+00:00",
+  "h4": {
+    "age": 0,
+    "dir": -1,
+    "entry": 3607.33,
+    "grade": null,
+    "partial": 3525.28,
+    "risk": 82.0503,
+    "session": null,
+    "sig_time": "2026-11-24T10:00:00+00:00",
+    "stop": 3689.38,
+    "strategy": "h4_trend",
+    "target": 3443.23,
+    "triggered": false
+  },
+  "h4_last_end": "2026-11-24T10:00:00+00:00",
   "ib": null,
   "ibs": {
     "DIA": {
@@ -36,27 +50,27 @@
   },
   "idea": null,
   "last_daily_k_end": "2026-11-23T22:00:00+00:00",
-  "last_h1": "2026-11-24T08:00:00+00:00",
+  "last_h1": "2026-11-24T09:00:00+00:00",
   "last_run": {
     "failed": [],
     "late": 0,
     "mode": "run",
-    "posts": 0,
+    "posts": 1,
     "skipped": 0,
-    "started": "2026-11-24T09:06:10.197524+00:00"
+    "started": "2026-11-24T10:06:09.742459+00:00"
   },
   "markets": {
     "btc": {
       "fail_count": 0,
       "idea": null,
       "last_daily_k_end": "2026-11-23T22:00:00+00:00",
-      "last_h1": "2026-11-24T08:00:00+00:00"
+      "last_h1": "2026-11-24T09:00:00+00:00"
     },
     "eth": {
       "fail_count": 0,
       "ib": null,
       "last_daily_k_end": "2026-11-23T22:00:00+00:00",
-      "last_h1": "2026-11-24T08:00:00+00:00"
+      "last_h1": "2026-11-24T09:00:00+00:00"
     }
   },
   "near_miss": {
