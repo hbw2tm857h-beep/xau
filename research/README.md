@@ -937,6 +937,7 @@ python3 research/round29_52wk_markets.py     # the 52-week breakout on 67 other 
 python3 research/round30_reverse_after_breakeven.py # reverse after a breakeven stop (research only)
 python3 research/round33_m15_trigger.py          # gold rules with a 15-minute trigger (research only)
 python3 research/round34_m15_new_rules.py        # new 15-minute rules, searched then held out (research only)
+python3 research/round36_trend_shift_exit.py      # take the second half off when the trend turns after TP1 (research only)
 python3 research/round32_skipped_setups.py      # setups skipped while a trade is open (research only)
 python3 research/round31_macro_horizon.py         # macro filters and 3/6/12-hour forecasts (needs scikit-learn, ~25 min)
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
@@ -957,3 +958,22 @@ python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 - **Both are coin flips minus the spread.** Over 13,500 trades, the average is within a few hundredths of an R of zero, about half the pairs are up and half down, and both get worse from 2017. That is what a market with no edge in the rule looks like.
 - **The "liquidity grab" reversal does not work on daily FX.** Before 2017 it was flat at best; since then it loses.
 - **Nothing changes in the bot.** FX now has eight failed strategy families.
+
+## Round 36: take the second half off when the trend turns after TP1 (25 Nov 2026)
+
+`round36_trend_shift_exit.py`, `round36_results.json`. Pre-registered and committed (6c665ff) before either exit was simulated. **Research only:** nothing in the bot changed. hypotheses_tested rises from 1,401 to 1,403 (recorded here only).
+
+Bradley asked whether the bot could tell members to start thinking about taking profits once a gold trend trade has hit TP1, has its stop at entry, and the trend is turning, making TP2 less likely. Such a heads-up only helps if acting on it pays, so the test acts on it: the second half closes at the hourly close where the turn is seen. Nothing changes before TP1 is banked, which makes this different from round 24's chandelier trail and from the old whole-trade `exit_mode "ha"`. Every live gold trend trade is re-run from its fill; the base re-run reproduced the live state machine's R on all 720 trades from 2008-26 and all 121 from 2004-07. Bar: gain above zero with paired one-sided p < 0.05 / 2, positive in 2008-15, 2016-24 and 2025-26, and not negative in 2004-07.
+
+| Test | Trades changed | Gain per trade, 2008-26 | p | 2008-15 / 2016-24 / 2025-26 | 2004-07 | Verdict |
+|---|---|---|---|---|---|---|
+| T1 4-hour Heikin Ashi candle turns against the trade after TP1 | 99 of 720 | +0.002R | 0.37 | +0.007 / −0.001 / −0.007 | −0.011 | fail |
+| T2 hourly Heikin Ashi candle turns against the trade after TP1 | 217 of 720 | +0.008R | 0.19 | +0.003 / +0.012 / +0.012 | +0.027 | fail |
+
+The base averages +0.182R per trade. **0 of 2 passed.**
+
+**What it says:**
+- **Getting out early when the trend turns after TP1 makes no real difference.** The 4-hour turn is a coin flip. The hourly turn is slightly ahead in every period, but by less than a hundredth of an R a trade on 2008-26, far from the bar.
+- **Why it doesn't help:** after TP1 the worst case for the second half is breakeven, so cutting it early mostly swaps a small locked-in gain for the TP2 trades it would have reached. The two roughly cancel.
+- **No "consider taking profits" alert.** It would ask members to act without improving their results, and the posted track record would stop matching what they did. TP1, stop to entry, TP2 stay as they are. The hourly turn can be watched in the live record but is not a candidate.
+
