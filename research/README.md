@@ -957,3 +957,43 @@ python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 - **Both are coin flips minus the spread.** Over 13,500 trades, the average is within a few hundredths of an R of zero, about half the pairs are up and half down, and both get worse from 2017. That is what a market with no edge in the rule looks like.
 - **The "liquidity grab" reversal does not work on daily FX.** Before 2017 it was flat at best; since then it loses.
 - **Nothing changes in the bot.** FX now has eight failed strategy families.
+
+## Round 36: Kalman-filter pairs trading (25 Nov 2026)
+
+Bradley asked whether HP, band-pass or Kalman filters would work.
+- **HP:** the standard HP filter is two-sided: it uses future prices, so a backtest on it is fake. One-sided, it is a lagging moving average, which earlier rounds already covered.
+- **Band-pass:** assumes a stable cycle length, which gold and FX don't keep.
+- **Kalman:** the one genuinely new use is tracking a moving hedge ratio between two linked markets and trading the gap when it stretches. No earlier round traded a spread.
+
+**The test.** Ten pairs, fixed in advance: gold/silver, gold/platinum, WTI/Brent, EURUSD/GBPUSD, AUDUSD/NZDUSD, EURUSD/USDCHF, AUDJPY/NZDJPY, S&P/Dow, S&P/Nasdaq, DAX/Euro Stoxx.
+- **Filter:** a Kalman filter on daily log closes, y = a + b·x.
+- **Entry:** when the forecast error passes 2 standard deviations, trade the gap back at the next open, with b frozen at entry.
+- **Exit:** when the error crosses zero, at a stop 2 standard deviations against, or after 20 days.
+- **Costs:** charged on both legs.
+
+The script is `round36_kalman_pairs.py` and the results are in `round36_results.json`.
+
+**Two amendments, both logged in the script.** The textbook noise settings (Ve 1e-3, delta 1e-4) are in dollar-price units. On log prices they produced 2 trades, then 10, in 18 years. The fix was a scale-free running Ve, delta 1e-7 and a diffuse start. Both changes were made only after seeing trade counts that showed the filter was mis-scaled, and the final version was run once.
+
+| | Trades | Per week | Avg R | Win | Pairs up | p (pairs) | p (months) | Before 2017 | From 2017 | Double costs | Verdict |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| Kalman pairs | 373 | 0.4 | +0.042 | 57% | 4/10 | 0.34 | 0.28 | +0.067 | +0.032 | +0.013 | fail |
+
+| Pair | Trades | Avg R | Win |
+|---|---|---|---|
+| WTI / Brent | 67 | +0.34 | 73% |
+| EURUSD / USDCHF | 27 | +0.49 | 48% |
+| S&P / Dow | 18 | +0.27 | 78% |
+| AUDUSD / NZDUSD | 29 | +0.22 | 69% |
+| EURUSD / GBPUSD | 32 | −0.00 | 50% |
+| S&P / Nasdaq | 35 | −0.01 | 49% |
+| Gold / silver | 65 | −0.14 | 52% |
+| DAX / Euro Stoxx | 26 | −0.14 | 50% |
+| AUDJPY / NZDJPY | 61 | −0.21 | 54% |
+| Gold / platinum | 13 | −0.43 | 38% |
+
+**Fail.** The pooled average is slightly positive (+0.04R). However, only 4 of the 10 pairs make money, and neither the across-pairs nor the across-months test is anywhere near significant.
+
+WTI/Brent looks best (+0.34R over 67 trades). Picking it out after seeing the results would be cherry-picking, though. It would need its own pre-registered test on data it hasn't seen, and there is none left. Gold/silver, the pair most relevant to this bot, loses.
+
+hypotheses_tested rises from 1,401 to 1,402 (recorded here only).
