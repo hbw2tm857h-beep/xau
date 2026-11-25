@@ -1,0 +1,74 @@
+{
+ "n": 373,
+ "per_week": 0.4,
+ "avg_r": 0.042,
+ "pairs_positive": "4/10",
+ "p_pairs": "0.34",
+ "p_months": "0.28",
+ "before_2017": 0.067,
+ "from_2017": 0.032,
+ "double_costs": 0.013,
+ "verdict": "fail",
+ "pairs": [
+  {
+   "pair": "XAUUSD/XAGUSD",
+   "n": 65,
+   "avg_r": -0.137,
+   "win_pct": 52
+  },
+  {
+   "pair": "XAUUSD/Platinum",
+   "n": 13,
+   "avg_r": -0.434,
+   "win_pct": 38
+  },
+  {
+   "pair": "WTI oil/Brent oil",
+   "n": 67,
+   "avg_r": 0.338,
+   "win_pct": 73
+  },
+  {
+   "pair": "EURUSD/GBPUSD",
+   "n": 32,
+   "avg_r": -0.001,
+   "win_pct": 50
+  },
+  {
+   "pair": "AUDUSD/NZDUSD",
+   "n": 29,
+   "avg_r": 0.221,
+   "win_pct": 69
+  },
+  {
+   "pair": "EURUSD/USDCHF",
+   "n": 27,
+   "avg_r": 0.486,
+   "win_pct": 48
+  },
+  {
+   "pair": "AUDJPY/NZDJPY",
+   "n": 61,
+   "avg_r": -0.214,
+   "win_pct": 54
+  },
+  {
+   "pair": "S&P 500/Dow",
+   "n": 18,
+   "avg_r": 0.274,
+   "win_pct": 78
+  },
+  {
+   "pair": "S&P 500/Nasdaq 100",
+   "n": 35,
+   "avg_r": -0.011,
+   "win_pct": 49
+  },
+  {
+   "pair": "DAX/Euro Stoxx 50",
+   "n": 26,
+   "avg_r": -0.138,
+   "win_pct": 50
+  }
+ ]
+}
