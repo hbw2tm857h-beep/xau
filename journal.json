@@ -296,5 +296,17 @@
     "r": -0.15,
     "sig_time": "2026-11-25T15:30:00+00:00",
     "strategy": "ndx_noise"
+  },
+  {
+    "dir": -1,
+    "entry": 3547.16,
+    "entry_time": "2026-11-25T01:00:00+00:00",
+    "exit": 3589.23,
+    "exit_time": "2026-11-25T22:00:00+00:00",
+    "grade": null,
+    "how": "ib_close",
+    "r": -0.316,
+    "sig_time": "2026-11-24T22:00:00+00:00",
+    "strategy": "inside_day"
   }
 ]
