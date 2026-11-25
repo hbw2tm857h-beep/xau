@@ -89,14 +89,14 @@
     "triggered": true
   },
   "last_daily_k_end": "2026-11-24T22:00:00+00:00",
-  "last_h1": "2026-11-25T13:00:00+00:00",
+  "last_h1": "2026-11-25T14:00:00+00:00",
   "last_run": {
     "failed": [],
     "late": 0,
     "mode": "run",
-    "posts": 1,
+    "posts": 0,
     "skipped": 0,
-    "started": "2026-11-25T14:06:09.960850+00:00"
+    "started": "2026-11-25T15:06:13.207341+00:00"
   },
   "markets": {
     "btc": {
@@ -107,7 +107,9 @@
       "fail_count": 0,
       "idea": {
         "age": 2,
+        "booked": 0.5,
         "dir": -1,
+        "done": 0.5,
         "entry": 58448.75,
         "entry_time": "2026-11-25T14:00:00+00:00",
         "grade": "A",
@@ -115,19 +117,19 @@
         "risk": 1138.7997,
         "session": true,
         "sig_time": "2026-11-25T12:00:00+00:00",
-        "stop": 59587.55,
+        "stop": 58448.75,
         "strategy": "btc_trend",
         "target": 56171.15,
         "triggered": true
       },
       "last_daily_k_end": "2026-11-24T22:00:00+00:00",
-      "last_h1": "2026-11-25T13:00:00+00:00"
+      "last_h1": "2026-11-25T14:00:00+00:00"
     },
     "eth": {
       "fail_count": 0,
       "ib": null,
       "last_daily_k_end": "2026-11-24T22:00:00+00:00",
-      "last_h1": "2026-11-25T13:00:00+00:00"
+      "last_h1": "2026-11-25T14:00:00+00:00"
     }
   },
   "near_miss": {
