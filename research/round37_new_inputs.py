@@ -177,9 +177,9 @@ def trend_trades(cfg, bars, lo, hi):
     return F, out
 
 
-def simulate(bars, k, d, entry, stop, cfg):
-    """R of one trade filled on bar k with the live exits, sized to |entry - stop|."""
-    risk = abs(entry - stop)
+def simulate(bars, k, d, entry, stop, cfg, risk):
+    """R of one trade filled on bar k with the live exits, sized to `risk` (the
+    live state machine keeps the unrounded risk next to rounded prices)."""
     cost = cfg["cost_per_trade"]
     partial = entry + d * cfg["partial_r"] * risk
     target = entry + d * cfg["target_r"] * risk
@@ -285,7 +285,7 @@ def t2_round_stops(cfg, sets):
             if not exposed(tr):
                 continue
             new_stop = tr["stop"] - tr["dir"] * 0.25 * tr["risk"]
-            v = simulate(bars, tr["k"], tr["dir"], tr["entry"], new_stop, cfg)
+            v = simulate(bars, tr["k"], tr["dir"], tr["entry"], new_stop, cfg, 1.25 * tr["risk"])
             if v is not None:
                 gains.setdefault(period_of(tr["t"]), []).append(v - tr["r"])
     allg = [x for p, _, _ in PERIODS for x in gains.get(p, [])]
@@ -391,7 +391,7 @@ def main():
     F, new = trend_trades(cfg, bars, D(2008), D(2030))
     F0, old = trend_trades(cfg, old_bars, *OLD[1:])
     bad = sum(1 for bb, ts in ((bars, new), (old_bars, old)) for tr in ts
-              if abs((simulate(bb, tr["k"], tr["dir"], tr["entry"], tr["stop"], cfg) or 99) - tr["r"]) > 0.002)
+              if abs((simulate(bb, tr["k"], tr["dir"], tr["entry"], tr["stop"], cfg, tr["risk"]) or 99) - tr["r"]) > 0.002)
     print(f"{len(new)} trend trades 2008-26, {len(old)} in 2004-07; exit re-run differs from the live R on {bad}")
     trades = new + old
     rows = [t1_flows(trades), t2_round_stops(cfg, [(bars, new), (old_bars, old)]) if not bad else
