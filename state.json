@@ -5,23 +5,7 @@
     "trend|2026-11-24T16:00:00+00:00|partial|-1": "2026-11-25T13:46:11.052488+00:00"
   },
   "fail_count": 0,
-  "h4": {
-    "age": 6,
-    "booked": 0.5,
-    "dir": -1,
-    "done": 0.5,
-    "entry": 3607.33,
-    "entry_time": "2026-11-24T16:00:00+00:00",
-    "grade": null,
-    "partial": 3525.28,
-    "risk": 82.0503,
-    "session": null,
-    "sig_time": "2026-11-24T10:00:00+00:00",
-    "stop": 3607.33,
-    "strategy": "h4_trend",
-    "target": 3443.23,
-    "triggered": true
-  },
+  "h4": null,
   "h4_last_end": "2026-11-25T14:00:00+00:00",
   "ib": {
     "dir": -1,
@@ -89,49 +73,28 @@
     "triggered": true
   },
   "last_daily_k_end": "2026-11-24T22:00:00+00:00",
-  "last_h1": "2026-11-25T14:00:00+00:00",
+  "last_h1": "2026-11-25T15:00:00+00:00",
   "last_run": {
     "failed": [],
-    "hour_first": "2026-11-25T15:06:13.207341+00:00",
     "late": 0,
     "mode": "run",
-    "posts": 0,
+    "posts": 1,
     "skipped": 0,
-    "started": "2026-11-25T15:30:12.287170+00:00"
+    "started": "2026-11-25T16:25:21.503756+00:00"
   },
   "markets": {
     "btc": {
-      "announced": {
-        "btc_trend|2026-11-25T12:00:00+00:00|entry|-1": "2026-11-25T13:36:12.564067+00:00",
-        "btc_trend|2026-11-25T12:00:00+00:00|partial|-1": "2026-11-25T14:56:12.463500+00:00",
-        "btc_trend|2026-11-25T12:00:00+00:00|stop|-1": "2026-11-25T15:16:11.113423+00:00"
-      },
+      "announced": {},
       "fail_count": 0,
-      "idea": {
-        "age": 2,
-        "booked": 0.5,
-        "dir": -1,
-        "done": 0.5,
-        "entry": 58448.75,
-        "entry_time": "2026-11-25T14:00:00+00:00",
-        "grade": "A",
-        "partial": 57309.95,
-        "risk": 1138.7997,
-        "session": true,
-        "sig_time": "2026-11-25T12:00:00+00:00",
-        "stop": 58448.75,
-        "strategy": "btc_trend",
-        "target": 56171.15,
-        "triggered": true
-      },
+      "idea": null,
       "last_daily_k_end": "2026-11-24T22:00:00+00:00",
-      "last_h1": "2026-11-25T14:00:00+00:00"
+      "last_h1": "2026-11-25T15:00:00+00:00"
     },
     "eth": {
       "fail_count": 0,
       "ib": null,
       "last_daily_k_end": "2026-11-24T22:00:00+00:00",
-      "last_h1": "2026-11-25T14:00:00+00:00"
+      "last_h1": "2026-11-25T15:00:00+00:00"
     }
   },
   "near_miss": {
