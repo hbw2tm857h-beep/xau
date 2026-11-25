@@ -48,6 +48,16 @@ Pass (one test, alpha 0.05):
 hypotheses_tested rises by 1 (1,401 -> 1,402), recorded here and in
 research/README.md. A pass goes to Bradley as a proposal for a candidate;
 nothing reaches members on this alone.
+
+AMENDMENT (25 Nov 2026, after the first run stopped at 2 trades on gold/silver
+and crashed on gold/platinum with none; no other result was seen): Ve = 1e-3
+came from the textbook example in dollar prices, and on log prices it is about
+20x the size of a day's forecast error, so z almost never reached 2 -- the
+filter's z was not a standard score at all. Ve is now scale-free: it starts at
+1e-4 and after each day becomes 0.97 x Ve + 0.03 x e^2 (an exponential average
+of the squared forecast errors, about a 1-month memory), so z stays a standard
+score on every pair. Nothing else changed. Pairs with no trades are reported as
+such instead of crashing.
 """
 import json
 import math
@@ -67,7 +77,7 @@ import round29_52wk_markets as R29  # noqa: E402
 UTC = timezone.utc
 HALF = datetime(2017, 1, 1, tzinfo=UTC)
 ALPHA = 0.05
-DELTA, VE = 1e-4, 1e-3
+DELTA = 1e-4
 WARMUP, ENTRY_Z, STOP_K, MAX_DAYS = 250, 2.0, 2.0, 20
 PAIRS = [("XAUUSD", "XAGUSD"), ("XAUUSD", "Platinum"), ("WTI oil", "Brent oil"), ("EURUSD", "GBPUSD"),
          ("AUDUSD", "NZDUSD"), ("EURUSD", "USDCHF"), ("AUDJPY", "NZDJPY"), ("S&P 500", "Dow"),
@@ -83,6 +93,7 @@ def daily(name, mk):
 def kalman(ys, xs):
     """Per day: (e, Q, a, b) before that day's update."""
     vw = DELTA / (1 - DELTA)
+    ve = 1e-4
     th = [0.0, 0.0]
     P = [[0.0, 0.0], [0.0, 0.0]]
     out = []
@@ -91,9 +102,10 @@ def kalman(ys, xs):
         F = [1.0, x]
         yhat = th[0] + th[1] * x
         RF = [R[0][0] + R[0][1] * x, R[1][0] + R[1][1] * x]
-        Q = F[0] * RF[0] + F[1] * RF[1] + VE
+        Q = F[0] * RF[0] + F[1] * RF[1] + ve
         e = y - yhat
         out.append((e, Q, th[0], th[1]))
+        ve = 0.97 * ve + 0.03 * e * e
         K = [RF[0] / Q, RF[1] / Q]
         th = [th[0] + K[0] * e, th[1] + K[1] * e]
         P = [[R[0][0] - K[0] * RF[0], R[0][1] - K[0] * RF[1]],
@@ -148,8 +160,7 @@ def main():
         if tr:
             per.append(m)
         win = 100 * sum(t["r"] > 0 for t in tr) / len(tr) if tr else 0
-        print(f"  {yn + '/' + xn:24s} n={len(tr):4d} avg {m:+.3f}R win {win:.0f}% "
-              f"from {min(t['t'] for t in tr):%Y}", flush=True)
+        print(f"  {yn + '/' + xn:24s} n={len(tr):4d} avg {m:+.3f}R win {win:.0f}%", flush=True)
         rows.append({"pair": f"{yn}/{xn}", "n": len(tr), "avg_r": round(m, 3), "win_pct": round(win)})
     a = [t["r"] for t in allt]
     t1, p1 = R28.tt(per)
