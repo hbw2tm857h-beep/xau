@@ -224,5 +224,17 @@
     "r": 0.461,
     "sig_time": "2026-11-25T01:00:00+00:00",
     "strategy": "btc_trend"
+  },
+  {
+    "dir": 1,
+    "entry": 3624.03,
+    "entry_time": "2026-11-24T15:00:00+00:00",
+    "exit": 3530.72,
+    "exit_time": "2026-11-25T11:00:00+00:00",
+    "grade": null,
+    "how": "time_exit",
+    "r": -0.991,
+    "sig_time": "2026-11-24T15:00:00+00:00",
+    "strategy": "gold_fixes"
   }
 ]
