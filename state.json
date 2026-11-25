@@ -86,28 +86,41 @@
     "triggered": true
   },
   "last_daily_k_end": "2026-11-24T22:00:00+00:00",
-  "last_h1": "2026-11-25T10:00:00+00:00",
+  "last_h1": "2026-11-25T11:00:00+00:00",
   "last_run": {
     "failed": [],
     "late": 0,
     "mode": "run",
     "posts": 1,
     "skipped": 0,
-    "started": "2026-11-25T11:06:08.976548+00:00"
+    "started": "2026-11-25T12:06:11.160936+00:00"
   },
   "markets": {
     "btc": {
       "announced": {},
       "fail_count": 0,
-      "idea": null,
+      "idea": {
+        "age": 0,
+        "dir": -1,
+        "entry": 58448.75,
+        "grade": "A",
+        "partial": 57309.95,
+        "risk": 1138.7997,
+        "session": true,
+        "sig_time": "2026-11-25T12:00:00+00:00",
+        "stop": 59587.55,
+        "strategy": "btc_trend",
+        "target": 56171.15,
+        "triggered": false
+      },
       "last_daily_k_end": "2026-11-24T22:00:00+00:00",
-      "last_h1": "2026-11-25T10:00:00+00:00"
+      "last_h1": "2026-11-25T11:00:00+00:00"
     },
     "eth": {
       "fail_count": 0,
       "ib": null,
       "last_daily_k_end": "2026-11-24T22:00:00+00:00",
-      "last_h1": "2026-11-25T10:00:00+00:00"
+      "last_h1": "2026-11-25T11:00:00+00:00"
     }
   },
   "near_miss": {
