@@ -22,7 +22,7 @@
     "target": 3443.23,
     "triggered": true
   },
-  "h4_last_end": "2026-11-25T10:00:00+00:00",
+  "h4_last_end": "2026-11-25T14:00:00+00:00",
   "ib": {
     "dir": -1,
     "entry": 3547.16,
@@ -73,7 +73,9 @@
   },
   "idea": {
     "age": 1,
+    "booked": 0.5,
     "dir": -1,
+    "done": 0.5,
     "entry": 3567.05,
     "entry_time": "2026-11-24T17:00:00+00:00",
     "grade": "B",
@@ -81,20 +83,20 @@
     "risk": 83.1441,
     "session": true,
     "sig_time": "2026-11-24T16:00:00+00:00",
-    "stop": 3650.2,
+    "stop": 3567.05,
     "strategy": "trend",
     "target": 3400.76,
     "triggered": true
   },
   "last_daily_k_end": "2026-11-24T22:00:00+00:00",
-  "last_h1": "2026-11-25T12:00:00+00:00",
+  "last_h1": "2026-11-25T13:00:00+00:00",
   "last_run": {
     "failed": [],
     "late": 0,
     "mode": "run",
-    "posts": 0,
+    "posts": 1,
     "skipped": 0,
-    "started": "2026-11-25T13:06:11.345630+00:00"
+    "started": "2026-11-25T14:06:09.960850+00:00"
   },
   "markets": {
     "btc": {
@@ -103,9 +105,10 @@
       },
       "fail_count": 0,
       "idea": {
-        "age": 1,
+        "age": 2,
         "dir": -1,
         "entry": 58448.75,
+        "entry_time": "2026-11-25T14:00:00+00:00",
         "grade": "A",
         "partial": 57309.95,
         "risk": 1138.7997,
@@ -114,16 +117,16 @@
         "stop": 59587.55,
         "strategy": "btc_trend",
         "target": 56171.15,
-        "triggered": false
+        "triggered": true
       },
       "last_daily_k_end": "2026-11-24T22:00:00+00:00",
-      "last_h1": "2026-11-25T12:00:00+00:00"
+      "last_h1": "2026-11-25T13:00:00+00:00"
     },
     "eth": {
       "fail_count": 0,
       "ib": null,
       "last_daily_k_end": "2026-11-24T22:00:00+00:00",
-      "last_h1": "2026-11-25T12:00:00+00:00"
+      "last_h1": "2026-11-25T13:00:00+00:00"
     }
   },
   "near_miss": {
@@ -146,7 +149,7 @@
       "last_exit": "2026-11-25T11:00:00+00:00"
     },
     "gold_m15": {
-      "last_exit": "2026-11-24T12:45:00+00:00"
+      "last_exit": "2026-11-25T13:45:00+00:00"
     }
   },
   "noise": {
