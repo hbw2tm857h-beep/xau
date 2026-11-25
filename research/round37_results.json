@@ -1,0 +1,76 @@
+[
+ {
+  "test": "T1 trade agrees with the last 5 days of GLD flows",
+  "n_group": 476,
+  "n_rest": 218,
+  "group": 0.26,
+  "rest": 0.008,
+  "diff": 0.252,
+  "p": "0.0031",
+  "periods": [
+   "2008-15 +0.244 (195) vs +0.003",
+   "2016-24 +0.219 (223) vs -0.001",
+   "2025-26 +0.471 (58) vs +0.065",
+   "2004-07 +0.023 (62) vs +0.223"
+  ],
+  "verdict": "fail"
+ },
+ {
+  "test": "T2 move an exposed stop 0.25R beyond the round number",
+  "n_exposed": 133,
+  "n_trades": 841,
+  "gain": 0.014,
+  "p": "0.41",
+  "periods": [
+   "2008-15 -0.013R (48)",
+   "2016-24 +0.048R (60)",
+   "2025-26 -0.018R (25)",
+   "2004-07 -0.180R (13)"
+  ],
+  "verdict": "fail"
+ },
+ {
+  "test": "T3 signal on options expiry day or the day before",
+  "n_group": 65,
+  "n_rest": 655,
+  "group": -0.133,
+  "rest": 0.213,
+  "diff": -0.345,
+  "p": "0.0099",
+  "periods": [
+   "2008-15 +0.169 (29) vs +0.167",
+   "2016-24 -0.440 (33) vs +0.224",
+   "2025-26 n/a (3)",
+   "2004-07 +0.073 (9) vs +0.056"
+  ],
+  "verdict": "fail"
+ },
+ {
+  "test": "T4 signal in the Chinese New Year or Golden Week window",
+  "n_group": 85,
+  "n_rest": 635,
+  "group": 0.315,
+  "rest": 0.164,
+  "diff": 0.152,
+  "p": "0.23",
+  "periods": [
+   "2008-15 +0.211 (31) vs +0.163",
+   "2016-24 +0.340 (41) vs +0.129",
+   "2025-26 +0.487 (13) vs +0.304",
+   "2004-07 -0.289 (9) vs +0.085"
+  ],
+  "verdict": "fail"
+ },
+ {
+  "test": "T5 gold catches up with a big dollar move",
+  "n": 1550,
+  "avg_bp": -2.2,
+  "p": "0.95",
+  "periods": [
+   "2008-15 -2.38bp (761)",
+   "2016-24 -1.51bp (638)",
+   "2025-26 -4.25bp (151)"
+  ],
+  "verdict": "fail"
+ }
+]

@@ -937,6 +937,8 @@ python3 research/round29_52wk_markets.py     # the 52-week breakout on 67 other 
 python3 research/round30_reverse_after_breakeven.py # reverse after a breakeven stop (research only)
 python3 research/round33_m15_trigger.py          # gold rules with a 15-minute trigger (research only)
 python3 research/round34_m15_new_rules.py        # new 15-minute rules, searched then held out (research only)
+python3 research/round36_trend_shift_exit.py      # take the second half off when the trend turns after TP1 (research only)
+python3 research/round37_new_inputs.py            # GLD flows, round-number stops, options expiry, China calendar, dollar lead (research only; downloads the GLD archive)
 python3 research/round32_skipped_setups.py      # setups skipped while a trade is open (research only)
 python3 research/round31_macro_horizon.py         # macro filters and 3/6/12-hour forecasts (needs scikit-learn, ~25 min)
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
@@ -957,3 +959,48 @@ python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
 - **Both are coin flips minus the spread.** Over 13,500 trades, the average is within a few hundredths of an R of zero, about half the pairs are up and half down, and both get worse from 2017. That is what a market with no edge in the rule looks like.
 - **The "liquidity grab" reversal does not work on daily FX.** Before 2017 it was flat at best; since then it loses.
 - **Nothing changes in the bot.** FX now has eight failed strategy families.
+
+## Round 36: take the second half off when the trend turns after TP1 (25 Nov 2026)
+
+`round36_trend_shift_exit.py`, `round36_results.json`. Pre-registered and committed (6c665ff) before either exit was simulated. **Research only:** nothing in the bot changed. hypotheses_tested rises from 1,401 to 1,403 (recorded here only).
+
+Bradley asked whether the bot could tell members to start thinking about taking profits once a gold trend trade has hit TP1, has its stop at entry, and the trend is turning, making TP2 less likely. Such a heads-up only helps if acting on it pays, so the test acts on it: the second half closes at the hourly close where the turn is seen. Nothing changes before TP1 is banked, which makes this different from round 24's chandelier trail and from the old whole-trade `exit_mode "ha"`. Every live gold trend trade is re-run from its fill; the base re-run reproduced the live state machine's R on all 720 trades from 2008-26 and all 121 from 2004-07. Bar: gain above zero with paired one-sided p < 0.05 / 2, positive in 2008-15, 2016-24 and 2025-26, and not negative in 2004-07.
+
+| Test | Trades changed | Gain per trade, 2008-26 | p | 2008-15 / 2016-24 / 2025-26 | 2004-07 | Verdict |
+|---|---|---|---|---|---|---|
+| T1 4-hour Heikin Ashi candle turns against the trade after TP1 | 99 of 720 | +0.002R | 0.37 | +0.007 / −0.001 / −0.007 | −0.011 | fail |
+| T2 hourly Heikin Ashi candle turns against the trade after TP1 | 217 of 720 | +0.008R | 0.19 | +0.003 / +0.012 / +0.012 | +0.027 | fail |
+
+The base averages +0.182R per trade. **0 of 2 passed.**
+
+**What it says:**
+- **Getting out early when the trend turns after TP1 makes no real difference.** The 4-hour turn is a coin flip. The hourly turn is slightly ahead in every period, but by less than a hundredth of an R a trade on 2008-26, far from the bar.
+- **Why it doesn't help:** after TP1 the worst case for the second half is breakeven, so cutting it early mostly swaps a small locked-in gain for the TP2 trades it would have reached. The two roughly cancel.
+- **No "consider taking profits" alert.** It would ask members to act without improving their results, and the posted track record would stop matching what they did. TP1, stop to entry, TP2 stay as they are. The hourly turn can be watched in the live record but is not a candidate.
+
+## Round 37: five inputs the candles don't contain (25 Nov 2026)
+
+`round37_new_inputs.py`, `round37_results.json`. Pre-registered and committed (b813d0b) before any input was joined to a trade. **Research only:** nothing in the bot changed. hypotheses_tested rises from 1,403 to 1,408 (recorded here only).
+
+Bradley asked for more creative ways to find a concrete edge. 36 rounds searched gold's own candles, and the filters kept failing because the live multi-timeframe checks already carry what price says. This round used information the candles don't hold, or flows forced by a known schedule. T1-T4 are judged on every live gold trend trade (720 in 2008-26, 121 in 2004-07). T5 is a standalone hourly rule. Bar: p < 0.05 / 5 = 0.01 on 2008-26, with the same direction in every period that has at least 5 trades in the group, 2004-07 included.
+
+The first run reported T2 as void because the exit re-run differed from the live R on 8 trades. The cause was rounding: the live state machine keeps the unrounded risk beside rounded prices. The re-run was changed to use the stored risk, after which it matched all 841 trades. T2's numbers had not been seen before the fix, and the other four tests are unaffected.
+
+| Test | Group | The rest | p | 2008-15 / 2016-24 / 2025-26 / 2004-07 (group vs rest) | Verdict |
+|---|---|---|---|---|---|
+| T1 Trade agrees with the last 5 days of GLD ETF flows | +0.260R (476) | +0.008R (218) | 0.0031 | +0.24 vs +0.00 / +0.22 vs −0.00 / +0.47 vs +0.07 / **+0.02 vs +0.22** | fail (2004-07) |
+| T2 Move a stop that sits just beyond a round price 0.25R further out | +0.014R gain (133 exposed) | | 0.41 | −0.01 / +0.05 / −0.02 / −0.18 | fail |
+| T3 Signal on COMEX gold options expiry day or the day before | −0.133R (65) | +0.213R (655) | 0.0099 | +0.17 vs +0.17 / −0.44 vs +0.22 / 3 trades / +0.07 vs +0.06 | fail |
+| T4 Signal in the Chinese New Year or Golden Week window | +0.315R (85) | +0.164R (635) | 0.23 | +0.21 vs +0.16 / +0.34 vs +0.13 / +0.49 vs +0.30 / −0.29 vs +0.09 | fail |
+| T5 Gold catches up after a big hourly dollar move (3-hour hold) | −2.20bp a trade (1,550) | | 0.95 | −2.4 / −1.5 / −4.3 bp | fail |
+
+**0 of 5 passed.**
+
+**What it says:**
+- **GLD flows are the strongest lead in 37 rounds, and they still fail.** On 2008-26, trades in the same direction as the last week's GLD flows made +0.26R a trade and the others made almost nothing, in every period and at p = 0.003. Keeping only those trades would have kept nearly all the profit with two thirds of the trades. The pre-registered bar also required 2004-07, and there it went the other way (+0.02R against +0.22R, 62 trades with the flow). GLD launched in November 2004 and grew from nothing through 2007, so its flows then were mostly launch buying. That may explain the reversal, but the explanation came after the result and does not rescue the test. The data cannot settle it further: every year with GLD flows has now been used. Only live trades can, so the flow direction is worth recording on each live trade and checking in a few months.
+- **Options expiry looks bad only in 2016-24.** It made no difference in 2008-15 or 2004-07, and 2025-26 has 3 trades. One period carrying the whole result is what noise looks like.
+- **Round-number stop runs don't hurt our stops.** Moving an exposed stop further out did nothing on average and lost in three of four periods.
+- **The Chinese calendar points the right way for 2008-26 but is far from significant,** and it reversed in 2004-07.
+- **Gold does not lag the dollar by an hour.** Trading the catch-up lost 2.2 basis points a trade after costs, in every period. Any lag is gone within the hour.
+- **Nothing changes in the bot.**
+
