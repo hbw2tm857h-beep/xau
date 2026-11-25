@@ -58,6 +58,16 @@ filter's z was not a standard score at all. Ve is now scale-free: it starts at
 of the squared forecast errors, about a 1-month memory), so z stays a standard
 score on every pair. Nothing else changed. Pairs with no trades are reported as
 such instead of crashing.
+
+AMENDMENT 2 (25 Nov 2026, after the amended run gave 10 trades in 18 years;
+seen: 10 trades averaging +0.59R, too few to mean anything): delta = 1e-4 is
+also the textbook's dollar-price scale. On log prices the state noise it adds
+(about 1% a day) swamps the day's forecast error (about 0.15%), so the hedge
+ratio chases every move (EURUSD/GBPUSD's b swung 0.45 -> 0.84) and z hardly
+ever reaches 2 (once in 4,664 days). Now delta = 1e-7 (hedge ratio drifts
+roughly 0.1 a year) and the filter starts diffuse (P = I) so it settles inside
+the 250-day warm-up. This is the final specification; it is run once and the
+result stands whatever it is.
 """
 import json
 import math
@@ -77,7 +87,7 @@ import round29_52wk_markets as R29  # noqa: E402
 UTC = timezone.utc
 HALF = datetime(2017, 1, 1, tzinfo=UTC)
 ALPHA = 0.05
-DELTA = 1e-4
+DELTA = 1e-7
 WARMUP, ENTRY_Z, STOP_K, MAX_DAYS = 250, 2.0, 2.0, 20
 PAIRS = [("XAUUSD", "XAGUSD"), ("XAUUSD", "Platinum"), ("WTI oil", "Brent oil"), ("EURUSD", "GBPUSD"),
          ("AUDUSD", "NZDUSD"), ("EURUSD", "USDCHF"), ("AUDJPY", "NZDJPY"), ("S&P 500", "Dow"),
@@ -95,7 +105,7 @@ def kalman(ys, xs):
     vw = DELTA / (1 - DELTA)
     ve = 1e-4
     th = [0.0, 0.0]
-    P = [[0.0, 0.0], [0.0, 0.0]]
+    P = [[1.0, 0.0], [0.0, 1.0]]
     out = []
     for y, x in zip(ys, xs):
         R = [[P[0][0] + vw, P[0][1]], [P[1][0], P[1][1] + vw]]
