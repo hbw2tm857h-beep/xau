@@ -272,5 +272,29 @@
     "r": 0.474,
     "sig_time": "2026-11-25T12:00:00+00:00",
     "strategy": "btc_trend"
+  },
+  {
+    "dir": -1,
+    "entry": 3567.05,
+    "entry_time": "2026-11-24T17:00:00+00:00",
+    "exit": 3567.05,
+    "exit_time": "2026-11-25T21:00:00+00:00",
+    "grade": "B",
+    "how": "stop",
+    "r": 0.496,
+    "sig_time": "2026-11-24T16:00:00+00:00",
+    "strategy": "trend"
+  },
+  {
+    "dir": -1,
+    "entry": 610.41,
+    "entry_time": "2026-11-25T15:30:00+00:00",
+    "exit": 611.26,
+    "exit_time": "2026-11-25T16:30:00+00:00",
+    "grade": null,
+    "how": "noise_exit",
+    "r": -0.15,
+    "sig_time": "2026-11-25T15:30:00+00:00",
+    "strategy": "ndx_noise"
   }
 ]
