@@ -2,7 +2,7 @@
   "announced": {},
   "fail_count": 0,
   "h4": null,
-  "h4_last_end": "2026-11-26T18:00:00+00:00",
+  "h4_last_end": "2026-11-26T22:00:00+00:00",
   "ib": null,
   "ibs": {
     "DIA": {
@@ -37,29 +37,29 @@
     "next": 2
   },
   "idea": null,
-  "last_daily_k_end": "2026-11-25T22:00:00+00:00",
-  "last_h1": "2026-11-26T20:00:00+00:00",
+  "last_daily_k_end": "2026-11-26T22:00:00+00:00",
+  "last_h1": "2026-11-26T21:00:00+00:00",
   "last_run": {
     "failed": [],
     "late": 0,
     "mode": "run",
     "posts": 0,
     "skipped": 0,
-    "started": "2026-11-26T21:06:09.199158+00:00"
+    "started": "2026-11-26T22:06:09.820833+00:00"
   },
   "markets": {
     "btc": {
       "announced": {},
       "fail_count": 0,
       "idea": null,
-      "last_daily_k_end": "2026-11-25T22:00:00+00:00",
-      "last_h1": "2026-11-26T20:00:00+00:00"
+      "last_daily_k_end": "2026-11-26T22:00:00+00:00",
+      "last_h1": "2026-11-26T21:00:00+00:00"
     },
     "eth": {
       "fail_count": 0,
       "ib": null,
-      "last_daily_k_end": "2026-11-25T22:00:00+00:00",
-      "last_h1": "2026-11-26T20:00:00+00:00"
+      "last_daily_k_end": "2026-11-26T22:00:00+00:00",
+      "last_h1": "2026-11-26T21:00:00+00:00"
     }
   },
   "near_miss": {
