@@ -308,5 +308,17 @@
     "r": -0.316,
     "sig_time": "2026-11-24T22:00:00+00:00",
     "strategy": "inside_day"
+  },
+  {
+    "dir": 1,
+    "entry": 3466.48,
+    "entry_time": "2026-11-25T15:00:00+00:00",
+    "exit": 3555.96,
+    "exit_time": "2026-11-26T11:00:00+00:00",
+    "grade": null,
+    "how": "time_exit",
+    "r": 0.903,
+    "sig_time": "2026-11-25T15:00:00+00:00",
+    "strategy": "gold_fixes"
   }
 ]
