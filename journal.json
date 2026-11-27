@@ -320,5 +320,17 @@
     "r": 0.903,
     "sig_time": "2026-11-25T15:00:00+00:00",
     "strategy": "gold_fixes"
+  },
+  {
+    "dir": 1,
+    "entry": 3581.43,
+    "entry_time": "2026-11-26T15:00:00+00:00",
+    "exit": 3679.27,
+    "exit_time": "2026-11-27T11:00:00+00:00",
+    "grade": null,
+    "how": "time_exit",
+    "r": 0.939,
+    "sig_time": "2026-11-26T15:00:00+00:00",
+    "strategy": "gold_fixes"
   }
 ]
