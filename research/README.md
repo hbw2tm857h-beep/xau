@@ -939,6 +939,9 @@ python3 research/round33_m15_trigger.py          # gold rules with a 15-minute t
 python3 research/round34_m15_new_rules.py        # new 15-minute rules, searched then held out (research only)
 python3 research/round36_trend_shift_exit.py      # take the second half off when the trend turns after TP1 (research only)
 python3 research/round37_new_inputs.py            # GLD flows, round-number stops, options expiry, China calendar, dollar lead (research only; downloads the GLD archive)
+python3 research/round38_headlines_shocks.py       # headline posts, news surprise size, shock hours (research only; downloads two post archives)
+python3 research/round39_gbpjpy.py                 # four GBPJPY ideas researched for the yen crosses (research only)
+python3 research/round41_real_volume_2020.py       # real COMEX gold volume, Sep 2020 on (research only; downloads Yahoo GC=F daily; round 40 is void)
 python3 research/round32_skipped_setups.py      # setups skipped while a trade is open (research only)
 python3 research/round31_macro_horizon.py         # macro filters and 3/6/12-hour forecasts (needs scikit-learn, ~25 min)
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
@@ -1002,5 +1005,71 @@ The first run reported T2 as void because the exit re-run differed from the live
 - **Round-number stop runs don't hurt our stops.** Moving an exposed stop further out did nothing on average and lost in three of four periods.
 - **The Chinese calendar points the right way for 2008-26 but is far from significant,** and it reversed in 2004-07.
 - **Gold does not lag the dollar by an hour.** Trading the catch-up lost 2.2 basis points a trade after costs, in every period. Any lag is gone within the hour.
+- **Nothing changes in the bot.**
+
+## Round 38: headline posts, the size of the news surprise, shock hours (27 Nov 2026)
+
+`round38_headlines_shocks.py`, `round38_results.json`. Pre-registered and committed (da826ad) before the post archives were downloaded or any split was looked at. **Research only:** nothing in the bot changed. hypotheses_tested rises from 1,408 to 1,411 (recorded here only).
+
+The ideas came from a 27 Nov scrape of r/algotrading. Two posts there described intraday systems losing on days a presidential post or headline moved the market, and round 23's near miss (gold trend signals just after an FOMC statement or jobs report) raised the question of whether the size of the surprise is what matters. Consensus forecasts were not affordable (the only Apify calendar source charges $0.01 a row), so the surprise is measured from gold's own move in the release hour. The posts come from two free archives on GitHub: UNC's Trump_Tweets_Example (90,554 posts, Twitter and Truth Social, 2009 to 8 Jan 2026) and stiles' trump-truth-social-archive (29,469 Truth Social posts, Feb 2022 to 2 May 2026). Neither is committed. Bar: p < 0.05 / 3 = 0.0167 and the same direction in every period with at least 5 trades in the group.
+
+| Test | Group | The rest | p | Periods (group vs rest) | Verdict |
+|---|---|---|---|---|---|
+| N1 Market-relevant post (tariffs, China, Fed, Iran, war, oil and similar) in the 2 hours before the signal, terms 1 and 2 only | +0.431R (15) | +0.167R (200) | 0.39 | term 1 +0.40 vs +0.08 / term 2 +0.48 vs +0.32 | fail, and the wrong way |
+| N2 Signal within 24h after an FOMC, jobs or CPI release that moved gold 3x a normal hour | +0.508R (38) | +0.163R (682) | 0.019 | +0.56 vs +0.15 / +0.53 vs +0.13 / **+0.29 vs +0.34** / **+0.04 vs +0.06** | fail |
+| N3 Signal within 24h after any hour that moved 3x a normal hour | +0.191R (495) | +0.162R (225) | 0.73 | +0.20 vs +0.09 / +0.15 vs +0.16 / +0.28 vs +0.46 / −0.05 vs +0.31 | fail |
+
+**0 of 3 passed.**
+
+**What it says:**
+- **Sitting out after a headline post would not have helped the trend trades.** The 15 trades signalled within two hours of a market-relevant post did better than the rest in both terms, not worse. Headline risk hurts the scalpers on Reddit; for multi-hour trend trades, a post that moves gold tends to start the move the rules then follow. The post archive ends on 2 May 2026, so later term-2 trades all count as "no post"; that can't flip the result, because the group already did better. No news pause.
+- **The size of the surprise doesn't sharpen round 23's near miss.** Trend signals after a big release did well in 2008-15 and 2016-24 again (+0.5R against +0.15R), but slightly worse than the rest in 2025-26 and 2004-07, and p missed the bar. Most of round 23's 40 trades are the same trades, so this is the same near miss seen again, not new evidence. It stays a thing to watch in the live record.
+- **A big hour on its own means nothing for the next day's trend trades.** Roughly two thirds of trades follow such an hour, and they do no better than the rest.
+- **Nothing changes in the bot.**
+
+## Round 39: GBPJPY, with ideas researched for the yen crosses (27 Nov 2026)
+
+`round39_gbpjpy.py`, `round39_results.json`. Pre-registered and committed (fb29023) before any rule was run on GBPJPY. **Research only:** nothing in the bot changed. hypotheses_tested rises from 1,411 to 1,415 (recorded here only).
+
+Bradley asked for an edge on GBPJPY and for other markets to be researched afresh rather than tried with gold's rules. Four ideas came from how a yen carry cross works, each with someone forced or slow on the other side: equities reprice risk before the yen crosses (from the 27 Nov r/algotrading scrape); carry unwinds are forced deleveraging (Brunnermeier, Nagel and Pedersen 2008; the IMF's 2019/136 finds yen unwinds run twice as fast when VIX is high); the carry premium is pay for crash risk that arrives in stressed markets (Menkhoff et al. 2012; Clarida, Davis and Pedersen 2009); and Japanese importers buy dollars into the 9:55 Tokyo fix on gotobi days (Bessho, Sugimoto and Suzuki, arXiv 2301.13204). Costs 2.5 basis points a round trip, plus financing on positions held overnight. Bar: p < 0.05 / 4 = 0.0125.
+
+One deviation from the pre-registration: FRED timed out from this machine, so financing uses the Bank of England and Bank of Japan policy rates by decision date instead of the OECD 3-month rates. Only G2 and G3 use financing. The 2026 BoJ steps come from press reports. Neither change moves financing by more than a fraction of a basis point a day.
+
+| Test | Result | p | 2008/12-15 / 2016-24 / 2025-26 | Verdict |
+|---|---|---|---|---|
+| G1 S&P 500 moves 2 sd in an hour and GBPJPY lags: trade the catch-up for 3 hours | −1.43bp a trade (1,230) | 0.97 | −2.2 / −0.9 / −2.9 bp | fail |
+| G2 Sell after a 2-sd down day, hold 5 days | −1.1bp a trade (159) | 0.53 | −17.8 / +14.1 / +3.8 bp | fail |
+| G3 Hold GBPJPY long with carry only when VIX is below its 1-year median | +1.68bp a day calm (3,196) vs −0.26bp (2,397) | 0.15 | calm ahead / ahead / **behind** | fail |
+| G4 Gotobi: long 18:00-01:00 UTC into the Tokyo fix | +0.12bp (1,167) vs −2.62bp on other days | 0.45 / 0.008 | +0.9 / −0.3 / −1.5 bp | fail |
+
+**0 of 4 passed.**
+
+**What it says:**
+- **GBPJPY does not lag the S&P 500.** Trading the catch-up lost after costs in every period, as gold did against the dollar in round 37. Any lag is gone within the hour.
+- **Carry unwinds don't reliably keep going.** Selling after a crash day lost heavily in 2008-15 (the bounces after 2008) and made money in 2016-24. It nets out at zero.
+- **Carry in calm markets is the most economically sound result and still not enough.** Holding GBPJPY only when VIX is below its one-year median made about 2.4% a year with financing, against nothing on the other days, in 2009-15 and 2016-24, but 2025-26 went the other way and p is 0.15. It is a slow, daily, buy-and-hold-style return, not a signal stream, and would not suit alerts even if it had passed.
+- **Gotobi days really are different, but not profitable.** The overnight hold into the fix did 2.7bp better on gotobi days than on other days (p 0.008), the right way in every period. But the plain hold loses on ordinary days, and on gotobi days it only breaks even after costs, so there is nothing to trade. Importers' dollar buying is visible in GBPJPY; it is smaller than the spread.
+- **Nothing changes in the bot.** FX now has twelve failed strategy families.
+
+## Rounds 40-41: real COMEX gold volume (27 Nov 2026)
+
+`round40_real_volume.py`, `round41_real_volume_2020.py`, `round40_results.json` (void), `round41_results.json`. Pre-registered and committed (ac4deb2, 9427900) before the volume was joined to any trade in the window each one reports. **Research only:** nothing in the bot changed. hypotheses_tested rises from 1,415 to 1,421 (recorded here only; round 40's three count although void).
+
+Round 18 found nothing in volume, but it had only Dukascopy's proxy volume, which is the broker's own flow. Real gold futures volume is the one input the research never had. Yahoo Finance serves daily candles for the continuous COMEX gold future (`GC=F`) with volume from 2000, free. The file is saved to `data/volume/gc_daily_yahoo.csv` and gitignored, because Yahoo's terms bar redistribution and the repo is public. From round 40 on, a period needs at least 20 trades in the group before it counts toward the "same direction in every period" rule, instead of 5. This was decided before round 40 because five trades let noise veto a result.
+
+**Round 40 is void.** Yahoo's `GC=F` volume is not exchange volume before 2020. In 2008-19 its median is about 100 contracts a day; from 27 May 2020 it is about 190,000. So the early years carry one thin contract's volume. The jump also tripped the pre-registered cleaning rule (a day more than 4 times the median of the last 20 valid days is invalid), which then marked every later day invalid. Round 40's numbers therefore come only from the junk years and are not used. No trade from 2020 on had been joined to volume, so round 41 re-ran the same three tests on Sep 2020 to Nov 2026 alone, with volume read from 1 June 2020.
+
+| Test (Sep 2020-26) | Group | The rest | p | 2020-24 / 2025-26 (group vs rest) | Verdict |
+|---|---|---|---|---|---|
+| Q1 Trend trade after a day with above-average volume (round 18's V2, real volume) | +0.282R (130) | +0.186R (111) | 0.50 | +0.15 vs +0.24 / +0.56 vs +0.08 | fail |
+| Q2 Inside-day trade after a quiet inside day (round 18's V4, real volume) | +0.103R (163) | +0.212R (44) | 0.53 | +0.02 vs +0.29 / +0.31 vs −0.03 | fail, worse |
+| Q3 Trend trade after volume dried up (last 5 days under 0.8x the previous 60) | +0.429R (48) | +0.190R (193) | 0.16 | +0.49 vs +0.12 / 19 trades | fail |
+
+**0 of 3 passed.**
+
+**What it says:**
+- **Real volume says what proxy volume said: nothing usable.** Above-average volume before a trend trade helped in 2025-26 and hurt in 2020-24. Quiet inside days were worse, as round 18 found with proxy volume.
+- **Volume drying up before a trend trade is the only lead, and it is weak.** Those trades made +0.43R against +0.19R, but on 48 trades with p = 0.16, and 2025-26 has too few to count. It is a note for the live record, not a rule.
+- **The free data is the limit.** Six years of daily volume give about 245 trend trades, so only a very large effect could pass. A longer real series (Databento's 1-minute GC bars go back to June 2010) is the only way to settle the dry-up lead. It is not worth buying on this evidence alone.
 - **Nothing changes in the bot.**
 

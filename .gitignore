@@ -3,3 +3,6 @@ __pycache__/
 research/reddit_raw/
 .env
 data/macro/gld_holdings.csv
+data/macro/trump_posts_unc.csv
+data/macro/trump_posts_truth.csv
+data/volume/gc_daily_yahoo.csv

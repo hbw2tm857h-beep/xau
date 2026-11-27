@@ -1,0 +1,48 @@
+[
+ {
+  "test": "N1 market-relevant post in the 2 hours before the signal",
+  "n_group": 15,
+  "n_rest": 200,
+  "group": 0.431,
+  "rest": 0.167,
+  "diff": 0.263,
+  "p": "0.39",
+  "periods": [
+   "term 1 +0.396 (9) vs +0.076 (124)",
+   "term 2 +0.483 (6) vs +0.317 (76)"
+  ],
+  "verdict": "fail"
+ },
+ {
+  "test": "N2 signal within 24h after a big-surprise release",
+  "n_group": 38,
+  "n_rest": 682,
+  "group": 0.508,
+  "rest": 0.163,
+  "diff": 0.344,
+  "p": "0.019",
+  "periods": [
+   "2008-15 +0.558 (12) vs +0.152 (300)",
+   "2016-24 +0.531 (21) vs +0.130 (303)",
+   "2025-26 +0.290 (5) vs +0.335 (79)",
+   "2004-07 +0.038 (6) vs +0.058 (115)"
+  ],
+  "verdict": "fail"
+ },
+ {
+  "test": "N3 signal within 24h after a shock hour",
+  "n_group": 495,
+  "n_rest": 225,
+  "group": 0.191,
+  "rest": 0.162,
+  "diff": 0.029,
+  "p": "0.73",
+  "periods": [
+   "2008-15 +0.201 (217) vs +0.091 (95)",
+   "2016-24 +0.154 (217) vs +0.159 (107)",
+   "2025-26 +0.283 (61) vs +0.464 (23)",
+   "2004-07 -0.045 (86) vs +0.307 (35)"
+  ],
+  "verdict": "fail"
+ }
+]
