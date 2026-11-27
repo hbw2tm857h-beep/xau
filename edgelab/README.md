@@ -28,17 +28,21 @@ structure.py      swing pivots that only become known R bars after the pivot; HH
                   S/R levels and touch counts; equal highs/lows (liquidity pools); sweep state
 regimes.py        causal daily regimes (trend / volatility / trending-vs-ranging) using expanding percentiles
 frame.py          the decision frame: row i = everything knowable at the close of H1 bar i (+H4/D1 context)
-setups.py         16 discretionary archetypes x long/short, each tied to the TA claim it embodies
+setups.py         18 discretionary archetypes x long/short (incl. momentum_burst, burst_pullback), each tied to the TA claim it embodies
 simulator.py      replays every trade on M15 bars (H1 fallback for 2003-07); spread + slippage, worse costs
                   around news and rollover, gap fills, stop-first when stop and target share a bar
 trades.py         decisions -> trades with a full context snapshot and trade-relative features
-taxonomy.py       56 mistake categories (38 ex-ante, 16 ex-post, 2 execution), each with a measurable rule;
+taxonomy.py       58 mistake categories (40 ex-ante, 16 ex-post, 2 execution), each with a measurable rule;
                   ex-ante categories are tested statistically, so folklore is labelled as folklore
-counterfactual.py 17 alternatives per trade (timing, confirmation, retest, stops, targets, breakeven,
-                  opposite, skip). Hindsight view (per trade) is kept apart from the policy view (per setup)
+counterfactual.py 20 alternatives per trade (timing, confirmation, retest, stops, targets, breakeven,
+                  chandelier trailing stops, partial exits, opposite, skip). Hindsight view (per trade) is kept apart from the policy view (per setup)
 comparison.py     winner vs look-alike loser: nearest-neighbour matching on what the chart showed,
                   then paired tests on hidden context, with a replication check on later data
-behaviour.py      market-level studies: momentum persistence, up/down asymmetry, exhaustion,
+robustness.py     White's Reality Check + studentised (SPA-style) test + Romano-Wolf step-down over the whole
+                  hypothesis family; per-discovery stress: threshold neighbourhood, cost multiples, year
+                  consistency, Monte-Carlo drawdown, same-month drift benchmark, regime split
+forward.py        freezes surviving hypotheses at the last bar and scores them only on later data
+behaviour.py      event studies (average path -24h..+48h around every setup, vs drift) and market-level studies: momentum persistence, up/down asymmetry, exhaustion,
                   long-vs-short decomposition (regime mix vs within-regime), conventional-claim scoreboard
 discovery.py      exhaustive condition scan (discovery split only, every cell counted as a trial) and
                   anchored walk-forward gradient-boosting meta-labelling with an embargo
@@ -120,6 +124,36 @@ inside the same regimes, and is consistent with gold's long-run up-drift and the
 A personal short-side edge has to beat this baseline to count as skill. Export your trades to
 `edgelab/store/my_trades.csv` (`python -m edgelab template`) and the profile switches to your data. It then adds a
 random-timing benchmark per trade (same day, same side, same stop distance), so timing skill can be told apart from drift.
+
+## Round 2 (same day): exits, momentum, family-wise controls
+
+Added: trailing-stop and partial-exit variants; two momentum setups built to exploit finding 3; H4/daily
+"significant" levels (median 1.15 ATR away instead of 0.38); event studies; a two-feature interaction scan;
+White's Reality Check over the whole family; stress tests including a same-month drift benchmark;
+a forward-test registry; H1 extended to 2026-11-23 from M15. 2,091 hypotheses are now in the Reality Check, and 9,831 trials are counted.
+
+1. **The whole family fails the data-snooping test.** The best of 2,091 hypotheses has t = 3.7. The 95% luck threshold for
+   that many tries is 4.2, so the studentised Reality Check p = 0.23, and **no hypothesis survives Romano-Wolf at 5%**.
+   Anything "found" by mining these setups should be treated as unproven.
+2. **The momentum effect is real but too small to trade on its own.** The momentum setups have small positive gross edge
+   (`momentum_burst` OOS gross t = 1.5), but net expectancy is about 0 and every trailing or threshold variant failed discovery.
+   Fast moves continue by 0.1-0.3 ATR beyond drift, while the stop is 1-2 ATR plus costs.
+3. **Higher-timeframe levels do not stop momentum.** Pushing a continuation trade into a nearby H4/daily level (S4, S5)
+   did *better*, in discovery and later data. So did "stop wider than 2.5 ATR" (V4). Replicated real mistakes now number five:
+   tight stops (V3), fading an aligned trend (K5), catching a knife against a strong 20-day trend (T4),
+   trading against H4 swing structure (T8), and reversing before the liquidity behind you is swept (L3).
+4. **Event studies, net of drift.** After 48h, long momentum bars, session breakouts and range-breakout shorts are the setups
+   furthest ahead of drift (+0.2 to +0.3 ATR). Exhaustion fades, double tops/bottoms and sweep reversals are furthest behind
+   (−0.1 to −0.4 ATR). In gold, reversal patterns are the worst category on every measure.
+5. **One provisional finding: the walk-forward model's long picks, held with a 3 ATR trail switched on at +1R.**
+   Results: +0.13R in discovery (n = 1,921), +0.10R in validation (n = 1,773), +0.22R in holdout (n = 1,548).
+   Within the same month it beats all long trades with the same exit by +0.16R / +0.06R / +0.17R, so the selection is not
+   just drift. But:
+   * the exit was chosen after seeing a per-exit table that included holdout. **Its holdout is contaminated**, as recorded in
+     the ledger and shown on the card. The dashboard now hides holdout from that table;
+   * the profit comes from bull regimes (+0.31R; bear +0.03R, neutral +0.06R), and only 8 of 15 years were positive;
+   * it does not survive the family-wise Reality Check.
+   It is frozen in `store/frozen.json` and will be scored only on data after 2026-11-23. That forward score is the honest test.
 
 ## Limitations
 

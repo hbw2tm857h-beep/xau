@@ -1,8 +1,8 @@
 {
- "feature_columns_checked": 116,
- "feature_checks": 464,
+ "feature_columns_checked": 128,
+ "feature_checks": 512,
  "feature_mismatches": 0,
  "mismatched_columns": [],
- "decisions_checked": 294,
+ "decisions_checked": 295,
  "mismatches": 0
 }

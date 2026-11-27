@@ -1,0 +1,93 @@
+[
+ {
+  "hyp_id": "He3def259a7",
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    }
+   ],
+   "exit": "base",
+   "origin": "mined",
+   "rationale": "Scan cell t=2.47, lift +0.278R on discovery."
+  },
+  "definition": "LONG momentum_bar when session == asia",
+  "status_at_freeze": "weak_holdout",
+  "frozen_at": "2026-11-23 12:00:00",
+  "frozen_on": "2026-11-27"
+ },
+ {
+  "hyp_id": "H266d017909",
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    }
+   ],
+   "exit": "breakeven_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'breakeven_1r'.",
+   "parent": "He3def259a7"
+  },
+  "definition": "LONG momentum_bar when session == asia [exit: breakeven_1r]",
+  "status_at_freeze": "weak_holdout",
+  "frozen_at": "2026-11-23 12:00:00",
+  "frozen_on": "2026-11-27"
+ },
+ {
+  "hyp_id": "H5248a114f8",
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "ml_sel",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "ml",
+   "rationale": "Model trained only on earlier years picked these trades (top 20%); exit chosen post hoc from the per-exit table."
+  },
+  "definition": "LONG any setup when ml_sel == True [exit: trail_3atr_after_1r]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-23 12:00:00",
+  "frozen_on": "2026-11-27"
+ },
+ {
+  "hyp_id": "Hf3dcddc9da",
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "ml_sel",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "rel_h4_structure",
+     "op": ">",
+     "v": 0.0
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Add look-alike discriminator rel_h4_structure.",
+   "parent": "H5248a114f8"
+  },
+  "definition": "LONG any setup when ml_sel == True AND rel_h4_structure > 0.0 [exit: trail_3atr_after_1r]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-23 12:00:00",
+  "frozen_on": "2026-11-27"
+ }
+]
