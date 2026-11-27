@@ -1,0 +1,1569 @@
+{
+ "generated": 268128,
+ "with_30_build_trades": 198546,
+ "build_pass": 8587,
+ "cut": 18,
+ "alpha": 0.002777777777777778,
+ "passed": 1,
+ "minutes": 3.5,
+ "rules": [
+  {
+   "rule": "Nasdaq 100: H1 55-candle breakout, long, F3, 2-ATR trail",
+   "spec": {
+    "market": "Nasdaq 100",
+    "v": [
+     "breakout",
+     "H1",
+     55,
+     ""
+    ],
+    "dirs": "long",
+    "f": [
+     "F3"
+    ],
+    "x": "X8"
+   },
+   "build": {
+    "n": 502,
+    "mean": 0.399,
+    "t": 3.8,
+    "random_p": 0.006,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      207,
+      0.45114275764710243
+     ],
+     [
+      295,
+      0.3626022313601477
+     ]
+    ]
+   },
+   "cut": {
+    "n": 568,
+    "mean": 0.262,
+    "p": 0.00211,
+    "periods": [
+     "2020-22 +0.171 (239)",
+     "2023-26 +0.329 (329)"
+    ],
+    "corr": {
+     "gold trend": 0.03,
+     "gold inside-day": 0.03,
+     "btc_trend": -0.03,
+     "eth_inside_day": 0.01,
+     "us_ibs": -0.04
+    }
+   },
+   "verdict": "PASS"
+  },
+  {
+   "rule": "Nikkei 225: H4 inside-candle break, long, F3, 3-candle exit",
+   "spec": {
+    "market": "Nikkei 225",
+    "v": [
+     "inside",
+     "H4",
+     0,
+     ""
+    ],
+    "dirs": "long",
+    "f": [
+     "F3"
+    ],
+    "x": "X5"
+   },
+   "build": {
+    "n": 536,
+    "mean": 0.318,
+    "t": 3.73,
+    "random_p": 0.004,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      258,
+      0.30119936155640986
+     ],
+     [
+      278,
+      0.33309109708652335
+     ]
+    ]
+   },
+   "cut": {
+    "n": 587,
+    "mean": 0.025,
+    "p": 0.358,
+    "periods": [
+     "2020-22 +0.047 (215)",
+     "2023-26 +0.012 (372)"
+    ],
+    "corr": {
+     "gold trend": -0.01,
+     "gold inside-day": 0.02,
+     "btc_trend": -0.01,
+     "eth_inside_day": -0.02,
+     "us_ibs": 0.0
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "Brent: D1 55-candle breakout, both, no filter, 1R target",
+   "spec": {
+    "market": "Brent",
+    "v": [
+     "breakout",
+     "D1",
+     55,
+     ""
+    ],
+    "dirs": "both",
+    "f": [],
+    "x": "X1"
+   },
+   "build": {
+    "n": 103,
+    "mean": 0.337,
+    "t": 3.64,
+    "random_p": 0.006,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      51,
+      0.34749240411326565
+     ],
+     [
+      52,
+      0.3262044603287181
+     ]
+    ]
+   },
+   "cut": {
+    "n": 84,
+    "mean": 0.125,
+    "p": 0.124,
+    "periods": [
+     "2020-22 +0.201 (46)",
+     "2023-26 +0.033 (38)"
+    ],
+    "corr": {
+     "gold trend": 0.01,
+     "gold inside-day": 0.02,
+     "btc_trend": 0.01,
+     "eth_inside_day": -0.03,
+     "us_ibs": -0.02
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "Bitcoin: H1 pullback to the 20 EMA, both, F1+F5, 2-ATR trail",
+   "spec": {
+    "market": "Bitcoin",
+    "v": [
+     "pullback",
+     "H1",
+     20,
+     ""
+    ],
+    "dirs": "both",
+    "f": [
+     "F1",
+     "F5"
+    ],
+    "x": "X8"
+   },
+   "build": {
+    "n": 236,
+    "mean": 0.783,
+    "t": 3.52,
+    "random_p": 0.05,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      0,
+      0.0
+     ],
+     [
+      236,
+      0.7832479162440822
+     ]
+    ]
+   },
+   "cut": {
+    "n": 809,
+    "mean": 0.187,
+    "p": 0.0128,
+    "periods": [
+     "2020-22 +0.371 (373)",
+     "2023-26 +0.029 (436)"
+    ],
+    "corr": {
+     "gold trend": 0.03,
+     "gold inside-day": 0.01,
+     "btc_trend": 0.14,
+     "eth_inside_day": 0.13,
+     "us_ibs": -0.0
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "Nasdaq 100: H1 4 closes in a row, fade, long, F6, 3R target",
+   "spec": {
+    "market": "Nasdaq 100",
+    "v": [
+     "run",
+     "H1",
+     4,
+     "fade"
+    ],
+    "dirs": "long",
+    "f": [
+     "F6"
+    ],
+    "x": "X3"
+   },
+   "build": {
+    "n": 503,
+    "mean": 0.292,
+    "t": 3.48,
+    "random_p": 0.01,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      216,
+      0.2380181101685492
+     ],
+     [
+      287,
+      0.3330424398674309
+     ]
+    ]
+   },
+   "cut": {
+    "n": 638,
+    "mean": 0.019,
+    "p": 0.394,
+    "periods": [
+     "2020-22 +0.041 (278)",
+     "2023-26 +0.001 (360)"
+    ],
+    "corr": {
+     "gold trend": -0.02,
+     "gold inside-day": -0.0,
+     "btc_trend": -0.02,
+     "eth_inside_day": 0.0,
+     "us_ibs": -0.02
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "Nikkei 225: H1 20-candle breakout, long, F6, 2R target",
+   "spec": {
+    "market": "Nikkei 225",
+    "v": [
+     "breakout",
+     "H1",
+     20,
+     ""
+    ],
+    "dirs": "long",
+    "f": [
+     "F6"
+    ],
+    "x": "X2"
+   },
+   "build": {
+    "n": 487,
+    "mean": 0.234,
+    "t": 3.48,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      181,
+      0.33263444613599713
+     ],
+     [
+      306,
+      0.17608585411305688
+     ]
+    ]
+   },
+   "cut": {
+    "n": 654,
+    "mean": -0.01,
+    "p": 0.572,
+    "periods": [
+     "2020-22 +0.035 (287)",
+     "2023-26 -0.046 (367)"
+    ],
+    "corr": {
+     "gold trend": 0.03,
+     "gold inside-day": -0.01,
+     "btc_trend": 0.04,
+     "eth_inside_day": 0.02,
+     "us_ibs": 0.0
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "Brent: D1 inside-candle break, long, no filter, next daily close",
+   "spec": {
+    "market": "Brent",
+    "v": [
+     "inside",
+     "D1",
+     0,
+     ""
+    ],
+    "dirs": "long",
+    "f": [],
+    "x": "X7"
+   },
+   "build": {
+    "n": 116,
+    "mean": 0.298,
+    "t": 3.38,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      51,
+      0.4522148187872362
+     ],
+     [
+      65,
+      0.17756693870429197
+     ]
+    ]
+   },
+   "cut": {
+    "n": 109,
+    "mean": -0.009,
+    "p": 0.551,
+    "periods": [
+     "2020-22 +0.133 (47)",
+     "2023-26 -0.117 (62)"
+    ],
+    "corr": {
+     "gold trend": 0.02,
+     "gold inside-day": -0.04,
+     "btc_trend": -0.02,
+     "eth_inside_day": -0.02,
+     "us_ibs": -0.01
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "WTI: D1 inside-candle break, both, no filter, next daily close",
+   "spec": {
+    "market": "WTI",
+    "v": [
+     "inside",
+     "D1",
+     0,
+     ""
+    ],
+    "dirs": "both",
+    "f": [],
+    "x": "X7"
+   },
+   "build": {
+    "n": 216,
+    "mean": 0.226,
+    "t": 3.19,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      101,
+      0.2625381835286482
+     ],
+     [
+      115,
+      0.19339365508105316
+     ]
+    ]
+   },
+   "cut": {
+    "n": 195,
+    "mean": 0.043,
+    "p": 0.213,
+    "periods": [
+     "2020-22 +0.078 (80)",
+     "2023-26 +0.019 (115)"
+    ],
+    "corr": {
+     "gold trend": -0.05,
+     "gold inside-day": -0.02,
+     "btc_trend": -0.01,
+     "eth_inside_day": -0.05,
+     "us_ibs": -0.0
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "FTSE 100: D1 3 closes in a row, follow, both, F2, 1R target",
+   "spec": {
+    "market": "FTSE 100",
+    "v": [
+     "run",
+     "D1",
+     3,
+     "follow"
+    ],
+    "dirs": "both",
+    "f": [
+     "F2"
+    ],
+    "x": "X1"
+   },
+   "build": {
+    "n": 188,
+    "mean": 0.216,
+    "t": 3.04,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      80,
+      0.13668738350101245
+     ],
+     [
+      108,
+      0.2746991290236263
+     ]
+    ]
+   },
+   "cut": {
+    "n": 185,
+    "mean": -0.022,
+    "p": 0.616,
+    "periods": [
+     "2020-22 -0.056 (81)",
+     "2023-26 +0.005 (104)"
+    ],
+    "corr": {
+     "gold trend": 0.01,
+     "gold inside-day": 0.04,
+     "btc_trend": -0.01,
+     "eth_inside_day": 0.04,
+     "us_ibs": 0.04
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "Nasdaq 100: H1 3 closes in a row, follow, long, F6, 10-candle exit",
+   "spec": {
+    "market": "Nasdaq 100",
+    "v": [
+     "run",
+     "H1",
+     3,
+     "follow"
+    ],
+    "dirs": "long",
+    "f": [
+     "F6"
+    ],
+    "x": "X6"
+   },
+   "build": {
+    "n": 841,
+    "mean": 0.192,
+    "t": 3.02,
+    "random_p": 0.05,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      361,
+      0.23832304358254047
+     ],
+     [
+      480,
+      0.1576977644718767
+     ]
+    ]
+   },
+   "cut": {
+    "n": 1192,
+    "mean": 0.013,
+    "p": 0.396,
+    "periods": [
+     "2020-22 -0.046 (548)",
+     "2023-26 +0.064 (644)"
+    ],
+    "corr": {
+     "gold trend": -0.02,
+     "gold inside-day": 0.02,
+     "btc_trend": 0.02,
+     "eth_inside_day": 0.03,
+     "us_ibs": 0.07
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "Nikkei 225: H1 squeeze breakout, long, F3, next daily close",
+   "spec": {
+    "market": "Nikkei 225",
+    "v": [
+     "squeeze",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "long",
+    "f": [
+     "F3"
+    ],
+    "x": "X7"
+   },
+   "build": {
+    "n": 490,
+    "mean": 0.279,
+    "t": 2.99,
+    "random_p": 0.01,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      254,
+      0.41434609292631525
+     ],
+     [
+      236,
+      0.13243656943017357
+     ]
+    ]
+   },
+   "cut": {
+    "n": 671,
+    "mean": 0.155,
+    "p": 0.0281,
+    "periods": [
+     "2020-22 +0.161 (233)",
+     "2023-26 +0.153 (438)"
+    ],
+    "corr": {
+     "gold trend": -0.01,
+     "gold inside-day": 0.04,
+     "btc_trend": 0.01,
+     "eth_inside_day": -0.01,
+     "us_ibs": 0.05
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "Nikkei 225: H1 squeeze breakout, both, F4+F6, next daily close",
+   "spec": {
+    "market": "Nikkei 225",
+    "v": [
+     "squeeze",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "both",
+    "f": [
+     "F4",
+     "F6"
+    ],
+    "x": "X7"
+   },
+   "build": {
+    "n": 355,
+    "mean": 0.344,
+    "t": 2.99,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      149,
+      0.4859871770229115
+     ],
+     [
+      206,
+      0.24208741271209425
+     ]
+    ]
+   },
+   "cut": {
+    "n": 700,
+    "mean": -0.032,
+    "p": 0.67,
+    "periods": [
+     "2020-22 -0.109 (286)",
+     "2023-26 +0.021 (414)"
+    ],
+    "corr": {
+     "gold trend": 0.01,
+     "gold inside-day": 0.02,
+     "btc_trend": -0.01,
+     "eth_inside_day": 0.02,
+     "us_ibs": 0.0
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "S&P 500: H1 pullback to the 20 EMA, long, F4, 10-candle exit",
+   "spec": {
+    "market": "S&P 500",
+    "v": [
+     "pullback",
+     "H1",
+     20,
+     ""
+    ],
+    "dirs": "long",
+    "f": [
+     "F4"
+    ],
+    "x": "X6"
+   },
+   "build": {
+    "n": 805,
+    "mean": 0.2,
+    "t": 2.89,
+    "random_p": 0.02,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      385,
+      0.10754264031432446
+     ],
+     [
+      420,
+      0.28419432305700415
+     ]
+    ]
+   },
+   "cut": {
+    "n": 1059,
+    "mean": 0.055,
+    "p": 0.184,
+    "periods": [
+     "2020-22 +0.039 (487)",
+     "2023-26 +0.069 (572)"
+    ],
+    "corr": {
+     "gold trend": 0.01,
+     "gold inside-day": -0.02,
+     "btc_trend": 0.0,
+     "eth_inside_day": 0.03,
+     "us_ibs": 0.01
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "EURUSD: D1 IBS extreme, short, F1+F4, next daily close",
+   "spec": {
+    "market": "EURUSD",
+    "v": [
+     "ibs",
+     "D1",
+     0,
+     ""
+    ],
+    "dirs": "short",
+    "f": [
+     "F1",
+     "F4"
+    ],
+    "x": "X7"
+   },
+   "build": {
+    "n": 108,
+    "mean": 0.153,
+    "t": 2.84,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      41,
+      0.10108346795997959
+     ],
+     [
+      39,
+      0.11863769050882161
+     ],
+     [
+      28,
+      0.27638955785921726
+     ]
+    ]
+   },
+   "cut": {
+    "n": 66,
+    "mean": 0.044,
+    "p": 0.27,
+    "periods": [
+     "2020-22 +0.035 (41)",
+     "2023-26 +0.060 (25)"
+    ],
+    "corr": {
+     "gold trend": 0.02,
+     "gold inside-day": 0.0,
+     "btc_trend": 0.0,
+     "eth_inside_day": -0.0,
+     "us_ibs": -0.01
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "S&P 500: H1 pullback to the 20 EMA, long, F4+F6, 2-ATR trail",
+   "spec": {
+    "market": "S&P 500",
+    "v": [
+     "pullback",
+     "H1",
+     20,
+     ""
+    ],
+    "dirs": "long",
+    "f": [
+     "F4",
+     "F6"
+    ],
+    "x": "X8"
+   },
+   "build": {
+    "n": 347,
+    "mean": 0.341,
+    "t": 2.8,
+    "random_p": 0.008,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      155,
+      0.1936774595662209
+     ],
+     [
+      192,
+      0.45946052286036654
+     ]
+    ]
+   },
+   "cut": {
+    "n": 462,
+    "mean": 0.072,
+    "p": 0.216,
+    "periods": [
+     "2020-22 +0.116 (234)",
+     "2023-26 +0.026 (228)"
+    ],
+    "corr": {
+     "gold trend": -0.02,
+     "gold inside-day": 0.01,
+     "btc_trend": 0.01,
+     "eth_inside_day": 0.03,
+     "us_ibs": -0.01
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "Dow: H1 squeeze breakout, both, F2, 10-candle exit",
+   "spec": {
+    "market": "Dow",
+    "v": [
+     "squeeze",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "both",
+    "f": [
+     "F2"
+    ],
+    "x": "X6"
+   },
+   "build": {
+    "n": 476,
+    "mean": 0.304,
+    "t": 2.6,
+    "random_p": 0.004,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      113,
+      0.10161116926070875
+     ],
+     [
+      363,
+      0.3671838398490634
+     ]
+    ]
+   },
+   "cut": {
+    "n": 847,
+    "mean": 0.025,
+    "p": 0.375,
+    "periods": [
+     "2020-22 +0.195 (336)",
+     "2023-26 -0.087 (511)"
+    ],
+    "corr": {
+     "gold trend": 0.03,
+     "gold inside-day": 0.03,
+     "btc_trend": 0.01,
+     "eth_inside_day": -0.03,
+     "us_ibs": 0.01
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "S&P 500: D1 IBS extreme, long, F4, 10-candle exit",
+   "spec": {
+    "market": "S&P 500",
+    "v": [
+     "ibs",
+     "D1",
+     0,
+     ""
+    ],
+    "dirs": "long",
+    "f": [
+     "F4"
+    ],
+    "x": "X6"
+   },
+   "build": {
+    "n": 111,
+    "mean": 0.427,
+    "t": 2.47,
+    "random_p": 0.026,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      55,
+      0.5510407111568961
+     ],
+     [
+      56,
+      0.3043155277984824
+     ]
+    ]
+   },
+   "cut": {
+    "n": 108,
+    "mean": 0.185,
+    "p": 0.127,
+    "periods": [
+     "2020-22 -0.072 (56)",
+     "2023-26 +0.461 (52)"
+    ],
+    "corr": {
+     "gold trend": 0.08,
+     "gold inside-day": -0.02,
+     "btc_trend": -0.03,
+     "eth_inside_day": -0.03,
+     "us_ibs": -0.03
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "Nasdaq 100: D1 IBS extreme, long, F6, next daily close",
+   "spec": {
+    "market": "Nasdaq 100",
+    "v": [
+     "ibs",
+     "D1",
+     0,
+     ""
+    ],
+    "dirs": "long",
+    "f": [
+     "F6"
+    ],
+    "x": "X7"
+   },
+   "build": {
+    "n": 217,
+    "mean": 0.143,
+    "t": 2.46,
+    "random_p": 0.004,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      96,
+      0.03482339402364259
+     ],
+     [
+      121,
+      0.22795434789386818
+     ]
+    ]
+   },
+   "cut": {
+    "n": 280,
+    "mean": 0.038,
+    "p": 0.201,
+    "periods": [
+     "2020-22 -0.036 (135)",
+     "2023-26 +0.106 (145)"
+    ],
+    "corr": {
+     "gold trend": -0.03,
+     "gold inside-day": -0.01,
+     "btc_trend": -0.01,
+     "eth_inside_day": -0.04,
+     "us_ibs": 0.04
+    }
+   },
+   "verdict": "fail"
+  }
+ ],
+ "list_log": [
+  [
+   "Nasdaq 100: H1 55-candle breakout, long, F3, 2-ATR trail",
+   "listed (random p = 0.006)"
+  ],
+  [
+   "Nasdaq 100: H1 55-candle breakout, long, no filter, 2-ATR trail",
+   "skipped: correlation 0.97 with a listed rule"
+  ],
+  [
+   "Nikkei 225: H4 inside-candle break, long, F3, 3-candle exit",
+   "listed (random p = 0.004)"
+  ],
+  [
+   "Nikkei 225: H4 inside-candle break, both, F3, 3-candle exit",
+   "skipped: correlation 0.83 with a listed rule"
+  ],
+  [
+   "Brent: D1 55-candle breakout, both, no filter, 1R target",
+   "listed (random p = 0.006)"
+  ],
+  [
+   "Brent: D1 55-candle breakout, both, F1, 1R target",
+   "skipped: correlation 1.00 with a listed rule"
+  ],
+  [
+   "Brent: D1 55-candle breakout, both, F2, 1R target",
+   "skipped: correlation 1.00 with a listed rule"
+  ],
+  [
+   "Brent: D1 55-candle breakout, both, F1+F2, 1R target",
+   "skipped: correlation 1.00 with a listed rule"
+  ],
+  [
+   "Nikkei 225: H4 inside-candle break, long, F3+F5, 3-candle exit",
+   "skipped: correlation 0.79 with a listed rule"
+  ],
+  [
+   "Bitcoin: H1 pullback to the 20 EMA, both, F1+F5, 2-ATR trail",
+   "listed (random p = 0.050)"
+  ],
+  [
+   "Nasdaq 100: H1 55-candle breakout, both, F3, 2-ATR trail",
+   "skipped: correlation 0.98 with a listed rule"
+  ],
+  [
+   "Nasdaq 100: H1 4 closes in a row, fade, long, F6, 3R target",
+   "listed (random p = 0.010)"
+  ],
+  [
+   "Nikkei 225: H1 20-candle breakout, long, F6, 2R target",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "Nikkei 225: H4 inside-candle break, both, F1+F3, 3-candle exit",
+   "skipped: correlation 0.80 with a listed rule"
+  ],
+  [
+   "Bitcoin: H1 pullback to the 20 EMA, both, F1, 2-ATR trail",
+   "skipped: correlation 0.87 with a listed rule"
+  ],
+  [
+   "Brent: D1 inside-candle break, long, no filter, next daily close",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "Bitcoin: H1 pullback to the 20 EMA, both, no filter, 2-ATR trail",
+   "skipped: correlation 0.65 with a listed rule"
+  ],
+  [
+   "Nasdaq 100: H1 4 closes in a row, fade, long, F3+F6, 3R target",
+   "skipped: correlation 0.96 with a listed rule"
+  ],
+  [
+   "Bitcoin: H1 3 closes in a row, fade, both, F1+F5, 10-candle exit",
+   "skipped: random entries p = 0.058"
+  ],
+  [
+   "Nikkei 225: H4 inside-candle break, both, F1, 3-candle exit",
+   "skipped: correlation 0.69 with a listed rule"
+  ],
+  [
+   "WTI: D1 inside-candle break, both, no filter, next daily close",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "Nasdaq 100: H1 4 closes in a row, follow, long, no filter, 2-ATR trail",
+   "skipped: random entries p = 0.164"
+  ],
+  [
+   "Nasdaq 100: H1 3 closes in a row, follow, long, F6, 2-ATR trail",
+   "skipped: random entries p = 0.283"
+  ],
+  [
+   "Nasdaq 100: H1 4 closes in a row, fade, both, F3+F6, 3R target",
+   "skipped: correlation 0.90 with a listed rule"
+  ],
+  [
+   "Bitcoin: H1 pullback to the 20 EMA, both, F2, 2-ATR trail",
+   "skipped: correlation 0.69 with a listed rule"
+  ],
+  [
+   "FTSE 100: D1 3 closes in a row, follow, both, F2, 1R target",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "Nikkei 225: H1 squeeze breakout, long, no filter, 2-ATR trail",
+   "skipped: random entries p = 0.122"
+  ],
+  [
+   "Nasdaq 100: H1 5 closes in a row, follow, long, no filter, 2-ATR trail",
+   "skipped: correlation 0.53 with a listed rule"
+  ],
+  [
+   "Nasdaq 100: H1 4 closes in a row, follow, long, F6, 2-ATR trail",
+   "skipped: random entries p = 0.076"
+  ],
+  [
+   "Nasdaq 100: H1 3 closes in a row, follow, long, no filter, 2-ATR trail",
+   "skipped: random entries p = 0.595"
+  ],
+  [
+   "Nasdaq 100: H1 3 closes in a row, follow, long, F6, 10-candle exit",
+   "listed (random p = 0.050)"
+  ],
+  [
+   "Bitcoin: H1 pullback to the 20 EMA, short, no filter, 2-ATR trail",
+   "skipped: correlation 0.50 with a listed rule"
+  ],
+  [
+   "Nikkei 225: H1 squeeze breakout, long, F3, next daily close",
+   "listed (random p = 0.010)"
+  ],
+  [
+   "Nikkei 225: H1 squeeze breakout, both, F4+F6, next daily close",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "Nasdaq 100: H1 pullback to the 20 EMA, long, F6, 2-ATR trail",
+   "skipped: random entries p = 0.144"
+  ],
+  [
+   "Nikkei 225: H1 squeeze breakout, long, no filter, 3-candle exit",
+   "skipped: correlation 0.55 with a listed rule"
+  ],
+  [
+   "Bitcoin: H1 pullback to the 20 EMA, both, F5, 2-ATR trail",
+   "skipped: correlation 0.84 with a listed rule"
+  ],
+  [
+   "S&P 500: H1 pullback to the 20 EMA, long, F4, 10-candle exit",
+   "listed (random p = 0.020)"
+  ],
+  [
+   "Bitcoin: H1 pullback to the 20 EMA, short, F1, 2-ATR trail",
+   "skipped: correlation 0.60 with a listed rule"
+  ],
+  [
+   "S&P 500: H1 pullback to the 20 EMA, long, F4+F6, 10-candle exit",
+   "skipped: correlation 0.74 with a listed rule"
+  ],
+  [
+   "EURUSD: D1 IBS extreme, short, F1+F4, next daily close",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "Nasdaq 100: D1 IBS extreme, long, F3, 3-candle exit",
+   "skipped: random entries p = 0.090"
+  ],
+  [
+   "S&P 500: H1 pullback to the 20 EMA, long, F4+F6, 2-ATR trail",
+   "listed (random p = 0.008)"
+  ],
+  [
+   "Nasdaq 100: D1 IBS extreme, long, no filter, 3-candle exit",
+   "skipped: random entries p = 0.108"
+  ],
+  [
+   "EURUSD: D1 IBS extreme, short, F3+F4, next daily close",
+   "skipped: correlation 0.59 with a listed rule"
+  ],
+  [
+   "Nikkei 225: H1 squeeze breakout, long, no filter, next daily close",
+   "skipped: correlation 0.89 with a listed rule"
+  ],
+  [
+   "Nikkei 225: H1 squeeze breakout, long, F6, 2-ATR trail",
+   "skipped: random entries p = 0.114"
+  ],
+  [
+   "Nikkei 225: H1 squeeze breakout, long, F3, 2-ATR trail",
+   "skipped: random entries p = 0.128"
+  ],
+  [
+   "Nikkei 225: H1 squeeze breakout, both, no filter, 2-ATR trail",
+   "skipped: random entries p = 0.178"
+  ],
+  [
+   "Nasdaq 100: D1 IBS extreme, long, F1, 3-candle exit",
+   "skipped: random entries p = 0.116"
+  ],
+  [
+   "Nikkei 225: H1 squeeze breakout, both, F3, next daily close",
+   "skipped: correlation 0.86 with a listed rule"
+  ],
+  [
+   "Nikkei 225: H1 squeeze breakout, both, F4, next daily close",
+   "skipped: correlation 0.87 with a listed rule"
+  ],
+  [
+   "Nasdaq 100: D1 IBS extreme, long, F1+F3, 3-candle exit",
+   "skipped: random entries p = 0.104"
+  ],
+  [
+   "Dow: H1 squeeze breakout, both, F2, 10-candle exit",
+   "listed (random p = 0.004)"
+  ],
+  [
+   "S&P 500: D1 IBS extreme, long, F4, 10-candle exit",
+   "listed (random p = 0.026)"
+  ],
+  [
+   "Nasdaq 100: D1 IBS extreme, long, F6, next daily close",
+   "listed (random p = 0.004)"
+  ]
+ ],
+ "build_pass_top": [
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, 3-candle exit",
+   "n": 2476,
+   "mean": 0.169,
+   "t": 7.01
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, 3-candle exit",
+   "n": 1742,
+   "mean": 0.179,
+   "t": 6.26
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, half 1R, rest 2R",
+   "n": 2265,
+   "mean": 0.13,
+   "t": 5.71
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, no filter, 3-candle exit",
+   "n": 1293,
+   "mean": 0.192,
+   "t": 5.69
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, 10-candle exit",
+   "n": 2476,
+   "mean": 0.197,
+   "t": 5.67
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, F6, 3-candle exit",
+   "n": 898,
+   "mean": 0.222,
+   "t": 5.61
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, 2-ATR trail",
+   "n": 2423,
+   "mean": 0.146,
+   "t": 5.6
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, next daily close",
+   "n": 2476,
+   "mean": 0.196,
+   "t": 5.57
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5+F6, 3-candle exit",
+   "n": 1012,
+   "mean": 0.214,
+   "t": 5.46
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5, 3-candle exit",
+   "n": 1459,
+   "mean": 0.171,
+   "t": 5.36
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, 2R target",
+   "n": 2100,
+   "mean": 0.168,
+   "t": 5.23
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, 2-ATR trail",
+   "n": 1715,
+   "mean": 0.166,
+   "t": 5.23
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, 2R target",
+   "n": 1533,
+   "mean": 0.196,
+   "t": 5.2
+  },
+  {
+   "describe": "WTI: first-hour range break, both, F2, 2-ATR trail",
+   "n": 730,
+   "mean": 0.384,
+   "t": 5.14
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, long, no filter, 3-candle exit",
+   "n": 1210,
+   "mean": 0.172,
+   "t": 5.1
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, next daily close",
+   "n": 1742,
+   "mean": 0.212,
+   "t": 5.01
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, F4, 3-candle exit",
+   "n": 484,
+   "mean": 0.276,
+   "t": 4.98
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F2, 3-candle exit",
+   "n": 1203,
+   "mean": 0.173,
+   "t": 4.97
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, half 1R, rest 2R",
+   "n": 1628,
+   "mean": 0.134,
+   "t": 4.97
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, 10-candle exit",
+   "n": 1742,
+   "mean": 0.205,
+   "t": 4.92
+  },
+  {
+   "describe": "EURUSD: first-hour range break, both, no filter, 3-candle exit",
+   "n": 2663,
+   "mean": 0.109,
+   "t": 4.89
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, short, no filter, 3-candle exit",
+   "n": 1266,
+   "mean": 0.167,
+   "t": 4.83
+  },
+  {
+   "describe": "EURJPY: first-hour range break, short, F2, 3-candle exit",
+   "n": 614,
+   "mean": 0.232,
+   "t": 4.82
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, short, F5+F6, 3-candle exit",
+   "n": 519,
+   "mean": 0.271,
+   "t": 4.77
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5, half 1R, rest 2R",
+   "n": 1339,
+   "mean": 0.142,
+   "t": 4.74
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5+F6, 2-ATR trail",
+   "n": 1000,
+   "mean": 0.209,
+   "t": 4.73
+  },
+  {
+   "describe": "EURJPY: first-hour range break, short, no filter, 3-candle exit",
+   "n": 1260,
+   "mean": 0.152,
+   "t": 4.72
+  },
+  {
+   "describe": "WTI: first-hour range break, both, F2+F5, 2-ATR trail",
+   "n": 411,
+   "mean": 0.522,
+   "t": 4.72
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F2+F6, 3-candle exit",
+   "n": 566,
+   "mean": 0.241,
+   "t": 4.72
+  },
+  {
+   "describe": "WTI: first-hour range break, short, F2, 2-ATR trail",
+   "n": 368,
+   "mean": 0.547,
+   "t": 4.71
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, short, F5, 3-candle exit",
+   "n": 738,
+   "mean": 0.219,
+   "t": 4.7
+  },
+  {
+   "describe": "WTI: first-hour range break, both, F2, 3-candle exit",
+   "n": 741,
+   "mean": 0.245,
+   "t": 4.68
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, F1+F6, 3-candle exit",
+   "n": 299,
+   "mean": 0.313,
+   "t": 4.67
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, 1R target",
+   "n": 2367,
+   "mean": 0.094,
+   "t": 4.66
+  },
+  {
+   "describe": "WTI: first-hour range break, short, F2, 3R target",
+   "n": 356,
+   "mean": 0.481,
+   "t": 4.65
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5+F6, half 1R, rest 2R",
+   "n": 951,
+   "mean": 0.164,
+   "t": 4.65
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, long, F4, 3-candle exit",
+   "n": 488,
+   "mean": 0.246,
+   "t": 4.64
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, no filter, 2-ATR trail",
+   "n": 1270,
+   "mean": 0.208,
+   "t": 4.63
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F4, 3-candle exit",
+   "n": 1007,
+   "mean": 0.17,
+   "t": 4.57
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, long, no filter, 10-candle exit",
+   "n": 1210,
+   "mean": 0.23,
+   "t": 4.56
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, long, F6, 3-candle exit",
+   "n": 863,
+   "mean": 0.181,
+   "t": 4.55
+  },
+  {
+   "describe": "GBPJPY: first-hour range break, both, no filter, 2-ATR trail",
+   "n": 2424,
+   "mean": 0.146,
+   "t": 4.52
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5, 2-ATR trail",
+   "n": 1424,
+   "mean": 0.158,
+   "t": 4.51
+  },
+  {
+   "describe": "WTI: first-hour range break, short, F2, 3-candle exit",
+   "n": 371,
+   "mean": 0.341,
+   "t": 4.47
+  },
+  {
+   "describe": "EURUSD: first-hour range break, both, F4, 3-candle exit",
+   "n": 993,
+   "mean": 0.162,
+   "t": 4.47
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, 3R target",
+   "n": 1351,
+   "mean": 0.227,
+   "t": 4.46
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, F1, 3-candle exit",
+   "n": 663,
+   "mean": 0.211,
+   "t": 4.43
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5+F6, next daily close",
+   "n": 1012,
+   "mean": 0.251,
+   "t": 4.39
+  },
+  {
+   "describe": "WTI: first-hour range break, both, no filter, 2-ATR trail",
+   "n": 1482,
+   "mean": 0.213,
+   "t": 4.37
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, long, no filter, half 1R, rest 2R",
+   "n": 1156,
+   "mean": 0.139,
+   "t": 4.36
+  },
+  {
+   "describe": "WTI: first-hour range break, short, F1+F2, 2R target",
+   "n": 240,
+   "mean": 0.417,
+   "t": 4.33
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F2+F4, 3-candle exit",
+   "n": 474,
+   "mean": 0.244,
+   "t": 4.31
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, short, F6, 3-candle exit",
+   "n": 879,
+   "mean": 0.178,
+   "t": 4.31
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5, 10-candle exit",
+   "n": 1459,
+   "mean": 0.196,
+   "t": 4.3
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5+F6, 2R target",
+   "n": 910,
+   "mean": 0.211,
+   "t": 4.3
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5, next daily close",
+   "n": 1459,
+   "mean": 0.199,
+   "t": 4.3
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, long, no filter, 2-ATR trail",
+   "n": 1196,
+   "mean": 0.157,
+   "t": 4.28
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, 3R target",
+   "n": 1761,
+   "mean": 0.189,
+   "t": 4.27
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F1, 3-candle exit",
+   "n": 1237,
+   "mean": 0.147,
+   "t": 4.25
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, F4+F6, 3-candle exit",
+   "n": 310,
+   "mean": 0.309,
+   "t": 4.25
+  }
+ ]
+}

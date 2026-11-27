@@ -997,3 +997,12 @@ The script is `round36_kalman_pairs.py` and the results are in `round36_results.
 WTI/Brent looks best (+0.34R over 67 trades). Picking it out after seeing the results would be cherry-picking, though. It would need its own pre-registered test on data it hasn't seen, and there is none left. Gold/silver, the pair most relevant to this bot, loses.
 
 hypotheses_tested rises from 1,401 to 1,402 (recorded here only).
+
+## Strategy factory, batch 1 (27 Nov 2026)
+
+`factory.py`, `factory_batch1.md`, `factory_batch1.json`; design in `FACTORY.md`. Rules committed (fa45d97) before the first run. 268,128 rules on 19 markets; 8,587 passed the 2008-19 build test; the best 20 that beat random entries and did not duplicate each other were cut once on 2020-26 at p < 0.0025. **0 of 20 passed.** All 20 were versions of one entry, a break of the London first-hour range (mostly GBPUSD and EURUSD); 16 of them were still positive in 2020-26 and five came within a factor of four of the bar. hypotheses_tested rises from 1,421 to 1,441 (recorded here only). See `factory_batch1.md` for the proposals for batch 2.
+
+## Strategy factory, batch 2 (27 Nov 2026)
+
+`factory_batch2.py`, `factory_batch2.md`. Committed (6204f13) before the run. Part A: batch 1's five London first-hour near misses all hold at 1.5 times costs. Part B: with at most 3 rules per entry family and the London first-hour family left out, 18 rules were cut on 2020-26 and **1 passed**: a Nasdaq 100 hourly 55-candle breakout, buys only, with the 12-month return up and a 2-ATR trail (+0.262R, 568 trades, p 0.0021 against 0.0028). A check after the result shows about 40% of that is Nasdaq's rise (random buys with the same exit made +0.10R; the rule beat them at p 0.013). hypotheses_tested rises from 1,441 to 1,459 (recorded here only). Six candidates proposed for silent tracking.
+
