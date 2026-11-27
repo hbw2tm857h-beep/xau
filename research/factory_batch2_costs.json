@@ -1,0 +1,131 @@
+[
+ {
+  "rule": "EURUSD: first-hour range break, short, no filter, 3-candle exit",
+  "spec": {
+   "market": "EURUSD",
+   "v": [
+    "orb",
+    "H1",
+    0,
+    ""
+   ],
+   "dirs": "short",
+   "f": [],
+   "x": "X5"
+  },
+  "cost_bps": 1.5,
+  "build": 0.164,
+  "n_build": 1293,
+  "cut": 0.061,
+  "n_cut": 810,
+  "periods": [
+   "2020-22 +0.079 (345)",
+   "2023-26 +0.048 (465)"
+  ],
+  "verdict": "holds"
+ },
+ {
+  "rule": "EURJPY: first-hour range break, short, F2, 3-candle exit",
+  "spec": {
+   "market": "EURJPY",
+   "v": [
+    "orb",
+    "H1",
+    0,
+    ""
+   ],
+   "dirs": "short",
+   "f": [
+    "F2"
+   ],
+   "x": "X5"
+  },
+  "cost_bps": 2.25,
+  "build": 0.197,
+  "n_build": 614,
+  "cut": 0.137,
+  "n_cut": 313,
+  "periods": [
+   "2020-22 +0.178 (150)",
+   "2023-26 +0.099 (163)"
+  ],
+  "verdict": "holds"
+ },
+ {
+  "rule": "GBPUSD: first-hour range break, long, no filter, 10-candle exit",
+  "spec": {
+   "market": "GBPUSD",
+   "v": [
+    "orb",
+    "H1",
+    0,
+    ""
+   ],
+   "dirs": "long",
+   "f": [],
+   "x": "X6"
+  },
+  "cost_bps": 1.7999999999999998,
+  "build": 0.197,
+  "n_build": 1210,
+  "cut": 0.123,
+  "n_cut": 817,
+  "periods": [
+   "2020-22 +0.091 (355)",
+   "2023-26 +0.147 (462)"
+  ],
+  "verdict": "holds"
+ },
+ {
+  "rule": "WTI: first-hour range break, both, F2, 2-ATR trail",
+  "spec": {
+   "market": "WTI",
+   "v": [
+    "orb",
+    "H1",
+    0,
+    ""
+   ],
+   "dirs": "both",
+   "f": [
+    "F2"
+   ],
+   "x": "X8"
+  },
+  "cost_bps": 7.5,
+  "build": 0.322,
+  "n_build": 730,
+  "cut": 0.11,
+  "n_cut": 757,
+  "periods": [
+   "2020-22 +0.067 (350)",
+   "2023-26 +0.148 (407)"
+  ],
+  "verdict": "holds"
+ },
+ {
+  "rule": "Gold: first-hour range break, short, no filter, 2-ATR trail",
+  "spec": {
+   "market": "Gold",
+   "v": [
+    "orb",
+    "H1",
+    0,
+    ""
+   ],
+   "dirs": "short",
+   "f": [],
+   "x": "X8"
+  },
+  "cost_bps": 2.625,
+  "build": 0.175,
+  "n_build": 1386,
+  "cut": 0.086,
+  "n_cut": 779,
+  "periods": [
+   "2020-22 +0.037 (361)",
+   "2023-26 +0.129 (418)"
+  ],
+  "verdict": "holds"
+ }
+]
