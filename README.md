@@ -1,5 +1,7 @@
 # xau: LumnFx trading signals to Discord
 
+> **Research lab:** [`edgelab/`](edgelab/README.md) is a separate research platform that reverse-engineers why XAUUSD trades succeed or fail (mistake taxonomy, counterfactuals, experiment engine, dashboard in `lab_output/dashboard.html`). It never trades.
+
 Alert-only bot. It **never places trades**. A few minutes after each H1 candle closes, GitHub Actions runs `signals.py`. The script checks the Heikin Ashi trend-ride rules on XAU/USD and posts plain-English alerts to the LumnFx Discord server:
 
 - **Setup** (buy or sell): the plan (entry, stop, size, take profit 1 and 2, when it's cancelled), why the setup qualifies, and context checks
