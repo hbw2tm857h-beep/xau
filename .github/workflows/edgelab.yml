@@ -1,0 +1,50 @@
+name: Edge Lab research cycle
+
+# Runs one autonomous research cycle of edgelab/ (research only: no broker, no orders):
+#   download new XAUUSD candles -> experiments (pre-registered agenda first) -> forward-test frozen
+#   hypotheses -> research log + dashboard -> commit.
+# Scheduled workflows only fire from the default branch, so the schedule activates once this
+# file is on main. It can also be started by hand from the Actions tab.
+on:
+  schedule:
+    - cron: "17 3 * * 0"        # Sundays 03:17 UTC, after the weekly close
+  workflow_dispatch:
+    inputs:
+      budget:
+        description: "Experiments to run this cycle"
+        required: true
+        default: "300"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: edgelab
+  cancel-in-progress: false
+
+jobs:
+  cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r edgelab/requirements.txt
+      - name: Leakage audit
+        run: python -m edgelab audit
+      - name: Research cycle
+        run: python -m edgelab cycle --budget "${{ github.event.inputs.budget || '300' }}"
+      - name: Commit results
+        run: |
+          git config user.name "edgelab-bot"
+          git config user.email "edgelab-bot@users.noreply.github.com"
+          git add edgelab/store/*.json edgelab/store/*.jsonl edgelab/store/*.csv edgelab/RESEARCH_LOG.md lab_output data/xauusd_m15_*.csv.gz
+          git commit -m "Edge Lab research cycle $(date -u +%F)" || exit 0
+          for i in 1 2 3 4 5; do
+            git pull --rebase --quiet origin "${GITHUB_REF_NAME}" && git push --quiet && break
+            git rebase --abort 2>/dev/null || true
+            [ "$i" = 5 ] && exit 1
+            sleep $(( i * 4 ))
+          done

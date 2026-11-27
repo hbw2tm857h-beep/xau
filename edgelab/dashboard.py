@@ -81,7 +81,7 @@ def _regime_series(lab) -> dict:
 
 def _distributions(lab) -> dict:
     T = lab.trades
-    T = T[T["split"] != "archive"]
+    T = T[T["split"].isin(["discovery", "validation", "holdout"])]
     bins = np.arange(-2.0, 4.01, 0.25)
     out = {"bins": bins.tolist()}
     for s, g in T.groupby("setup"):

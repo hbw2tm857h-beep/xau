@@ -155,6 +155,37 @@ a forward-test registry; H1 extended to 2026-11-23 from M15. 2,091 hypotheses ar
    * it does not survive the family-wise Reality Check.
    It is frozen in `store/frozen.json` and will be scored only on data after 2026-11-23. That forward score is the honest test.
 
+## Ongoing research (how the lab keeps running)
+
+```
+python -m edgelab update                    # pull new candles from Dukascopy (complete UTC days -> M15 files)
+python -m edgelab cycle --budget 300        # one full cycle: update -> experiments -> forward test -> log
+```
+
+Each **cycle** does the following:
+1. Downloads new XAUUSD candles directly from the Dukascopy feed and rebuilds the caches if the data grew.
+2. Tests the **pre-registered agenda** first (`edgelab/agenda.json`), then the engine's own queue: mutations, contradiction
+   probes, scan cells, and coverage-seeking exploration, so the queue never runs dry.
+3. Re-runs the Reality Check over the whole family. Every new hypothesis raises the bar for all the others.
+4. Freezes any newly surviving hypothesis and scores all frozen ones on the **forward split**: data after 2026-11-23 that no
+   test has ever used. After 30 forward trades each gets a verdict: `forward_confirmed`, `forward_failed` or `forward_inconclusive`.
+5. Writes what changed to `edgelab/RESEARCH_LOG.md` (newest first) and `store/cycles.jsonl`, and rebuilds the dashboard.
+
+The holdout is now fixed at 2022-01-01 to 2026-11-23, so results stay reproducible. New data only ever lands in `forward`.
+
+**Schedulers**
+* **Weekly Claude research session** (Sundays 04:23 UTC). It runs a cycle, reads the results as a researcher,
+  pre-registers 3-6 new hypotheses in `agenda.json` for the next cycle, writes "Researcher notes" into the log, and pushes to
+  this branch. It may design hypotheses only from discovery/validation evidence, never from holdout or forward numbers.
+  Manage or stop it under scheduled tasks in Claude Code on the web.
+* **GitHub Actions** `.github/workflows/edgelab.yml` (Sundays 03:17 UTC, or by hand). This is the mechanical cycle with no
+  reasoning step. GitHub only runs scheduled workflows from the default branch, so it activates once merged to `main`.
+  The Claude session skips its own cycle when one ran in the last 12 hours.
+
+**Adding your own ideas:** append a spec to `edgelab/agenda.json`, for example
+`{"setup": "breakout", "direction": -1, "conditions": [{"f": "session", "op": "==", "v": "london"}], "exit": "trail_2atr", "rationale": "...", "author": "me"}`.
+It is tested first in the next cycle and pays the same multiple-testing price as everything else.
+
 ## Limitations
 
 * Setups are mechanical stand-ins for discretionary reads. The taxonomy explains these trades, not your judgement, until you add your log.

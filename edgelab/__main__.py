@@ -5,6 +5,8 @@
   audit       look-ahead / leakage audit of features and setups
   dashboard   rebuild the dashboard from the last run
   template    print the personal-trades CSV template
+  update      download new candles from Dukascopy (complete UTC days)
+  cycle       one autonomous research cycle: update -> experiments -> forward test -> log  [--budget N] [--no-fetch]
 """
 from __future__ import annotations
 
@@ -14,10 +16,13 @@ import json
 
 def main():
     ap = argparse.ArgumentParser(prog="edgelab")
-    ap.add_argument("command", choices=["run", "experiment", "audit", "dashboard", "template"])
+    ap.add_argument("command", choices=["run", "experiment", "audit", "dashboard", "template", "update", "cycle"])
     ap.add_argument("--budget", type=int, default=60)
     ap.add_argument("--rebuild", action="store_true")
     ap.add_argument("--trades", default=None)
+    ap.add_argument("--no-fetch", action="store_true")
+    ap.add_argument("--skip-if-recent", type=float, default=0.0,
+                    help="cycle: do nothing if the last cycle finished less than this many hours ago")
     a = ap.parse_args()
     if a.command == "run":
         from .pipeline import run
@@ -44,6 +49,16 @@ def main():
         from .dashboard import build
         R = json.loads((OUTPUT / "lab_results.json").read_text())
         build(R, Lab())
+    elif a.command == "update":
+        from .updater import update
+        update()
+    elif a.command == "cycle":
+        from .cycle import run_cycle, hours_since_last
+        h = hours_since_last()
+        if a.skip_if_recent and h is not None and h < a.skip_if_recent:
+            print(f"[cycle] last cycle {h:.1f}h ago (< {a.skip_if_recent}h): skipping, results are current")
+        else:
+            run_cycle(a.budget, fetch=not a.no_fetch, user_trades=a.trades)
     elif a.command == "template":
         from .profile import TEMPLATE
         print(TEMPLATE)

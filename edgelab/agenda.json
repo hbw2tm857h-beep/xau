@@ -1,0 +1,22 @@
+[
+  {"setup": "rsi_extreme", "direction": 0, "conditions": [{"f": "flag_K5", "op": "==", "v": true}], "exit": "opposite",
+   "rationale": "K5 (fading RSI/BB extremes against an aligned H1/H4/D1 trend) is a confirmed, replicated mistake. Is the inverse - joining the aligned trend at the extreme - an edge, or only less bad?",
+   "author": "claude, cycle 0 (pre-registered 2026-11-27)"},
+  {"setup": "bb_fade", "direction": 0, "conditions": [{"f": "flag_K5", "op": "==", "v": true}], "exit": "opposite",
+   "rationale": "Same K5 inverse on Bollinger fades.", "author": "claude, cycle 0"},
+  {"setup": ["sweep_reversal", "wick_rejection", "failed_break", "exhaustion_fade", "double_top_bottom", "engulfing"],
+   "direction": 0, "conditions": [{"f": "flag_T4", "op": "==", "v": true}], "exit": "opposite",
+   "rationale": "T4 (reversal against a >3 daily-ATR 20-day trend) is confirmed. Test trading WITH that trend at the moment others try to pick the top.",
+   "author": "claude, cycle 0"},
+  {"setup": ["breakout", "range_breakout", "momentum_bar", "momentum_burst", "session_breakout"], "direction": 0,
+   "conditions": [{"f": "flag_S5", "op": "==", "v": true}], "exit": "base",
+   "rationale": "S5 replicated as an ADVANTAGE: continuation into a nearby H4/D1 level did better. Is it an edge in absolute terms for momentum-type entries?",
+   "author": "claude, cycle 0"},
+  {"setup": "*", "direction": 0, "conditions": [{"f": "stop_atr", "op": ">", "v": 2.5}, {"f": "flag_E2", "op": "==", "v": true}],
+   "exit": "base",
+   "rationale": "Two contradicted 'mistakes' combined: late entry after a >3 ATR move (E2) with a wide stop (V4). Momentum + room to breathe.",
+   "author": "claude, cycle 0"},
+  {"setup": "momentum_burst", "direction": -1, "conditions": [{"f": "rel_mom6", "op": ">=", "v": 4.0}], "exit": "time_exit_12h",
+   "rationale": "Event study: down-moves > 4 ATR/6h continue by ~0.33 ATR beyond drift, smaller ones stall. Short only the elevator-down cases, short holding period.",
+   "author": "claude, cycle 0"}
+]

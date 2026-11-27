@@ -25,9 +25,13 @@ SPLITS = {
     "archive": ("2003-01-01", "2007-12-31 23:59"),
     "discovery": ("2008-01-01", "2017-12-31 23:59"),
     "validation": ("2018-01-01", "2021-12-31 23:59"),
-    "holdout": ("2022-01-01", "2100-01-01"),
+    "holdout": ("2022-01-01", "2026-11-23 11:59"),
+    # Data that arrives after the lab went "live". The engine never tests on it; only hypotheses
+    # frozen in store/frozen.json are scored here, each from its own freeze time onward.
+    "forward": ("2026-11-23 12:00", "2100-01-01"),
 }
-SPLIT_ORDER = ["archive", "discovery", "validation", "holdout"]
+SPLIT_ORDER = ["archive", "discovery", "validation", "holdout", "forward"]
+RESEARCH_SPLITS = ["discovery", "validation", "holdout"]
 
 # Embargo between splits: trades whose holding window crosses a split boundary
 # are dropped from the later split's statistics (prevents overlap leakage).

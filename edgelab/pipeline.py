@@ -9,7 +9,7 @@ from pathlib import Path as FsPath
 import numpy as np
 import pandas as pd
 
-from .config import CACHE, STORE, OUTPUT, DEFAULT, SPLITS
+from .config import CACHE, STORE, OUTPUT, DEFAULT, SPLITS, RESEARCH_SPLITS
 from .frame import load_frame, load_m15_cached
 from .simulator import Path
 from .setups import generate_decisions, SETUPS
@@ -112,10 +112,10 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     R["side_profile"] = B.setup_side_profile(T).to_dict("records")
     R["oaxaca"] = B.oaxaca(T[T["split"].isin(["discovery", "validation", "holdout"])])
     R["conventional"] = B.conventional_scoreboard(T, cs).to_dict("records")
-    reg = T[T["split"] != "archive"].groupby(["setup", "regime_trend"])["r"].agg(["mean", "size"]).reset_index()
+    reg = T[T["split"].isin(RESEARCH_SPLITS)].groupby(["setup", "regime_trend"])["r"].agg(["mean", "size"]).reset_index()
     R["setup_regime"] = reg.to_dict("records")
-    hm = T[T["split"] != "archive"].groupby(["dow", "hour"])["r"].agg(["mean", "size"]).reset_index()
-    hm["loss_rate"] = T[T["split"] != "archive"].groupby(["dow", "hour"])["win"].mean().values
+    hm = T[T["split"].isin(RESEARCH_SPLITS)].groupby(["dow", "hour"])["r"].agg(["mean", "size"]).reset_index()
+    hm["loss_rate"] = T[T["split"].isin(RESEARCH_SPLITS)].groupby(["dow", "hour"])["win"].mean().values
     R["heat_hour_dow"] = hm.to_dict("records")
 
     # ------------------------------------------------------------- discovery scan + ML
@@ -145,6 +145,7 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     if not eng.queue and not led.records():
         eng.seed(cs, pol_d)
     eng.seed_momentum_track()
+    eng.seed_agenda()
     eng.seed_ml()
     print(f"[engine] running {budget} experiments (queue {len(eng.queue)})")
     eng.run(budget)

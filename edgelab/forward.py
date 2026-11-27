@@ -42,8 +42,17 @@ def score(t: pd.DataFrame, cf) -> list[dict]:
         m = mask(t, h["spec"]) & (t["tc"] > pd.Timestamp(h["frozen_at"]))
         r = trade_r(t, cf, h["spec"].get("exit", "base"))[m].dropna()
         s = summarise(r.values)
+        if s["n"] < 30:
+            verdict = f"accumulating ({s['n']}/30 trades)"
+        elif s["avg_r"] > 0 and s["t"] >= 1.0:
+            verdict = "forward_confirmed"
+        elif s["avg_r"] < 0:
+            verdict = "forward_failed"
+        else:
+            verdict = "forward_inconclusive"
         rec = {"hyp_id": h["hyp_id"], "definition": h["definition"], "frozen_at": h["frozen_at"],
-               "forward": s, "scored_on": time.strftime("%Y-%m-%d %H:%M")}
+               "status_at_freeze": h.get("status_at_freeze"), "forward": s, "verdict": verdict,
+               "scored_on": time.strftime("%Y-%m-%d %H:%M")}
         out.append(rec)
         with open(FORWARD_LOG, "a") as fh:
             fh.write(json.dumps(rec, default=str) + "\n")

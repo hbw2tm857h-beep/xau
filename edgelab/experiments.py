@@ -182,6 +182,71 @@ class Engine:
                                         "exit chosen post hoc from the per-exit table."}, 93)
         self.save()
 
+    def seed_agenda(self):
+        """Pre-registered hypotheses from edgelab/agenda.json (written by you or a research session).
+
+        Each entry is a hypothesis spec plus "rationale" and "author". Entries are registered
+        BEFORE they are tested, and re-pushing an already-tested one is a no-op.
+        """
+        from .config import ROOT
+        p = ROOT / "edgelab" / "agenda.json"
+        if not p.exists():
+            return 0
+        n = 0
+        for item in json.loads(p.read_text()):
+            spec = {k: item[k] for k in ("setup", "direction", "conditions", "exit") if k in item}
+            spec.setdefault("conditions", []); spec.setdefault("exit", "base")
+            spec.update(origin="agenda", rationale=f"{item.get('rationale', '')} [{item.get('author', 'agenda')}]")
+            bad = [c["f"] for c in spec["conditions"] if c["f"] not in self.t]
+            if bad:
+                self.ledger.append({"type": "note", "note": f"Agenda item skipped, unknown features {bad}: {item}"})
+                continue
+            before = len(self.queue)
+            self.push(spec, 99)
+            n += len(self.queue) > before
+        self.save()
+        return n
+
+    def explore(self, k: int, seed: int):
+        """Random, coverage-seeking hypotheses so the engine never runs dry.
+
+        Picks (setup, direction, feature, tercile, exit) cells the ledger has not covered yet.
+        Seeded by the ledger size, so a cycle is reproducible.
+        """
+        from .discovery import NUMERIC_FEATURES
+        rng = np.random.default_rng(seed)
+        covered = set()
+        for r in self.ledger.records():
+            sp = r.get("spec") or {}
+            for c in sp.get("conditions", []):
+                covered.add((str(sp.get("setup")), sp.get("direction"), c.get("f")))
+        disc = self.t[self.t["split"] == "discovery"]
+        setups = sorted(self.t["setup"].unique())
+        exits = ["base"] + EXIT_VARIANTS
+        added = tries = 0
+        while added < k and tries < 50 * k:
+            tries += 1
+            s_, d_, f_ = rng.choice(setups), int(rng.choice([1, -1])), str(rng.choice(NUMERIC_FEATURES))
+            if (s_, d_, f_) in covered or f_ not in disc:
+                continue
+            x = disc.loc[(disc["setup"] == s_) & (disc["direction"] == d_), f_].dropna()
+            if len(x) < 150:
+                continue
+            q = rng.choice([1, 2])
+            lo, hi = float(x.quantile((q - 1) / 3)), float(x.quantile(q / 3))
+            cond = [{"f": f_, "op": "<", "v": round(hi, 4)}] if q == 1 else \
+                   [{"f": f_, "op": "between", "v": [round(lo, 4), round(hi, 4)]}]
+            if rng.random() < 0.5:
+                cond = [{"f": f_, "op": ">=", "v": round(float(x.quantile(2 / 3)), 4)}]
+            spec = {"setup": s_, "direction": d_, "conditions": cond, "exit": str(rng.choice(exits)),
+                    "origin": "explore", "rationale": "Coverage: feature x setup cell not yet tested."}
+            before = len(self.queue)
+            self.push(spec, 30)
+            if len(self.queue) > before:
+                added += 1
+                covered.add((s_, d_, f_))
+        return added
+
     def refill_from_scan(self, k: int):
         from .discovery import scan_to_spec
         if self.scan_df is None or not len(self.scan_df):
@@ -327,6 +392,8 @@ class Engine:
         for _ in range(budget):
             if len(self.queue) < 5:
                 self.refill_from_scan(20)
+            if len(self.queue) < 5:
+                self.explore(20, seed=len(self.ledger.records()))
             if not self.queue:
                 break
             self.queue.sort(key=lambda q: -q["priority"])
