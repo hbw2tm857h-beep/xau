@@ -1,0 +1,47 @@
+[
+ {
+  "test": "Q1 trend trade, RVOL >= 1.0 (volume confirms)",
+  "n_group": 130,
+  "n_rest": 111,
+  "group": 0.282,
+  "rest": 0.186,
+  "diff": 0.096,
+  "p": "0.5",
+  "periods": [
+   "2020-24 +0.145 (87) vs +0.241 (73)",
+   "2025-26 +0.557 (43) vs +0.080 (38)"
+  ],
+  "left_out": 4,
+  "verdict": "fail"
+ },
+ {
+  "test": "Q2 inside-day trade, RVOL < 1.0 (quiet inside day)",
+  "n_group": 163,
+  "n_rest": 44,
+  "group": 0.103,
+  "rest": 0.212,
+  "diff": -0.109,
+  "p": "0.53",
+  "periods": [
+   "2020-24 +0.018 (116) vs +0.292 (33)",
+   "2025-26 +0.312 (47) vs -0.027 (11)"
+  ],
+  "left_out": 6,
+  "verdict": "fail"
+ },
+ {
+  "test": "Q3 trend trade, 5-day volume < 0.8x the prior 60 (dry-up)",
+  "n_group": 48,
+  "n_rest": 193,
+  "group": 0.429,
+  "rest": 0.19,
+  "diff": 0.239,
+  "p": "0.16",
+  "periods": [
+   "2020-24 +0.493 (29) vs +0.122 (131)",
+   "2025-26 n/a (19)"
+  ],
+  "left_out": 4,
+  "verdict": "fail"
+ }
+]

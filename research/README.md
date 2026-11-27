@@ -941,6 +941,7 @@ python3 research/round36_trend_shift_exit.py      # take the second half off whe
 python3 research/round37_new_inputs.py            # GLD flows, round-number stops, options expiry, China calendar, dollar lead (research only; downloads the GLD archive)
 python3 research/round38_headlines_shocks.py       # headline posts, news surprise size, shock hours (research only; downloads two post archives)
 python3 research/round39_gbpjpy.py                 # four GBPJPY ideas researched for the yen crosses (research only)
+python3 research/round41_real_volume_2020.py       # real COMEX gold volume, Sep 2020 on (research only; downloads Yahoo GC=F daily; round 40 is void)
 python3 research/round32_skipped_setups.py      # setups skipped while a trade is open (research only)
 python3 research/round31_macro_horizon.py         # macro filters and 3/6/12-hour forecasts (needs scikit-learn, ~25 min)
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
@@ -1049,4 +1050,26 @@ One deviation from the pre-registration: FRED timed out from this machine, so fi
 - **Carry in calm markets is the most economically sound result and still not enough.** Holding GBPJPY only when VIX is below its one-year median made about 2.4% a year with financing, against nothing on the other days, in 2009-15 and 2016-24, but 2025-26 went the other way and p is 0.15. It is a slow, daily, buy-and-hold-style return, not a signal stream, and would not suit alerts even if it had passed.
 - **Gotobi days really are different, but not profitable.** The overnight hold into the fix did 2.7bp better on gotobi days than on other days (p 0.008), the right way in every period. But the plain hold loses on ordinary days, and on gotobi days it only breaks even after costs, so there is nothing to trade. Importers' dollar buying is visible in GBPJPY; it is smaller than the spread.
 - **Nothing changes in the bot.** FX now has twelve failed strategy families.
+
+## Rounds 40-41: real COMEX gold volume (27 Nov 2026)
+
+`round40_real_volume.py`, `round41_real_volume_2020.py`, `round40_results.json` (void), `round41_results.json`. Pre-registered and committed (ac4deb2, 9427900) before the volume was joined to any trade in the window each one reports. **Research only:** nothing in the bot changed. hypotheses_tested rises from 1,415 to 1,421 (recorded here only; round 40's three count although void).
+
+Round 18 found nothing in volume, but it had only Dukascopy's proxy volume, which is the broker's own flow. Real gold futures volume is the one input the research never had. Yahoo Finance serves daily candles for the continuous COMEX gold future (`GC=F`) with volume from 2000, free. The file is saved to `data/volume/gc_daily_yahoo.csv` and gitignored, because Yahoo's terms bar redistribution and the repo is public. From round 40 on, a period needs at least 20 trades in the group before it counts toward the "same direction in every period" rule, instead of 5. This was decided before round 40 because five trades let noise veto a result.
+
+**Round 40 is void.** Yahoo's `GC=F` volume is not exchange volume before 2020. In 2008-19 its median is about 100 contracts a day; from 27 May 2020 it is about 190,000. So the early years carry one thin contract's volume. The jump also tripped the pre-registered cleaning rule (a day more than 4 times the median of the last 20 valid days is invalid), which then marked every later day invalid. Round 40's numbers therefore come only from the junk years and are not used. No trade from 2020 on had been joined to volume, so round 41 re-ran the same three tests on Sep 2020 to Nov 2026 alone, with volume read from 1 June 2020.
+
+| Test (Sep 2020-26) | Group | The rest | p | 2020-24 / 2025-26 (group vs rest) | Verdict |
+|---|---|---|---|---|---|
+| Q1 Trend trade after a day with above-average volume (round 18's V2, real volume) | +0.282R (130) | +0.186R (111) | 0.50 | +0.15 vs +0.24 / +0.56 vs +0.08 | fail |
+| Q2 Inside-day trade after a quiet inside day (round 18's V4, real volume) | +0.103R (163) | +0.212R (44) | 0.53 | +0.02 vs +0.29 / +0.31 vs −0.03 | fail, worse |
+| Q3 Trend trade after volume dried up (last 5 days under 0.8x the previous 60) | +0.429R (48) | +0.190R (193) | 0.16 | +0.49 vs +0.12 / 19 trades | fail |
+
+**0 of 3 passed.**
+
+**What it says:**
+- **Real volume says what proxy volume said: nothing usable.** Above-average volume before a trend trade helped in 2025-26 and hurt in 2020-24. Quiet inside days were worse, as round 18 found with proxy volume.
+- **Volume drying up before a trend trade is the only lead, and it is weak.** Those trades made +0.43R against +0.19R, but on 48 trades with p = 0.16, and 2025-26 has too few to count. It is a note for the live record, not a rule.
+- **The free data is the limit.** Six years of daily volume give about 245 trend trades, so only a very large effect could pass. A longer real series (Databento's 1-minute GC bars go back to June 2010) is the only way to settle the dry-up lead. It is not worth buying on this evidence alone.
+- **Nothing changes in the bot.**
 

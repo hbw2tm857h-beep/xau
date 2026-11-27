@@ -1,0 +1,53 @@
+[
+ {
+  "test": "Q1 trend trade, RVOL >= 1.0 (volume confirms)",
+  "n_group": 96,
+  "n_rest": 135,
+  "group": 0.355,
+  "rest": 0.225,
+  "diff": 0.13,
+  "p": "0.36",
+  "periods": [
+   "2008-15 +0.311 (63) vs +0.256 (90)",
+   "2016-24 +0.439 (33) vs +0.164 (45)",
+   "2025-26 n/a (0)",
+   "2004-07 n/a (15)"
+  ],
+  "left_out": 571,
+  "verdict": "fail"
+ },
+ {
+  "test": "Q2 inside-day trade, RVOL < 1.0 (quiet inside day)",
+  "n_group": 135,
+  "n_rest": 94,
+  "group": -0.046,
+  "rest": 0.143,
+  "diff": -0.19,
+  "p": "0.13",
+  "periods": [
+   "2008-15 -0.071 (97) vs +0.190 (66)",
+   "2016-24 +0.017 (38) vs +0.032 (28)",
+   "2025-26 n/a (0)",
+   "2004-07 +0.193 (30) vs -0.132 (21)"
+  ],
+  "left_out": 600,
+  "verdict": "fail"
+ },
+ {
+  "test": "Q3 trend trade, 5-day volume < 0.8x the prior 60 (dry-up)",
+  "n_group": 80,
+  "n_rest": 151,
+  "group": 0.444,
+  "rest": 0.192,
+  "diff": 0.252,
+  "p": "0.082",
+  "periods": [
+   "2008-15 +0.388 (59) vs +0.210 (94)",
+   "2016-24 +0.602 (21) vs +0.162 (57)",
+   "2025-26 n/a (0)",
+   "2004-07 n/a (17)"
+  ],
+  "left_out": 571,
+  "verdict": "fail"
+ }
+]
