@@ -2,3 +2,5 @@ __pycache__/
 *.pyc
 research/reddit_raw/
 .env
+data/macro/gld_holdings.csv
+data/volume/gc_daily_yahoo.csv
