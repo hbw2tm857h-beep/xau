@@ -940,6 +940,7 @@ python3 research/round34_m15_new_rules.py        # new 15-minute rules, searched
 python3 research/round36_trend_shift_exit.py      # take the second half off when the trend turns after TP1 (research only)
 python3 research/round37_new_inputs.py            # GLD flows, round-number stops, options expiry, China calendar, dollar lead (research only; downloads the GLD archive)
 python3 research/round38_headlines_shocks.py       # headline posts, news surprise size, shock hours (research only; downloads two post archives)
+python3 research/round39_gbpjpy.py                 # four GBPJPY ideas researched for the yen crosses (research only)
 python3 research/round32_skipped_setups.py      # setups skipped while a trade is open (research only)
 python3 research/round31_macro_horizon.py         # macro filters and 3/6/12-hour forecasts (needs scikit-learn, ~25 min)
 python3 research/round12_ibs_live_check.py  # live code vs research on US IBS
@@ -1024,4 +1025,28 @@ The ideas came from a 27 Nov scrape of r/algotrading. Two posts there described 
 - **The size of the surprise doesn't sharpen round 23's near miss.** Trend signals after a big release did well in 2008-15 and 2016-24 again (+0.5R against +0.15R), but slightly worse than the rest in 2025-26 and 2004-07, and p missed the bar. Most of round 23's 40 trades are the same trades, so this is the same near miss seen again, not new evidence. It stays a thing to watch in the live record.
 - **A big hour on its own means nothing for the next day's trend trades.** Roughly two thirds of trades follow such an hour, and they do no better than the rest.
 - **Nothing changes in the bot.**
+
+## Round 39: GBPJPY, with ideas researched for the yen crosses (27 Nov 2026)
+
+`round39_gbpjpy.py`, `round39_results.json`. Pre-registered and committed (fb29023) before any rule was run on GBPJPY. **Research only:** nothing in the bot changed. hypotheses_tested rises from 1,411 to 1,415 (recorded here only).
+
+Bradley asked for an edge on GBPJPY and for other markets to be researched afresh rather than tried with gold's rules. Four ideas came from how a yen carry cross works, each with someone forced or slow on the other side: equities reprice risk before the yen crosses (from the 27 Nov r/algotrading scrape); carry unwinds are forced deleveraging (Brunnermeier, Nagel and Pedersen 2008; the IMF's 2019/136 finds yen unwinds run twice as fast when VIX is high); the carry premium is pay for crash risk that arrives in stressed markets (Menkhoff et al. 2012; Clarida, Davis and Pedersen 2009); and Japanese importers buy dollars into the 9:55 Tokyo fix on gotobi days (Bessho, Sugimoto and Suzuki, arXiv 2301.13204). Costs 2.5 basis points a round trip, plus financing on positions held overnight. Bar: p < 0.05 / 4 = 0.0125.
+
+One deviation from the pre-registration: FRED timed out from this machine, so financing uses the Bank of England and Bank of Japan policy rates by decision date instead of the OECD 3-month rates. Only G2 and G3 use financing. The 2026 BoJ steps come from press reports. Neither change moves financing by more than a fraction of a basis point a day.
+
+| Test | Result | p | 2008/12-15 / 2016-24 / 2025-26 | Verdict |
+|---|---|---|---|---|
+| G1 S&P 500 moves 2 sd in an hour and GBPJPY lags: trade the catch-up for 3 hours | −1.43bp a trade (1,230) | 0.97 | −2.2 / −0.9 / −2.9 bp | fail |
+| G2 Sell after a 2-sd down day, hold 5 days | −1.1bp a trade (159) | 0.53 | −17.8 / +14.1 / +3.8 bp | fail |
+| G3 Hold GBPJPY long with carry only when VIX is below its 1-year median | +1.68bp a day calm (3,196) vs −0.26bp (2,397) | 0.15 | calm ahead / ahead / **behind** | fail |
+| G4 Gotobi: long 18:00-01:00 UTC into the Tokyo fix | +0.12bp (1,167) vs −2.62bp on other days | 0.45 / 0.008 | +0.9 / −0.3 / −1.5 bp | fail |
+
+**0 of 4 passed.**
+
+**What it says:**
+- **GBPJPY does not lag the S&P 500.** Trading the catch-up lost after costs in every period, as gold did against the dollar in round 37. Any lag is gone within the hour.
+- **Carry unwinds don't reliably keep going.** Selling after a crash day lost heavily in 2008-15 (the bounces after 2008) and made money in 2016-24. It nets out at zero.
+- **Carry in calm markets is the most economically sound result and still not enough.** Holding GBPJPY only when VIX is below its one-year median made about 2.4% a year with financing, against nothing on the other days, in 2009-15 and 2016-24, but 2025-26 went the other way and p is 0.15. It is a slow, daily, buy-and-hold-style return, not a signal stream, and would not suit alerts even if it had passed.
+- **Gotobi days really are different, but not profitable.** The overnight hold into the fix did 2.7bp better on gotobi days than on other days (p 0.008), the right way in every period. But the plain hold loses on ordinary days, and on gotobi days it only breaks even after costs, so there is nothing to trade. Importers' dollar buying is visible in GBPJPY; it is smaller than the spread.
+- **Nothing changes in the bot.** FX now has twelve failed strategy families.
 

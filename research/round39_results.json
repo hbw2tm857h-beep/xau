@@ -1,0 +1,54 @@
+[
+ {
+  "test": "G1 equities move first",
+  "n": 1230,
+  "avg_bp": -1.43,
+  "p": "0.97",
+  "periods": [
+   "2012-15 -2.23bp (261)",
+   "2016-24 -0.86bp (800)",
+   "2025-26 -2.87bp (169)"
+  ],
+  "verdict": "fail"
+ },
+ {
+  "test": "G2 carry unwinds continue",
+  "n": 159,
+  "avg_bp": -1.1,
+  "p": "0.53",
+  "periods": [
+   "2008-15 -17.8bp (72)",
+   "2016-24 +14.1bp (75)",
+   "2025-26 +3.8bp (12)"
+  ],
+  "verdict": "fail"
+ },
+ {
+  "test": "G3 carry only when calm",
+  "n_calm": 3196,
+  "n_rest": 2397,
+  "calm_bp": 1.68,
+  "rest_bp": -0.26,
+  "p": "0.15",
+  "periods": [
+   "2009-15 calm +2.03bp (1352) vs -0.48bp (838)",
+   "2016-24 calm +1.50bp (1575) vs -0.81bp (1238)",
+   "2025-26 calm +0.97bp (269) vs +2.43bp (321)"
+  ],
+  "verdict": "fail"
+ },
+ {
+  "test": "G4 gotobi",
+  "n": 1167,
+  "avg_bp": 0.12,
+  "other_bp": -2.62,
+  "p": "0.45",
+  "p_vs_other": "0.008",
+  "periods": [
+   "2008-15 +0.92bp (496) vs -2.20bp",
+   "2016-24 -0.26bp (555) vs -3.09bp",
+   "2025-26 -1.51bp (116) vs -2.11bp"
+  ],
+  "verdict": "fail"
+ }
+]

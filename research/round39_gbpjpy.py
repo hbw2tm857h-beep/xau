@@ -117,12 +117,34 @@ def fred(series):
     return out
 
 
+# FRED timed out from this machine on 27 Nov 2026 (both the csv and the series
+# page), so the pre-registered OECD 3-month rates could not be fetched. Financing
+# uses the two central banks' policy rates instead, by decision date; the rest of
+# the round is unchanged. The 2026 BoJ steps (about 1.0% in June, 1.25% on
+# 18 Sep) come from press reports, and a reported BoE rise to 4.0% in Nov 2026 is
+# unconfirmed and left out; either moves financing by under 0.1bp a day.
+BOE = [("2007-12-06", 5.5), ("2008-02-07", 5.25), ("2008-04-10", 5.0), ("2008-10-08", 4.5), ("2008-11-06", 3.0),
+       ("2008-12-04", 2.0), ("2009-01-08", 1.5), ("2009-02-05", 1.0), ("2009-03-05", 0.5), ("2016-08-04", 0.25),
+       ("2017-11-02", 0.5), ("2018-08-02", 0.75), ("2020-03-11", 0.25), ("2020-03-19", 0.1), ("2021-12-16", 0.25),
+       ("2022-02-03", 0.5), ("2022-03-17", 0.75), ("2022-05-05", 1.0), ("2022-06-16", 1.25), ("2022-08-04", 1.75),
+       ("2022-09-22", 2.25), ("2022-11-03", 3.0), ("2022-12-15", 3.5), ("2023-02-02", 4.0), ("2023-03-23", 4.25),
+       ("2023-05-11", 4.5), ("2023-06-22", 5.0), ("2023-08-03", 5.25), ("2024-08-01", 5.0), ("2024-11-07", 4.75),
+       ("2025-02-06", 4.5), ("2025-05-08", 4.25), ("2025-08-07", 4.0), ("2025-12-18", 3.75)]
+BOJ = [("2007-02-21", 0.5), ("2008-10-31", 0.3), ("2008-12-19", 0.1), ("2010-10-05", 0.05), ("2016-02-16", -0.1),
+       ("2024-03-19", 0.05), ("2024-07-31", 0.25), ("2025-01-24", 0.5), ("2025-12-19", 0.75), ("2026-06-16", 1.0),
+       ("2026-09-18", 1.25)]
+
+
 def rate_diff():
-    """{(year, month): UK minus Japan 3-month rate, %}, carried forward."""
-    uk, jp = dict(((d.year, d.month), v) for d, v in fred("IR3TIB01GBM156N")), \
-        dict(((d.year, d.month), v) for d, v in fred("IR3TIB01JPM156N"))
-    months = sorted(set(uk) & set(jp))
-    return {m: uk[m] - jp[m] for m in months}, months
+    """{(year, month): UK minus Japan policy rate at the month's start, %}."""
+    def at(table, d):
+        v = table[0][1]
+        for day, r in table:
+            if date.fromisoformat(day) <= d:
+                v = r
+        return v
+    months = [(y, m) for y in range(2007, 2027) for m in range(1, 13)]
+    return {(y, m): at(BOE, date(y, m, 1)) - at(BOJ, date(y, m, 1)) for y, m in months}, months
 
 
 def diff_on(d, diffs, months):
