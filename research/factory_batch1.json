@@ -1,0 +1,1800 @@
+{
+ "generated": 268128,
+ "with_30_build_trades": 198546,
+ "build_pass": 8587,
+ "cut": 20,
+ "alpha": 0.0025,
+ "passed": 0,
+ "minutes": 5.2,
+ "rules": [
+  {
+   "rule": "GBPUSD: first-hour range break, both, no filter, 3-candle exit",
+   "spec": {
+    "market": "GBPUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "both",
+    "f": [],
+    "x": "X5"
+   },
+   "build": {
+    "n": 2476,
+    "mean": 0.169,
+    "t": 7.01,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      697,
+      0.11494672139339052
+     ],
+     [
+      878,
+      0.20306196941768212
+     ],
+     [
+      901,
+      0.17796178980354302
+     ]
+    ]
+   },
+   "cut": {
+    "n": 1642,
+    "mean": 0.034,
+    "p": 0.0993,
+    "periods": [
+     "2020-22 +0.059 (719)",
+     "2023-26 +0.014 (923)"
+    ],
+    "corr": {
+     "gold trend": 0.01,
+     "gold inside-day": 0.01,
+     "btc_trend": 0.03,
+     "eth_inside_day": 0.02,
+     "us_ibs": -0.02
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "EURUSD: first-hour range break, short, no filter, 3-candle exit",
+   "spec": {
+    "market": "EURUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "short",
+    "f": [],
+    "x": "X5"
+   },
+   "build": {
+    "n": 1293,
+    "mean": 0.192,
+    "t": 5.69,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      343,
+      0.1929187575288167
+     ],
+     [
+      467,
+      0.20330967510579123
+     ],
+     [
+      483,
+      0.17928775138445963
+     ]
+    ]
+   },
+   "cut": {
+    "n": 810,
+    "mean": 0.095,
+    "p": 0.0048,
+    "periods": [
+     "2020-22 +0.109 (345)",
+     "2023-26 +0.085 (465)"
+    ],
+    "corr": {
+     "gold trend": 0.02,
+     "gold inside-day": -0.01,
+     "btc_trend": 0.03,
+     "eth_inside_day": -0.02,
+     "us_ibs": 0.01
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "GBPUSD: first-hour range break, both, F6, 2R target",
+   "spec": {
+    "market": "GBPUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "both",
+    "f": [
+     "F6"
+    ],
+    "x": "X2"
+   },
+   "build": {
+    "n": 1533,
+    "mean": 0.196,
+    "t": 5.2,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      431,
+      0.21502082474112436
+     ],
+     [
+      544,
+      0.19045087422458032
+     ],
+     [
+      558,
+      0.18794147021315
+     ]
+    ]
+   },
+   "cut": {
+    "n": 1062,
+    "mean": -0.003,
+    "p": 0.525,
+    "periods": [
+     "2020-22 +0.071 (468)",
+     "2023-26 -0.061 (594)"
+    ],
+    "corr": {
+     "gold trend": -0.01,
+     "gold inside-day": -0.01,
+     "btc_trend": 0.03,
+     "eth_inside_day": -0.01,
+     "us_ibs": -0.01
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "WTI: first-hour range break, both, F2, 2-ATR trail",
+   "spec": {
+    "market": "WTI",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "both",
+    "f": [
+     "F2"
+    ],
+    "x": "X8"
+   },
+   "build": {
+    "n": 730,
+    "mean": 0.384,
+    "t": 5.14,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      302,
+      0.32637186379992494
+     ],
+     [
+      428,
+      0.42454883613682876
+     ]
+    ]
+   },
+   "cut": {
+    "n": 757,
+    "mean": 0.149,
+    "p": 0.00939,
+    "periods": [
+     "2020-22 +0.102 (350)",
+     "2023-26 +0.189 (407)"
+    ],
+    "corr": {
+     "gold trend": 0.02,
+     "gold inside-day": -0.0,
+     "btc_trend": -0.01,
+     "eth_inside_day": -0.04,
+     "us_ibs": 0.01
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "EURJPY: first-hour range break, short, F2, 3-candle exit",
+   "spec": {
+    "market": "EURJPY",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "short",
+    "f": [
+     "F2"
+    ],
+    "x": "X5"
+   },
+   "build": {
+    "n": 614,
+    "mean": 0.232,
+    "t": 4.82,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      159,
+      0.30422091796436285
+     ],
+     [
+      223,
+      0.26778869085290763
+     ],
+     [
+      232,
+      0.14823946163205554
+     ]
+    ]
+   },
+   "cut": {
+    "n": 313,
+    "mean": 0.178,
+    "p": 0.00519,
+    "periods": [
+     "2020-22 +0.219 (150)",
+     "2023-26 +0.141 (163)"
+    ],
+    "corr": {
+     "gold trend": 0.03,
+     "gold inside-day": -0.01,
+     "btc_trend": 0.02,
+     "eth_inside_day": 0.01,
+     "us_ibs": 0.0
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "GBPUSD: first-hour range break, short, F5+F6, 3-candle exit",
+   "spec": {
+    "market": "GBPUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "short",
+    "f": [
+     "F5",
+     "F6"
+    ],
+    "x": "X5"
+   },
+   "build": {
+    "n": 519,
+    "mean": 0.271,
+    "t": 4.77,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      171,
+      0.2344616377259623
+     ],
+     [
+      192,
+      0.2816863563056285
+     ],
+     [
+      156,
+      0.296597248919683
+     ]
+    ]
+   },
+   "cut": {
+    "n": 367,
+    "mean": -0.033,
+    "p": 0.738,
+    "periods": [
+     "2020-22 +0.019 (131)",
+     "2023-26 -0.062 (236)"
+    ],
+    "corr": {
+     "gold trend": 0.03,
+     "gold inside-day": 0.0,
+     "btc_trend": -0.01,
+     "eth_inside_day": 0.02,
+     "us_ibs": -0.0
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "GBPUSD: first-hour range break, both, F5+F6, 2-ATR trail",
+   "spec": {
+    "market": "GBPUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "both",
+    "f": [
+     "F5",
+     "F6"
+    ],
+    "x": "X8"
+   },
+   "build": {
+    "n": 1000,
+    "mean": 0.209,
+    "t": 4.73,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      327,
+      0.20268041897578787
+     ],
+     [
+      357,
+      0.18390584440363858
+     ],
+     [
+      316,
+      0.2432962806549841
+     ]
+    ]
+   },
+   "cut": {
+    "n": 676,
+    "mean": 0.029,
+    "p": 0.285,
+    "periods": [
+     "2020-22 -0.002 (228)",
+     "2023-26 +0.045 (448)"
+    ],
+    "corr": {
+     "gold trend": -0.01,
+     "gold inside-day": 0.04,
+     "btc_trend": 0.01,
+     "eth_inside_day": 0.02,
+     "us_ibs": 0.01
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "GBPUSD: first-hour range break, both, F2+F6, 3-candle exit",
+   "spec": {
+    "market": "GBPUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "both",
+    "f": [
+     "F2",
+     "F6"
+    ],
+    "x": "X5"
+   },
+   "build": {
+    "n": 566,
+    "mean": 0.241,
+    "t": 4.72,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      165,
+      0.25322994315147596
+     ],
+     [
+      192,
+      0.2852394245354297
+     ],
+     [
+      209,
+      0.1903752179456854
+     ]
+    ]
+   },
+   "cut": {
+    "n": 382,
+    "mean": 0.018,
+    "p": 0.375,
+    "periods": [
+     "2020-22 +0.097 (173)",
+     "2023-26 -0.047 (209)"
+    ],
+    "corr": {
+     "gold trend": 0.03,
+     "gold inside-day": -0.01,
+     "btc_trend": -0.02,
+     "eth_inside_day": -0.04,
+     "us_ibs": -0.02
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "EURUSD: first-hour range break, short, F1+F6, 3-candle exit",
+   "spec": {
+    "market": "EURUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "short",
+    "f": [
+     "F1",
+     "F6"
+    ],
+    "x": "X5"
+   },
+   "build": {
+    "n": 299,
+    "mean": 0.313,
+    "t": 4.67,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      71,
+      0.3921978195700332
+     ],
+     [
+      102,
+      0.28868716628913405
+     ],
+     [
+      126,
+      0.2881162890268937
+     ]
+    ]
+   },
+   "cut": {
+    "n": 200,
+    "mean": 0.089,
+    "p": 0.104,
+    "periods": [
+     "2020-22 +0.140 (99)",
+     "2023-26 +0.040 (101)"
+    ],
+    "corr": {
+     "gold trend": 0.04,
+     "gold inside-day": 0.01,
+     "btc_trend": 0.04,
+     "eth_inside_day": 0.01,
+     "us_ibs": -0.0
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "WTI: first-hour range break, short, F2, 3R target",
+   "spec": {
+    "market": "WTI",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "short",
+    "f": [
+     "F2"
+    ],
+    "x": "X3"
+   },
+   "build": {
+    "n": 356,
+    "mean": 0.481,
+    "t": 4.65,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      0,
+      0.0
+     ],
+     [
+      160,
+      0.5903652969552309
+     ],
+     [
+      196,
+      0.3911500250306425
+     ]
+    ]
+   },
+   "cut": {
+    "n": 346,
+    "mean": -0.044,
+    "p": 0.68,
+    "periods": [
+     "2020-22 -0.051 (158)",
+     "2023-26 -0.038 (188)"
+    ],
+    "corr": {
+     "gold trend": 0.04,
+     "gold inside-day": -0.01,
+     "btc_trend": -0.01,
+     "eth_inside_day": -0.05,
+     "us_ibs": 0.03
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "GBPUSD: first-hour range break, long, F4, 3-candle exit",
+   "spec": {
+    "market": "GBPUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "long",
+    "f": [
+     "F4"
+    ],
+    "x": "X5"
+   },
+   "build": {
+    "n": 488,
+    "mean": 0.246,
+    "t": 4.64,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      95,
+      0.18759784957193978
+     ],
+     [
+      183,
+      0.2400572586851272
+     ],
+     [
+      210,
+      0.27685275487793665
+     ]
+    ]
+   },
+   "cut": {
+    "n": 349,
+    "mean": 0.1,
+    "p": 0.0342,
+    "periods": [
+     "2020-22 +0.153 (199)",
+     "2023-26 +0.029 (150)"
+    ],
+    "corr": {
+     "gold trend": -0.03,
+     "gold inside-day": -0.02,
+     "btc_trend": 0.05,
+     "eth_inside_day": 0.01,
+     "us_ibs": -0.0
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "GBPUSD: first-hour range break, long, no filter, 10-candle exit",
+   "spec": {
+    "market": "GBPUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "long",
+    "f": [],
+    "x": "X6"
+   },
+   "build": {
+    "n": 1210,
+    "mean": 0.23,
+    "t": 4.56,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      343,
+      0.12467451418280939
+     ],
+     [
+      437,
+      0.28006644397634306
+     ],
+     [
+      430,
+      0.2638203617335636
+     ]
+    ]
+   },
+   "cut": {
+    "n": 817,
+    "mean": 0.158,
+    "p": 0.00635,
+    "periods": [
+     "2020-22 +0.120 (355)",
+     "2023-26 +0.188 (462)"
+    ],
+    "corr": {
+     "gold trend": -0.0,
+     "gold inside-day": -0.03,
+     "btc_trend": 0.03,
+     "eth_inside_day": -0.03,
+     "us_ibs": -0.0
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "GBPJPY: first-hour range break, both, no filter, 2-ATR trail",
+   "spec": {
+    "market": "GBPJPY",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "both",
+    "f": [],
+    "x": "X8"
+   },
+   "build": {
+    "n": 2424,
+    "mean": 0.146,
+    "t": 4.52,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      677,
+      0.15256456024549045
+     ],
+     [
+      862,
+      0.1200819921326717
+     ],
+     [
+      885,
+      0.16497943094355522
+     ]
+    ]
+   },
+   "cut": {
+    "n": 1573,
+    "mean": 0.045,
+    "p": 0.107,
+    "periods": [
+     "2020-22 +0.079 (702)",
+     "2023-26 +0.018 (871)"
+    ],
+    "corr": {
+     "gold trend": 0.04,
+     "gold inside-day": 0.0,
+     "btc_trend": 0.03,
+     "eth_inside_day": -0.0,
+     "us_ibs": 0.0
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "EURUSD: first-hour range break, both, F4, 3-candle exit",
+   "spec": {
+    "market": "EURUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "both",
+    "f": [
+     "F4"
+    ],
+    "x": "X5"
+   },
+   "build": {
+    "n": 993,
+    "mean": 0.162,
+    "t": 4.47,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      356,
+      0.16829739500919133
+     ],
+     [
+      329,
+      0.1533172762595843
+     ],
+     [
+      308,
+      0.16290164970484006
+     ]
+    ]
+   },
+   "cut": {
+    "n": 710,
+    "mean": -0.008,
+    "p": 0.587,
+    "periods": [
+     "2020-22 -0.006 (422)",
+     "2023-26 -0.010 (288)"
+    ],
+    "corr": {
+     "gold trend": -0.02,
+     "gold inside-day": -0.01,
+     "btc_trend": 0.03,
+     "eth_inside_day": -0.02,
+     "us_ibs": -0.0
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "GBPUSD: first-hour range break, both, F2+F4, 3-candle exit",
+   "spec": {
+    "market": "GBPUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "both",
+    "f": [
+     "F2",
+     "F4"
+    ],
+    "x": "X5"
+   },
+   "build": {
+    "n": 474,
+    "mean": 0.244,
+    "t": 4.31,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      92,
+      0.24224629897068803
+     ],
+     [
+      179,
+      0.3473353250944185
+     ],
+     [
+      203,
+      0.15402234636336562
+     ]
+    ]
+   },
+   "cut": {
+    "n": 329,
+    "mean": 0.068,
+    "p": 0.117,
+    "periods": [
+     "2020-22 +0.150 (186)",
+     "2023-26 -0.038 (143)"
+    ],
+    "corr": {
+     "gold trend": 0.02,
+     "gold inside-day": 0.0,
+     "btc_trend": 0.04,
+     "eth_inside_day": 0.04,
+     "us_ibs": -0.02
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "GBPUSD: first-hour range break, both, no filter, 3R target",
+   "spec": {
+    "market": "GBPUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "both",
+    "f": [],
+    "x": "X3"
+   },
+   "build": {
+    "n": 1761,
+    "mean": 0.189,
+    "t": 4.27,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      483,
+      0.17775424862963107
+     ],
+     [
+      656,
+      0.13584821026894275
+     ],
+     [
+      622,
+      0.2524777004563293
+     ]
+    ]
+   },
+   "cut": {
+    "n": 1248,
+    "mean": 0.038,
+    "p": 0.227,
+    "periods": [
+     "2020-22 +0.197 (535)",
+     "2023-26 -0.081 (713)"
+    ],
+    "corr": {
+     "gold trend": 0.05,
+     "gold inside-day": 0.0,
+     "btc_trend": 0.02,
+     "eth_inside_day": -0.01,
+     "us_ibs": -0.0
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "EURJPY: first-hour range break, both, no filter, 2-ATR trail",
+   "spec": {
+    "market": "EURJPY",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "both",
+    "f": [],
+    "x": "X8"
+   },
+   "build": {
+    "n": 2492,
+    "mean": 0.137,
+    "t": 4.21,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      702,
+      0.29616686455914926
+     ],
+     [
+      905,
+      0.09569852803100298
+     ],
+     [
+      885,
+      0.051861688479076525
+     ]
+    ]
+   },
+   "cut": {
+    "n": 1584,
+    "mean": 0.026,
+    "p": 0.219,
+    "periods": [
+     "2020-22 +0.051 (705)",
+     "2023-26 +0.007 (879)"
+    ],
+    "corr": {
+     "gold trend": 0.03,
+     "gold inside-day": -0.0,
+     "btc_trend": 0.01,
+     "eth_inside_day": -0.04,
+     "us_ibs": 0.01
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "EURUSD: first-hour range break, short, F1, 2-ATR trail",
+   "spec": {
+    "market": "EURUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "short",
+    "f": [
+     "F1"
+    ],
+    "x": "X8"
+   },
+   "build": {
+    "n": 649,
+    "mean": 0.26,
+    "t": 4.14,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      153,
+      0.20846775610300725
+     ],
+     [
+      260,
+      0.35809702912767005
+     ],
+     [
+      236,
+      0.1852849452072622
+     ]
+    ]
+   },
+   "cut": {
+    "n": 401,
+    "mean": 0.113,
+    "p": 0.0435,
+    "periods": [
+     "2020-22 +0.105 (194)",
+     "2023-26 +0.121 (207)"
+    ],
+    "corr": {
+     "gold trend": 0.05,
+     "gold inside-day": 0.03,
+     "btc_trend": 0.03,
+     "eth_inside_day": 0.01,
+     "us_ibs": -0.02
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "Gold: first-hour range break, short, no filter, 2-ATR trail",
+   "spec": {
+    "market": "Gold",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "short",
+    "f": [],
+    "x": "X8"
+   },
+   "build": {
+    "n": 1386,
+    "mean": 0.215,
+    "t": 4.02,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      381,
+      0.08852841046797343
+     ],
+     [
+      571,
+      0.257179701421202
+     ],
+     [
+      434,
+      0.2707406420365479
+     ]
+    ]
+   },
+   "cut": {
+    "n": 779,
+    "mean": 0.12,
+    "p": 0.0308,
+    "periods": [
+     "2020-22 +0.070 (361)",
+     "2023-26 +0.163 (418)"
+    ],
+    "corr": {
+     "gold trend": 0.06,
+     "gold inside-day": 0.08,
+     "btc_trend": -0.0,
+     "eth_inside_day": 0.02,
+     "us_ibs": -0.01
+    }
+   },
+   "verdict": "fail"
+  },
+  {
+   "rule": "GBPUSD: first-hour range break, short, no filter, half 1R, rest 2R",
+   "spec": {
+    "market": "GBPUSD",
+    "v": [
+     "orb",
+     "H1",
+     0,
+     ""
+    ],
+    "dirs": "short",
+    "f": [],
+    "x": "X4"
+   },
+   "build": {
+    "n": 1207,
+    "mean": 0.127,
+    "t": 4.01,
+    "random_p": 0.002,
+    "blocks": [
+     [
+      342,
+      0.09094850513962661
+     ],
+     [
+      421,
+      0.13028521447181438
+     ],
+     [
+      444,
+      0.1508499733048232
+     ]
+    ]
+   },
+   "cut": {
+    "n": 801,
+    "mean": 0.016,
+    "p": 0.335,
+    "periods": [
+     "2020-22 +0.050 (353)",
+     "2023-26 -0.010 (448)"
+    ],
+    "corr": {
+     "gold trend": 0.04,
+     "gold inside-day": -0.0,
+     "btc_trend": 0.02,
+     "eth_inside_day": 0.01,
+     "us_ibs": -0.0
+    }
+   },
+   "verdict": "fail"
+  }
+ ],
+ "list_log": [
+  [
+   "GBPUSD: first-hour range break, both, no filter, 3-candle exit",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F6, 3-candle exit",
+   "skipped: correlation 0.83 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, no filter, half 1R, rest 2R",
+   "skipped: correlation 0.66 with a listed rule"
+  ],
+  [
+   "EURUSD: first-hour range break, short, no filter, 3-candle exit",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, no filter, 10-candle exit",
+   "skipped: correlation 0.69 with a listed rule"
+  ],
+  [
+   "EURUSD: first-hour range break, short, F6, 3-candle exit",
+   "skipped: correlation 0.81 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, no filter, 2-ATR trail",
+   "skipped: correlation 0.66 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, no filter, next daily close",
+   "skipped: correlation 0.68 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F5+F6, 3-candle exit",
+   "skipped: correlation 0.66 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F5, 3-candle exit",
+   "skipped: correlation 0.78 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, no filter, 2R target",
+   "skipped: correlation 0.56 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F6, 2-ATR trail",
+   "skipped: correlation 0.54 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F6, 2R target",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "WTI: first-hour range break, both, F2, 2-ATR trail",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "GBPUSD: first-hour range break, long, no filter, 3-candle exit",
+   "skipped: correlation 0.68 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F6, next daily close",
+   "skipped: correlation 0.64 with a listed rule"
+  ],
+  [
+   "EURUSD: first-hour range break, short, F4, 3-candle exit",
+   "skipped: correlation 0.62 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F2, 3-candle exit",
+   "skipped: correlation 0.70 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F6, half 1R, rest 2R",
+   "skipped: correlation 0.83 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F6, 10-candle exit",
+   "skipped: correlation 0.64 with a listed rule"
+  ],
+  [
+   "EURUSD: first-hour range break, both, no filter, 3-candle exit",
+   "skipped: correlation 0.74 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, short, no filter, 3-candle exit",
+   "skipped: correlation 0.73 with a listed rule"
+  ],
+  [
+   "EURJPY: first-hour range break, short, F2, 3-candle exit",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "GBPUSD: first-hour range break, short, F5+F6, 3-candle exit",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F5, half 1R, rest 2R",
+   "skipped: correlation 0.52 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F5+F6, 2-ATR trail",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "EURJPY: first-hour range break, short, no filter, 3-candle exit",
+   "skipped: correlation 0.73 with a listed rule"
+  ],
+  [
+   "WTI: first-hour range break, both, F2+F5, 2-ATR trail",
+   "skipped: correlation 0.83 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F2+F6, 3-candle exit",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "WTI: first-hour range break, short, F2, 2-ATR trail",
+   "skipped: correlation 0.76 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, short, F5, 3-candle exit",
+   "skipped: correlation 0.86 with a listed rule"
+  ],
+  [
+   "WTI: first-hour range break, both, F2, 3-candle exit",
+   "skipped: correlation 0.61 with a listed rule"
+  ],
+  [
+   "EURUSD: first-hour range break, short, F1+F6, 3-candle exit",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, no filter, 1R target",
+   "skipped: correlation 0.62 with a listed rule"
+  ],
+  [
+   "WTI: first-hour range break, short, F2, 3R target",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F5+F6, half 1R, rest 2R",
+   "skipped: correlation 0.63 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, long, F4, 3-candle exit",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "EURUSD: first-hour range break, short, no filter, 2-ATR trail",
+   "skipped: correlation 0.62 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F4, 3-candle exit",
+   "skipped: correlation 0.69 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, long, no filter, 10-candle exit",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "GBPUSD: first-hour range break, long, F6, 3-candle exit",
+   "skipped: correlation 0.57 with a listed rule"
+  ],
+  [
+   "GBPJPY: first-hour range break, both, no filter, 2-ATR trail",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F5, 2-ATR trail",
+   "skipped: correlation 0.87 with a listed rule"
+  ],
+  [
+   "WTI: first-hour range break, short, F2, 3-candle exit",
+   "skipped: correlation 0.62 with a listed rule"
+  ],
+  [
+   "EURUSD: first-hour range break, both, F4, 3-candle exit",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F6, 3R target",
+   "skipped: correlation 0.59 with a listed rule"
+  ],
+  [
+   "EURUSD: first-hour range break, short, F1, 3-candle exit",
+   "skipped: correlation 0.72 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F5+F6, next daily close",
+   "skipped: correlation 0.52 with a listed rule"
+  ],
+  [
+   "WTI: first-hour range break, both, no filter, 2-ATR trail",
+   "skipped: correlation 0.75 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, long, no filter, half 1R, rest 2R",
+   "skipped: correlation 0.63 with a listed rule"
+  ],
+  [
+   "WTI: first-hour range break, short, F1+F2, 2R target",
+   "skipped: correlation 0.61 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F2+F4, 3-candle exit",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "GBPUSD: first-hour range break, short, F6, 3-candle exit",
+   "skipped: correlation 0.82 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F5, 10-candle exit",
+   "skipped: correlation 0.53 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F5+F6, 2R target",
+   "skipped: correlation 0.77 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F5, next daily close",
+   "skipped: correlation 0.54 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, long, no filter, 2-ATR trail",
+   "skipped: correlation 0.57 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, no filter, 3R target",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F1, 3-candle exit",
+   "skipped: correlation 0.71 with a listed rule"
+  ],
+  [
+   "EURUSD: first-hour range break, short, F4+F6, 3-candle exit",
+   "skipped: correlation 0.63 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F5+F6, 10-candle exit",
+   "skipped: correlation 0.51 with a listed rule"
+  ],
+  [
+   "EURJPY: first-hour range break, both, no filter, 2-ATR trail",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "WTI: first-hour range break, both, F1, 2-ATR trail",
+   "skipped: correlation 0.64 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, short, no filter, 2R target",
+   "skipped: correlation 0.54 with a listed rule"
+  ],
+  [
+   "EURUSD: first-hour range break, both, F4+F6, 3-candle exit",
+   "skipped: correlation 0.85 with a listed rule"
+  ],
+  [
+   "GBPJPY: first-hour range break, both, F5, 2-ATR trail",
+   "skipped: correlation 0.80 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F6, 1R target",
+   "skipped: correlation 0.64 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, long, F2, 3-candle exit",
+   "skipped: correlation 0.50 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, long, no filter, next daily close",
+   "skipped: correlation 0.98 with a listed rule"
+  ],
+  [
+   "EURJPY: first-hour range break, short, F2, 3R target",
+   "skipped: correlation 0.54 with a listed rule"
+  ],
+  [
+   "WTI: first-hour range break, short, F2, 2R target",
+   "skipped: correlation 0.79 with a listed rule"
+  ],
+  [
+   "EURUSD: first-hour range break, short, F1, 2-ATR trail",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "EURUSD: first-hour range break, short, F4, 2-ATR trail",
+   "skipped: correlation 0.53 with a listed rule"
+  ],
+  [
+   "WTI: first-hour range break, short, F1+F2, 3R target",
+   "skipped: correlation 0.81 with a listed rule"
+  ],
+  [
+   "WTI: first-hour range break, both, F1+F5, 2-ATR trail",
+   "skipped: correlation 0.50 with a listed rule"
+  ],
+  [
+   "WTI: first-hour range break, both, F2+F5, 3-candle exit",
+   "skipped: correlation 0.51 with a listed rule"
+  ],
+  [
+   "EURUSD: first-hour range break, both, F6, 3-candle exit",
+   "skipped: correlation 0.60 with a listed rule"
+  ],
+  [
+   "EURUSD: first-hour range break, short, F6, 2-ATR trail",
+   "skipped: correlation 0.50 with a listed rule"
+  ],
+  [
+   "EURJPY: first-hour range break, short, F2+F3, 3-candle exit",
+   "skipped: correlation 0.80 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, long, F2+F4, 3-candle exit",
+   "skipped: correlation 0.70 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, both, F2, 10-candle exit",
+   "skipped: correlation 0.54 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, long, F2+F6, 3-candle exit",
+   "skipped: correlation 0.68 with a listed rule"
+  ],
+  [
+   "EURJPY: first-hour range break, both, no filter, 3-candle exit",
+   "skipped: correlation 0.54 with a listed rule"
+  ],
+  [
+   "GBPUSD: first-hour range break, long, F2, 10-candle exit",
+   "skipped: correlation 0.73 with a listed rule"
+  ],
+  [
+   "WTI: first-hour range break, both, F2+F3, 2-ATR trail",
+   "skipped: correlation 0.71 with a listed rule"
+  ],
+  [
+   "WTI: first-hour range break, both, F5, 2-ATR trail",
+   "skipped: correlation 0.63 with a listed rule"
+  ],
+  [
+   "EURJPY: first-hour range break, short, no filter, 2-ATR trail",
+   "skipped: correlation 0.71 with a listed rule"
+  ],
+  [
+   "Gold: first-hour range break, short, no filter, 2-ATR trail",
+   "listed (random p = 0.002)"
+  ],
+  [
+   "GBPUSD: first-hour range break, short, no filter, half 1R, rest 2R",
+   "listed (random p = 0.002)"
+  ]
+ ],
+ "build_pass_top": [
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, 3-candle exit",
+   "n": 2476,
+   "mean": 0.169,
+   "t": 7.01
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, 3-candle exit",
+   "n": 1742,
+   "mean": 0.179,
+   "t": 6.26
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, half 1R, rest 2R",
+   "n": 2265,
+   "mean": 0.13,
+   "t": 5.71
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, no filter, 3-candle exit",
+   "n": 1293,
+   "mean": 0.192,
+   "t": 5.69
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, 10-candle exit",
+   "n": 2476,
+   "mean": 0.197,
+   "t": 5.67
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, F6, 3-candle exit",
+   "n": 898,
+   "mean": 0.222,
+   "t": 5.61
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, 2-ATR trail",
+   "n": 2423,
+   "mean": 0.146,
+   "t": 5.6
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, next daily close",
+   "n": 2476,
+   "mean": 0.196,
+   "t": 5.57
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5+F6, 3-candle exit",
+   "n": 1012,
+   "mean": 0.214,
+   "t": 5.46
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5, 3-candle exit",
+   "n": 1459,
+   "mean": 0.171,
+   "t": 5.36
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, 2R target",
+   "n": 2100,
+   "mean": 0.168,
+   "t": 5.23
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, 2-ATR trail",
+   "n": 1715,
+   "mean": 0.166,
+   "t": 5.23
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, 2R target",
+   "n": 1533,
+   "mean": 0.196,
+   "t": 5.2
+  },
+  {
+   "describe": "WTI: first-hour range break, both, F2, 2-ATR trail",
+   "n": 730,
+   "mean": 0.384,
+   "t": 5.14
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, long, no filter, 3-candle exit",
+   "n": 1210,
+   "mean": 0.172,
+   "t": 5.1
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, next daily close",
+   "n": 1742,
+   "mean": 0.212,
+   "t": 5.01
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, F4, 3-candle exit",
+   "n": 484,
+   "mean": 0.276,
+   "t": 4.98
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F2, 3-candle exit",
+   "n": 1203,
+   "mean": 0.173,
+   "t": 4.97
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, half 1R, rest 2R",
+   "n": 1628,
+   "mean": 0.134,
+   "t": 4.97
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, 10-candle exit",
+   "n": 1742,
+   "mean": 0.205,
+   "t": 4.92
+  },
+  {
+   "describe": "EURUSD: first-hour range break, both, no filter, 3-candle exit",
+   "n": 2663,
+   "mean": 0.109,
+   "t": 4.89
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, short, no filter, 3-candle exit",
+   "n": 1266,
+   "mean": 0.167,
+   "t": 4.83
+  },
+  {
+   "describe": "EURJPY: first-hour range break, short, F2, 3-candle exit",
+   "n": 614,
+   "mean": 0.232,
+   "t": 4.82
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, short, F5+F6, 3-candle exit",
+   "n": 519,
+   "mean": 0.271,
+   "t": 4.77
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5, half 1R, rest 2R",
+   "n": 1339,
+   "mean": 0.142,
+   "t": 4.74
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5+F6, 2-ATR trail",
+   "n": 1000,
+   "mean": 0.209,
+   "t": 4.73
+  },
+  {
+   "describe": "EURJPY: first-hour range break, short, no filter, 3-candle exit",
+   "n": 1260,
+   "mean": 0.152,
+   "t": 4.72
+  },
+  {
+   "describe": "WTI: first-hour range break, both, F2+F5, 2-ATR trail",
+   "n": 411,
+   "mean": 0.522,
+   "t": 4.72
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F2+F6, 3-candle exit",
+   "n": 566,
+   "mean": 0.241,
+   "t": 4.72
+  },
+  {
+   "describe": "WTI: first-hour range break, short, F2, 2-ATR trail",
+   "n": 368,
+   "mean": 0.547,
+   "t": 4.71
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, short, F5, 3-candle exit",
+   "n": 738,
+   "mean": 0.219,
+   "t": 4.7
+  },
+  {
+   "describe": "WTI: first-hour range break, both, F2, 3-candle exit",
+   "n": 741,
+   "mean": 0.245,
+   "t": 4.68
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, F1+F6, 3-candle exit",
+   "n": 299,
+   "mean": 0.313,
+   "t": 4.67
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, 1R target",
+   "n": 2367,
+   "mean": 0.094,
+   "t": 4.66
+  },
+  {
+   "describe": "WTI: first-hour range break, short, F2, 3R target",
+   "n": 356,
+   "mean": 0.481,
+   "t": 4.65
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5+F6, half 1R, rest 2R",
+   "n": 951,
+   "mean": 0.164,
+   "t": 4.65
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, long, F4, 3-candle exit",
+   "n": 488,
+   "mean": 0.246,
+   "t": 4.64
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, no filter, 2-ATR trail",
+   "n": 1270,
+   "mean": 0.208,
+   "t": 4.63
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F4, 3-candle exit",
+   "n": 1007,
+   "mean": 0.17,
+   "t": 4.57
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, long, no filter, 10-candle exit",
+   "n": 1210,
+   "mean": 0.23,
+   "t": 4.56
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, long, F6, 3-candle exit",
+   "n": 863,
+   "mean": 0.181,
+   "t": 4.55
+  },
+  {
+   "describe": "GBPJPY: first-hour range break, both, no filter, 2-ATR trail",
+   "n": 2424,
+   "mean": 0.146,
+   "t": 4.52
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5, 2-ATR trail",
+   "n": 1424,
+   "mean": 0.158,
+   "t": 4.51
+  },
+  {
+   "describe": "WTI: first-hour range break, short, F2, 3-candle exit",
+   "n": 371,
+   "mean": 0.341,
+   "t": 4.47
+  },
+  {
+   "describe": "EURUSD: first-hour range break, both, F4, 3-candle exit",
+   "n": 993,
+   "mean": 0.162,
+   "t": 4.47
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F6, 3R target",
+   "n": 1351,
+   "mean": 0.227,
+   "t": 4.46
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, F1, 3-candle exit",
+   "n": 663,
+   "mean": 0.211,
+   "t": 4.43
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5+F6, next daily close",
+   "n": 1012,
+   "mean": 0.251,
+   "t": 4.39
+  },
+  {
+   "describe": "WTI: first-hour range break, both, no filter, 2-ATR trail",
+   "n": 1482,
+   "mean": 0.213,
+   "t": 4.37
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, long, no filter, half 1R, rest 2R",
+   "n": 1156,
+   "mean": 0.139,
+   "t": 4.36
+  },
+  {
+   "describe": "WTI: first-hour range break, short, F1+F2, 2R target",
+   "n": 240,
+   "mean": 0.417,
+   "t": 4.33
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F2+F4, 3-candle exit",
+   "n": 474,
+   "mean": 0.244,
+   "t": 4.31
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, short, F6, 3-candle exit",
+   "n": 879,
+   "mean": 0.178,
+   "t": 4.31
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5, 10-candle exit",
+   "n": 1459,
+   "mean": 0.196,
+   "t": 4.3
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5+F6, 2R target",
+   "n": 910,
+   "mean": 0.211,
+   "t": 4.3
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F5, next daily close",
+   "n": 1459,
+   "mean": 0.199,
+   "t": 4.3
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, long, no filter, 2-ATR trail",
+   "n": 1196,
+   "mean": 0.157,
+   "t": 4.28
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, no filter, 3R target",
+   "n": 1761,
+   "mean": 0.189,
+   "t": 4.27
+  },
+  {
+   "describe": "GBPUSD: first-hour range break, both, F1, 3-candle exit",
+   "n": 1237,
+   "mean": 0.147,
+   "t": 4.25
+  },
+  {
+   "describe": "EURUSD: first-hour range break, short, F4+F6, 3-candle exit",
+   "n": 310,
+   "mean": 0.309,
+   "t": 4.25
+  }
+ ]
+}

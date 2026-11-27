@@ -997,3 +997,8 @@ The script is `round36_kalman_pairs.py` and the results are in `round36_results.
 WTI/Brent looks best (+0.34R over 67 trades). Picking it out after seeing the results would be cherry-picking, though. It would need its own pre-registered test on data it hasn't seen, and there is none left. Gold/silver, the pair most relevant to this bot, loses.
 
 hypotheses_tested rises from 1,401 to 1,402 (recorded here only).
+
+## Strategy factory, batch 1 (27 Nov 2026)
+
+`factory.py`, `factory_batch1.md`, `factory_batch1.json`; design in `FACTORY.md`. Rules committed (fa45d97) before the first run. 268,128 rules on 19 markets; 8,587 passed the 2008-19 build test; the best 20 that beat random entries and did not duplicate each other were cut once on 2020-26 at p < 0.0025. **0 of 20 passed.** All 20 were versions of one entry, a break of the London first-hour range (mostly GBPUSD and EURUSD); 16 of them were still positive in 2020-26 and five came within a factor of four of the bar. hypotheses_tested rises from 1,421 to 1,441 (recorded here only). See `factory_batch1.md` for the proposals for batch 2.
+
