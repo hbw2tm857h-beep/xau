@@ -690,10 +690,11 @@ def describe(r):
     return f"{r['market']}: {ent}, {r['dirs']}, {fl}, {xs}"
 
 
-def main():
+def main(batch="batch1", exclude=(), family_cap=None):
+    """exclude: entry families left off the cut list; family_cap: most rules per family on it."""
     t0 = _time.time()
     names = list(MARKETS)
-    print(f"Batch 1: {len(names)} markets x {len(variants()) * len(DIRSETS) * len(FSETS) * len(EXITS)} rules", flush=True)
+    print(f"{batch}: {len(names)} markets x {len(variants()) * len(DIRSETS) * len(FSETS) * len(EXITS)} rules", flush=True)
     with ProcessPoolExecutor(max_workers=8) as px:
         res = [r for rows in px.map(run_market, names) for r in rows]
     lookup = {key(r): r for r in res}
@@ -702,9 +703,13 @@ def main():
     print(f"{generated} rules generated, {len(res)} with 30+ build trades, {len(passed)} pass the build test", flush=True)
 
     mk, caches, listed, lseries, log = {}, {}, [], [], []
+    fam_n = {}
     for r in passed:
         if len(listed) >= MAX_CUT:
             break
+        fam = r["v"][0]
+        if fam in exclude or (family_cap and fam_n.get(fam, 0) >= family_cap):
+            continue
         m = mk.setdefault(r["market"], Market(r["market"]))
         ev, take, R, xi = rule_trades(m, r, caches.setdefault(r["market"], {}))
         ser = daily_series(m, xi, R, take, 0, BUILD_END)
@@ -717,6 +722,7 @@ def main():
             log.append((describe(r), f"skipped: random entries p = {p:.3f}"))
             continue
         listed.append((r, m, ev, take, R, xi, p)); lseries.append(ser)
+        fam_n[fam] = fam_n.get(fam, 0) + 1
         log.append((describe(r), f"listed (random p = {p:.3f})"))
     K = len(listed)
     print(f"{K} sent to the cut", flush=True)
@@ -752,7 +758,7 @@ def main():
                "minutes": round((_time.time() - t0) / 60, 1), "rules": cut_rows, "list_log": log,
                "build_pass_top": [dict(describe=describe(r), n=r["n"], mean=round(r["mean"], 3), t=round(r["t"], 2))
                                   for r in passed[:60]]}
-    json.dump(summary, open(os.path.join(HERE, "factory_batch1.json"), "w"), indent=1, default=str)
+    json.dump(summary, open(os.path.join(HERE, f"factory_{batch}.json"), "w"), indent=1, default=str)
     print(f"\n{summary['passed']} of {K} pass the cut; {summary['minutes']} min", flush=True)
 
 
