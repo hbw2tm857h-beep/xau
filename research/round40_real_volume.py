@@ -73,8 +73,8 @@ URL = "https://query1.finance.yahoo.com/v8/finance/chart/GC=F?period1=946684800&
 
 
 # ----------------------------------------------------------------- data
-def volume_days():
-    """[(known-from UTC time, volume or None if invalid)] in date order."""
+def volume_days(start=None):
+    """[(known-from UTC time, volume or None if invalid)] in date order, from `start`."""
     if not os.path.exists(VOL_CSV):
         req = urllib.request.Request(URL.format(int(datetime.now(UTC).timestamp())), headers={"User-Agent": "Mozilla/5.0"})
         d = json.load(urllib.request.urlopen(req, timeout=60))["chart"]["result"][0]
@@ -88,7 +88,9 @@ def volume_days():
     with open(VOL_CSV) as f:
         for r in csv.DictReader(f):
             day = datetime.fromisoformat(r["date"]).date()
-            rows.append((datetime.combine(day, time(17), NY).astimezone(UTC), float(r["volume"])))
+            t = datetime.combine(day, time(17), NY).astimezone(UTC)
+            if start is None or t >= start:
+                rows.append((t, float(r["volume"])))
     out, valid = [], []
     for t, v in rows:
         ok = v > 0
@@ -130,20 +132,20 @@ def trades(cfg, bars, lo, hi, strategy):
     return out
 
 
-def judge(name, trs, pred):
+def judge(name, trs, pred, periods=PERIODS, main=R37.PERIODS):
     g = {}
     for tr in trs:
         flag = pred(tr)
         if flag is None:
             continue
-        pn = next((p for p, lo, hi in PERIODS if lo <= tr["t"] < hi), None)
+        pn = next((p for p, lo, hi in periods if lo <= tr["t"] < hi), None)
         a, b = g.setdefault(pn, ([], []))
         (a if flag else b).append(tr["r"])
-    a = [r for p, _, _ in R37.PERIODS for r in g.get(p, ([], []))[0]]
-    b = [r for p, _, _ in R37.PERIODS for r in g.get(p, ([], []))[1]]
+    a = [r for p, _, _ in main for r in g.get(p, ([], []))[0]]
+    b = [r for p, _, _ in main for r in g.get(p, ([], []))[1]]
     diff, t, p = R37.welch(a, b)
     same, parts = diff > 0, []
-    for pn, _, _ in PERIODS:
+    for pn, _, _ in periods:
         ga, gb = g.get(pn, ([], []))
         if len(ga) >= MIN_N and len(gb) >= 2:
             same &= st.mean(ga) > st.mean(gb)
@@ -159,11 +161,11 @@ def judge(name, trs, pred):
             "left_out": left_out, "verdict": "PASS" if ok else "fail"}
 
 
-def main():
+def main(vol_start=None, trade_start=None, periods=PERIODS, main_periods=R37.PERIODS, out="round40_results.json"):
     cfg = S.CONFIG
     bars = S.closed_h1(S.load_history(cfg), datetime.now(UTC))
     old_bars = R37.load_csv_bars(os.path.join(ROOT, "data", "xauusd_h1_2003_2007.csv.gz"))
-    days = volume_days()
+    days = volume_days(vol_start)
     m = measures(days)
     known = [t for t, _ in days]
     bad = sum(1 for _, v in days if v is None)
@@ -175,14 +177,17 @@ def main():
 
     trend = trades(cfg, bars, D(2008), D(2030), "trend") + trades(cfg, old_bars, *R37.OLD[1:], "trend")
     inside = trades(cfg, bars, D(2008), D(2030), "inside_day") + trades(cfg, old_bars, *R37.OLD[1:], "inside_day")
+    if trade_start:
+        trend = [t for t in trend if t["t"] >= trade_start]
+        inside = [t for t in inside if t["t"] >= trade_start]
     print(f"{len(trend)} trend trades, {len(inside)} inside-day trades")
     flag = lambda x, f: None if x is None else f(x)
-    rows = [judge("Q1 trend trade, RVOL >= 1.0 (volume confirms)", trend, lambda tr: flag(at(tr, 0), lambda x: x >= 1.0)),
-            judge("Q2 inside-day trade, RVOL < 1.0 (quiet inside day)", inside, lambda tr: flag(at(tr, 0), lambda x: x < 1.0)),
-            judge("Q3 trend trade, 5-day volume < 0.8x the prior 60 (dry-up)", trend, lambda tr: flag(at(tr, 1), lambda x: x < 0.8))]
+    rows = [judge("Q1 trend trade, RVOL >= 1.0 (volume confirms)", trend, lambda tr: flag(at(tr, 0), lambda x: x >= 1.0), periods, main_periods),
+            judge("Q2 inside-day trade, RVOL < 1.0 (quiet inside day)", inside, lambda tr: flag(at(tr, 0), lambda x: x < 1.0), periods, main_periods),
+            judge("Q3 trend trade, 5-day volume < 0.8x the prior 60 (dry-up)", trend, lambda tr: flag(at(tr, 1), lambda x: x < 0.8), periods, main_periods)]
     passed = [r["test"] for r in rows if r["verdict"] == "PASS"]
     print(f"\n{len(passed)} of {len(rows)} pass" + (": " + ", ".join(passed) if passed else ""))
-    json.dump(rows, open(os.path.join(HERE, "round40_results.json"), "w"), indent=1)
+    json.dump(rows, open(os.path.join(HERE, out), "w"), indent=1)
 
 
 if __name__ == "__main__":
