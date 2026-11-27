@@ -38,6 +38,9 @@ VARIANTS = {
     "target_level": "Target at the nearest opposing swing level (if beyond 0.5R, else 1R).",
     "time_exit_12h": "No target: exit after 12 hours.",
     "breakeven_1r": "2R target, stop moved to entry once +1R is reached.",
+    "trail_2atr": "No fixed target: chandelier trailing stop 2 x ATR(H1) behind the best price, 96h max.",
+    "trail_3atr_after_1r": "No fixed target: 3 x ATR trail switched on after +1R, 96h max.",
+    "partial_1r_trail": "Half off at +1R, other half on a 2 x ATR trailing stop (96h max).",
     "opposite": "Take the opposite direction with a mirrored stop/target.",
     "skip": "Do not take the trade (0R).",
 }
@@ -94,6 +97,11 @@ def run_counterfactuals(trades: pd.DataFrame, f: pd.DataFrame, path: Path,
         r = simulate(path, s0, d, stop, None, 12 * 60, atr, costs=co)
         out["time_exit_12h"] = _base_r(r, d, risk)
         out["breakeven_1r"] = _base_r(sim(s0, breakeven_at_r=1.0), d, risk)
+        tr2 = simulate(path, s0, d, stop, None, 96 * 60, atr, costs=co, trail_atr=2.0)
+        out["trail_2atr"] = _base_r(tr2, d, risk)
+        out["trail_3atr_after_1r"] = _base_r(simulate(path, s0, d, stop, None, 96 * 60, atr, costs=co,
+                                                      trail_atr=3.0, trail_after_r=1.0), d, risk)
+        out["partial_1r_trail"] = 0.5 * out["target_1r"] + 0.5 * out["trail_2atr"]
         r = simulate(path, s0, -d, mid0 + d * risk, mid0 - d * 2 * risk, mm, atr, costs=co, min_risk_atr=0.0)
         out["opposite"] = _base_r(r, -d, risk)
         out["skip"] = 0.0

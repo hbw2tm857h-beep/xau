@@ -74,7 +74,8 @@ def simulate(path: Path, start: int, direction: int, stop: float, target: float 
              max_minutes: int, atr: float, entry_type: str = "market", order_price: float | None = None,
              expiry_minutes: int = 0, costs: CostModel = DEFAULT.costs,
              breakeven_at_r: float | None = None, post_minutes: int = 0,
-             target_r: float | None = None, min_risk_atr: float = 0.3) -> dict:
+             target_r: float | None = None, min_risk_atr: float = 0.3,
+             trail_atr: float | None = None, trail_after_r: float = 0.0) -> dict:
     """Simulate a single trade. Returns a dict with fill, exit, R and path statistics.
 
     ``start`` is the first path bar after the decision. ``direction`` is +1/-1.
@@ -149,6 +150,23 @@ def simulate(path: Path, start: int, direction: int, stop: float, target: float 
         if jb >= 0 and jb + 1 < len(hi):
             cur_stop[jb + 1:] = mid
             stop_hit = (lo <= cur_stop) if d > 0 else (hi >= cur_stop)
+    if trail_atr is not None and len(hi) > 1:
+        # chandelier trail: stop for bar j uses extremes of bars < j only (no same-bar look-ahead),
+        # activated once the trade has been trail_after_r in profit.
+        if d > 0:
+            ext = np.maximum.accumulate(hi)[:-1]
+            trail = np.concatenate([[stop], ext - trail_atr * atr])
+            active = np.concatenate([[False], (ext - mid) >= trail_after_r * risk])
+            cur_stop = np.where(active, np.maximum(cur_stop, trail), cur_stop)
+            cur_stop = np.maximum.accumulate(cur_stop)
+            stop_hit = lo <= cur_stop
+        else:
+            ext = np.minimum.accumulate(lo)[:-1]
+            trail = np.concatenate([[stop], ext + trail_atr * atr])
+            active = np.concatenate([[False], (mid - ext) >= trail_after_r * risk])
+            cur_stop = np.where(active, np.minimum(cur_stop, trail), cur_stop)
+            cur_stop = np.minimum.accumulate(cur_stop)
+            stop_hit = hi >= cur_stop
     js, jt = _first_true(stop_hit), _first_true(tgt_hit)
     if js >= 0 and (jt < 0 or js <= jt):        # ties -> stop first (pessimistic)
         j = js
@@ -157,7 +175,7 @@ def simulate(path: Path, start: int, direction: int, stop: float, target: float 
         if j == 0 and not fill_bar_full:
             px = level
         exit_mid = px - d * costs.slippage(atr, path.news[k + j])
-        reason = "stop" if level == stop else "breakeven"
+        reason = "stop" if level == stop else ("trail" if trail_atr is not None else "breakeven")
     elif jt >= 0:
         j = jt
         px = max(target, op[j]) if d > 0 else min(target, op[j])

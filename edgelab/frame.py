@@ -19,8 +19,9 @@ from .regimes import classify_daily, classify_h4
 D1_COLS = ["d_atr", "d_ema50", "d_ema200", "d_ema50_slope", "d_dist_ema50", "d_dist_ema200",
            "d_er20", "d_mom20", "d_volpct", "regime_trend", "regime_vol", "regime_char", "regime",
            "d_dir", "d_prev_high", "d_prev_low", "d_prev_close", "real_yield_chg20", "usd_chg20", "vix",
-           "d_structure"]
-H4_COLS = ["h4_trend", "h4_dist_ema20", "h4_mom6", "h4_dir", "h4_atr", "h4_structure"]
+           "d_structure", "ds_lvl_above", "ds_lvl_below", "ds_sh1", "ds_sl1"]
+H4_COLS = ["h4_trend", "h4_dist_ema20", "h4_mom6", "h4_dir", "h4_atr", "h4_structure",
+           "h4s_lvl_above", "h4s_lvl_below", "h4s_sh1", "h4s_sl1"]
 
 
 def split_of(t: pd.Series) -> pd.Series:
@@ -42,10 +43,10 @@ def build_frame(h1: pd.DataFrame | None = None, verbose: bool = True) -> pd.Data
     f = add_structure(f, left=3, right=3, keep_levels=12)
     # higher timeframes, each with its own structure (larger pivots)
     h4 = classify_h4(add_core(D.resample(h1, 4)))
-    h4 = add_structure(h4, left=3, right=3, prefix="h4s_")
+    h4 = add_structure(h4, left=5, right=5, keep_levels=6, prefix="h4s_")
     h4["h4_structure"] = h4["h4s_structure"]
     d1 = add_core(D.resample(h1, 24))
-    d1 = add_structure(d1, left=2, right=2, prefix="ds_")
+    d1 = add_structure(d1, left=3, right=3, keep_levels=10, prefix="ds_")
     d1["d_structure"] = d1["ds_structure"]
     d1 = classify_daily(d1, D.load_macro_daily())
     for col in D1_COLS:
@@ -61,6 +62,16 @@ def build_frame(h1: pd.DataFrame | None = None, verbose: bool = True) -> pd.Data
     f["d_trend"] = d_tr
     f["mtf_align"] = np.where((h1_tr == f["h4_trend"]) & (h1_tr == d_tr), h1_tr, 0)
     f["mtf_votes"] = h1_tr.fillna(0) + f["h4_trend"].fillna(0) + d_tr
+    # significant (H4 / daily) levels relative to the CURRENT H1 close
+    c = f["close"].values
+    cand = np.vstack([f[k].values for k in ("h4s_lvl_above", "h4s_lvl_below", "h4s_sh1", "h4s_sl1",
+                                            "ds_lvl_above", "ds_lvl_below", "ds_sh1", "ds_sl1")])
+    above = np.where(cand > c, cand, np.inf).min(axis=0)
+    below = np.where(cand < c, cand, -np.inf).max(axis=0)
+    f["htf_lvl_above"] = np.where(np.isfinite(above), above, np.nan)
+    f["htf_lvl_below"] = np.where(np.isfinite(below), below, np.nan)
+    f["htf_room_up"] = (f["htf_lvl_above"] - f["close"]) / f["atr"]
+    f["htf_room_dn"] = (f["close"] - f["htf_lvl_below"]) / f["atr"]
     # distance to the previous completed day's high/low
     f["dist_pdh"] = (f["d_prev_high"] - f["close"]) / f["atr"]
     f["dist_pdl"] = (f["close"] - f["d_prev_low"]) / f["atr"]

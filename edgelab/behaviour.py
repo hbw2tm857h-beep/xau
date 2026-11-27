@@ -146,3 +146,40 @@ def conventional_scoreboard(t: pd.DataFrame, cat_stats: pd.DataFrame) -> pd.Data
             row["verdict"] = "No evidence (coin-flip before costs)"
         rows.append(row)
     return pd.DataFrame(rows)
+
+
+def event_paths(f: pd.DataFrame, t: pd.DataFrame, pre: int = 24, post: int = 48,
+                splits=("discovery", "validation", "holdout")) -> dict:
+    """Average trade-relative price path (in ATR at decision) around every setup trigger.
+
+    k < 0 shows what led INTO the setup; k > 0 what followed. Winners/losers are split
+    by the trade outcome purely for description.
+    """
+    c = f["close"].values
+    a = f["atr"].values
+    n = len(c)
+    ks = np.arange(-pre, post + 1)
+    out = {"k": ks.tolist(), "paths": {}}
+    d = t[t["split"].isin(splits)]
+    for (s, dr), g in d.groupby(["setup", "direction"]):
+        idx = g["idx"].values
+        idx = idx[(idx >= pre) & (idx < n - post)]
+        if len(idx) < 30:
+            continue
+        M = (c[idx[:, None] + ks[None, :]] - c[idx][:, None]) * dr / a[idx][:, None]
+        win = g.set_index("idx").loc[idx, "win"].values.astype(bool) if g["idx"].is_unique else None
+        rec = {"n": int(len(idx)), "mean": np.round(M.mean(0), 3).tolist(),
+               "q25": np.round(np.percentile(M, 25, 0), 3).tolist(),
+               "q75": np.round(np.percentile(M, 75, 0), 3).tolist()}
+        if win is not None and win.any() and (~win).any():
+            rec["win"] = np.round(M[win].mean(0), 3).tolist()
+            rec["loss"] = np.round(M[~win].mean(0), 3).tolist()
+        # where is the average path at +12h relative to drift? (does the setup's idea play out?)
+        rec["fwd12"] = float(M[:, pre + 12].mean())
+        rec["fwd48"] = float(M[:, pre + 48].mean())
+        out["paths"][f"{s}|{int(dr)}"] = rec
+    # unconditional drift benchmark (trade-relative for longs; shorts are its negative)
+    sample = np.arange(pre, n - post, 7)
+    M = (c[sample[:, None] + ks[None, :]] - c[sample][:, None]) / a[sample][:, None]
+    out["drift_long"] = np.round(M.mean(0), 3).tolist()
+    return out

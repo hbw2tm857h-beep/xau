@@ -24,7 +24,7 @@ HIDDEN = {
     "Market structure": ["rel_structure", "rel_h4_structure", "rel_d_structure", "sh1_age", "sl1_age"],
     "Volatility": ["atr_pct", "atr_ratio", "bb_width_pct", "d_volpct", "range20_atr"],
     "Location": ["rel_dist_ema20", "rel_dist_ema50", "rel_dist_ema200", "rel_pos20", "rel_pos50", "rel_d_ext",
-                 "room_fwd", "room_back", "room_in_r", "dist_prev_day_fwd", "dist_round50"],
+                 "room_fwd", "room_back", "room_in_r", "room_fwd_htf", "room_back_htf", "dist_prev_day_fwd", "dist_round50"],
     "Liquidity": ["liq_fwd", "liq_back", "opp_touches"],
     "Session": ["hour", "dow"],
     "MTF alignment": ["rel_mtf_votes", "with_daily", "rel_h4_trend", "rel_h4_dist_ema20"],

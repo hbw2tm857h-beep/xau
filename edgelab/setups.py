@@ -196,6 +196,42 @@ def det_engulfing(f):
                           np.maximum(_a(f, "high"), _prev(_a(f, "high"))))
 
 
+def det_momentum_burst(f):
+    """Follow a fast 6-hour move that closes near its extreme (the 'late entry' the taxonomy contradicted)."""
+    m6, clv = _a(f, "mom6"), _a(f, "clv")
+    pm6 = _prev(m6)
+    L = (m6 > 2.5) & (pm6 <= 2.5) & (clv > 0.3)
+    S = (m6 < -2.5) & (pm6 >= -2.5) & (clv < -0.3)
+    return L, S, _a(f, "close")
+
+
+def det_burst_pullback(f, lookback: int = 12):
+    """After a burst (> 3 ATR in 6h), wait for a 30-70% retracement, enter when a bar closes back in the burst direction."""
+    h, l, c, o, m6 = _a(f, "high"), _a(f, "low"), _a(f, "close"), _a(f, "open"), _a(f, "mom6")
+    n = len(c)
+    L = np.zeros(n, bool); S = np.zeros(n, bool); ref = np.full(n, np.nan)
+    up_i = dn_i = -10**9
+    up_hi = up_lo = dn_hi = dn_lo = np.nan
+    for i in range(6, n):
+        if m6[i] > 3.0:
+            up_i, up_hi, up_lo = i, h[i], np.nanmin(l[i - 6:i + 1])
+        elif up_i > 0 and i - up_i <= lookback:
+            up_hi = max(up_hi, h[i]) if i - up_i <= 1 else up_hi
+            rng = up_hi - up_lo
+            retr = (up_hi - np.nanmin(l[up_i + 1:i + 1])) / rng if rng > 0 else 0
+            if 0.3 <= retr <= 0.7 and c[i] > o[i] and c[i - 1] <= o[i - 1]:
+                L[i] = True; ref[i] = up_lo; up_i = -10**9
+        if m6[i] < -3.0:
+            dn_i, dn_lo, dn_hi = i, l[i], np.nanmax(h[i - 6:i + 1])
+        elif dn_i > 0 and i - dn_i <= lookback:
+            dn_lo = min(dn_lo, l[i]) if i - dn_i <= 1 else dn_lo
+            rng = dn_hi - dn_lo
+            retr = (np.nanmax(h[dn_i + 1:i + 1]) - dn_lo) / rng if rng > 0 else 0
+            if 0.3 <= retr <= 0.7 and c[i] < o[i] and c[i - 1] >= o[i - 1]:
+                S[i] = True; ref[i] = dn_hi; dn_i = -10**9
+    return L, S, ref
+
+
 SETUPS: dict[str, Setup] = {s.name: s for s in [
     Setup("breakout", "continuation", "A close beyond the last swing point starts a move in that direction.", det_breakout),
     Setup("range_breakout", "continuation", "A breakout from a tight consolidation leads to expansion.", det_range_breakout),
@@ -213,6 +249,8 @@ SETUPS: dict[str, Setup] = {s.name: s for s in [
     Setup("session_breakout", "continuation", "London breaking the Asia range sets the day's direction.", det_session_breakout),
     Setup("double_top_bottom", "reversal", "Equal highs/lows with rejection form a reversal pattern.", det_double_top_bottom),
     Setup("engulfing", "reversal", "An engulfing candle after a move marks a reversal.", det_engulfing),
+    Setup("momentum_burst", "continuation", "(Lab hypothesis) Fast moves keep going: chasing is not a mistake in gold.", det_momentum_burst),
+    Setup("burst_pullback", "continuation", "After an impulse, the first 30-70% pullback is bought (sold) by late participants.", det_burst_pullback),
 ]}
 
 

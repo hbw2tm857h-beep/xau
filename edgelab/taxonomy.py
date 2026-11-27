@@ -22,7 +22,7 @@ import pandas as pd
 from .stats import summarise, welch, benjamini_hochberg
 
 CONT = ("breakout", "range_breakout", "pullback_ema", "bb_squeeze_breakout", "ma_cross", "retest",
-        "momentum_bar", "session_breakout")
+        "momentum_bar", "session_breakout", "momentum_burst", "burst_pullback")
 REV = ("sweep_reversal", "wick_rejection", "failed_break", "exhaustion_fade", "double_top_bottom", "engulfing")
 MR = ("bb_fade", "rsi_extreme")
 BREAK = ("breakout", "range_breakout", "bb_squeeze_breakout", "session_breakout")
@@ -182,6 +182,14 @@ M: list[Mistake] = [
             "Level-based reversal stopped out with the level decisively broken (price ran > 1.5R beyond the stop afterwards).",
             lambda t, cf: _s(t, _in(t, ("sweep_reversal", "wick_rejection", "double_top_bottom", "retest")) & (t["exit_reason"] == "stop") & (t.get("post_mae_r", 0) > 2.5)),
             "The level the trade relied on simply failed."),
+    Mistake("S4", "Into a higher-timeframe level", "Support & resistance", "ex_ante",
+            "Nearest opposing H4 or daily swing level is closer than 1R (significant levels only).",
+            lambda t, cf: _s(t, t["room_in_r_htf"] < 1.0),
+            "A 4-hour/daily level sat only {room_in_r_htf:.2f}R away."),
+    Mistake("S5", "Selling into higher-timeframe support / buying into resistance", "Support & resistance", "ex_ante",
+            "Continuation trade with an opposing H4/D1 level within 0.5 ATR.",
+            lambda t, cf: _s(t, _in(t, CONT) & (t["room_fwd_htf"] < 0.5)),
+            "Pushing straight into a higher-timeframe level {room_fwd_htf:.2f} ATR away."),
     Mistake("S3", "Round-number magnet ignored", "Support & resistance", "ex_ante",
             "Entry within 0.3 ATR of a $50 handle.",
             lambda t, cf: _s(t, t["dist_round50"] < 0.3),

@@ -18,7 +18,7 @@ NUMERIC_FEATURES = [
     "atr_pct", "atr_ratio", "bb_width_pct", "d_volpct", "range20_atr", "range_atr",
     "rel_body", "rel_clv", "fwd_wick", "back_wick", "stop_atr",
     "rel_dist_ema20", "rel_dist_ema50", "rel_dist_ema200", "rel_pos20", "rel_pos50", "rel_d_ext",
-    "room_fwd", "room_in_r", "dist_prev_day_fwd", "dist_round50", "opp_touches",
+    "room_fwd", "room_in_r", "room_fwd_htf", "room_back_htf", "room_in_r_htf", "dist_prev_day_fwd", "dist_round50", "opp_touches",
     "rel_h4_dist_ema20", "rel_mtf_votes", "vol_rel", "rel_real_yield_chg20", "rel_usd_chg20", "vix",
 ]
 CATEGORICAL = ["session", "regime_trend", "regime_vol", "regime_char", "with_daily", "rel_structure",
@@ -64,7 +64,45 @@ def scan(t: pd.DataFrame, bins: int = 3, min_n: int = 40, split: str = "discover
     return df.sort_values("t", ascending=False).reset_index(drop=True)
 
 
+def pair_scan(t: pd.DataFrame, uni: pd.DataFrame, top_k: int = 10, min_n: int = 40,
+              split: str = "discovery") -> pd.DataFrame:
+    """Two-condition interactions: cross the top-k single cells of each setup/direction.
+
+    Every evaluated pair is a trial (returned so the caller can count it).
+    """
+    from .hypothesis import mask
+    d = t[(t["split"] == split) & ~t["crosses_split"]]
+    rows = []
+    for (s, dr), g in uni.groupby(["setup", "direction"]):
+        cells = g.sort_values("lift", ascending=False).head(top_k)
+        specs = [scan_to_spec(r)["conditions"][0] for _, r in cells.iterrows()]
+        base = d[(d["setup"] == s) & (d["direction"] == dr)]
+        for i in range(len(specs)):
+            for j in range(i + 1, len(specs)):
+                if specs[i]["f"] == specs[j]["f"]:
+                    continue
+                conds = [specs[i], specs[j]]
+                m = mask(base, {"setup": s, "direction": int(dr), "conditions": conds})
+                rr = base.loc[m, "r"].values
+                if len(rr) < min_n:
+                    continue
+                st = summarise(rr)
+                rows.append({"setup": s, "direction": int(dr), "feature": f"{specs[i]['f']} & {specs[j]['f']}",
+                             "op": "pair", "conds": conds, "n": st["n"], "win": st["win"], "avg_r": st["avg_r"],
+                             "t": st["t"], "p": st["p"], "sharpe": st["sharpe"], "base_avg_r": base["r"].mean(),
+                             "lift": st["avg_r"] - base["r"].mean()})
+    df = pd.DataFrame(rows)
+    if len(df):
+        df["q"] = benjamini_hochberg(df["p"].values)
+        df = df.sort_values("t", ascending=False).reset_index(drop=True)
+    return df
+
+
 def scan_to_spec(row) -> dict:
+    if row.get("op") == "pair":
+        return {"setup": row["setup"], "direction": int(row["direction"]), "conditions": list(row["conds"]),
+                "exit": "base", "origin": "mined_pair",
+                "rationale": f"Pair-scan cell t={row['t']:.2f}, lift {row['lift']:+.3f}R on discovery."}
     if row["op"] == "==":
         v = row["lo"]
         v = v.item() if hasattr(v, "item") else v
@@ -86,7 +124,7 @@ ML_FEATURES = NUMERIC_FEATURES + ["hour", "dow"]
 
 
 def walk_forward_ml(t: pd.DataFrame, first_test_year: int = 2012, top_frac: float = 0.2,
-                    embargo_hours: int = 72, seed: int = 0) -> dict:
+                    embargo_hours: int = 72, seed: int = 0, cf: pd.DataFrame | None = None) -> dict:
     """Anchored walk-forward meta-labelling.
 
     For each test year Y: train a gradient-boosted classifier on all trades that
@@ -132,7 +170,14 @@ def walk_forward_ml(t: pd.DataFrame, first_test_year: int = 2012, top_frac: floa
     auc = {sp: float(roc_auc_score((g["r"] > 0).astype(int), g["p"])) for sp, g in P.groupby("split")
            if g["r"].gt(0).nunique() > 1}
     sel = P[P["selected"]]
+    if cf is not None:
+        x = sel.merge(cf, on="trade_id", how="left")
+        cols = [c for c in cf.columns if c != "trade_id"]
+        exits = {sp: {c: float(g[c].mean()) for c in cols} for sp, g in x.groupby("split")}
+    else:
+        exits = {}
     return {
+        "selected_by_exit": exits,
         "per_year": per_year,
         "oos_selected": {sp: summarise(g["r"].values) for sp, g in sel.groupby("split")},
         "oos_all": {sp: summarise(g["r"].values) for sp, g in P.groupby("split")},

@@ -255,7 +255,7 @@ const statusPill = s => {
 /* ------------------------------------------------------------------ tabs */
 const TABS = [
   ["overview","Overview"],["setups","Setups"],["mistakes","Mistake taxonomy"],["counterfactuals","Counterfactuals"],
-  ["lookalikes","Look-alikes"],["behaviour","Market behaviour"],["discoveries","Discoveries"],
+  ["lookalikes","Look-alikes"],["events","Event studies"],["behaviour","Market behaviour"],["discoveries","Discoveries"],
   ["experiments","Experiments"],["profile","Edge profile"],["inspector","Trade inspector"]];
 const R = {};
 
@@ -270,13 +270,15 @@ function overview() {
     <div class="kpi"><small>Reconstructed decisions</small><b>${D.data.trades.toLocaleString()}</b><small>16 setups × long/short</small></div>
     <div class="kpi"><small>Trials counted (incl. legacy)</small><b>${ex.n_trials_total.toLocaleString()}</b><small>${ex.legacy_trials} legacy · ${ex.scan_trials} scan · ledger</small></div>
     <div class="kpi"><small>Scan cells p&lt;0.05 vs chance</small><b>${sc.observed_p05} / ${Math.round(sc.expected_false_at_p05)}</b><small>FDR survivors: ${sc.fdr_survivors}</small></div>
+    <div class="kpi"><small>Reality Check (best of family)</small><b>p=${D.reality_check&&D.reality_check.p_studentised!=null?num(D.reality_check.p_studentised,3):"–"}</b><small>${D.reality_check?D.reality_check.n_hypotheses+" hypotheses · "+(D.reality_check.rw_survivors||[]).length+" survive FWER":""}</small></div>
     <div class="kpi"><small>Validated discoveries</small><b>${val}</b><small>of ${ex.n_hypotheses} hypotheses tested</small></div>
     <div class="kpi"><small>Look-ahead audit</small><b>${audit ? (audit.feature_mismatches + audit.mismatches === 0 ? "clean" : "LEAK") : "not run"}</b><small>${audit ? audit.feature_checks+" feature + "+audit.decisions_checked+" decision checks" : "python -m edgelab audit"}</small></div>
   </div>
   <div class="grid">
     <div class="panel"><h3>Headline findings</h3><div id="headlines"></div></div>
     <div class="panel"><h3>ML meta-filter, walk-forward (out-of-sample every year)</h3><div id="ml_chart" class="chart"></div>
-      <p class="note">AUC ${Object.entries(ml.auc||{}).map(([k,v])=>k+" "+num(v,3)).join(" · ")}. Bars: average R of all trades vs the top 20% the model (trained only on earlier years) preferred.</p></div>
+      <p class="note">AUC ${Object.entries(ml.auc||{}).map(([k,v])=>k+" "+num(v,3)).join(" · ")}. Bars: average R of all trades vs the top 20% the model (trained only on earlier years) preferred.</p>
+      <h3>Model-selected trades under each exit (base R)</h3>${mlExits()}</div>
   </div>
   <div class="panel"><h3>Data splits</h3><p class="note">${Object.entries(D.splits).map(([k,v])=>`<b>${k}</b> ${v[0]} → ${v[1].slice(0,10)}`).join(" · ")}. Holdout is out-of-sample for this lab, but earlier research rounds in <span class="mono">research/</span> viewed all years; their ${ex.legacy_trials} logged trials are added to the multiple-testing count.</p></div>`;
 }
@@ -287,6 +289,13 @@ function overviewAfter() {
     {type:"bar", name:"Model top 20%", x:py.map(r=>r.year), y:py.map(r=>r.sel_avg_r), marker:{color:css("--gold")}},
   ], {barmode:"group", yaxis:{title:"avg R / trade", gridcolor:css("--line"), zerolinecolor:css("--muted")}});
   $("#headlines").innerHTML = headlines();
+}
+function mlExits() {
+  const e = D.ml.selected_by_exit || {}; const sp = ["discovery","validation","holdout"].filter(k=>e[k]);
+  if (!sp.length) return "";
+  const vs = Object.keys(D.variants).filter(v => e[sp[0]][v] !== undefined && v !== "skip");
+  return table(vs.map(v => ({v, ...Object.fromEntries(sp.map(k=>[k, e[k][v]]))})),
+    [{label:"Exit",k:"v"}, ...sp.map(k => ({label:k, num:1, f:r=>sgn(r[k]), cls:r=>cls(r[k]), sort:r=>r[k]}))]);
 }
 function headlines() {
   const h = [];
@@ -301,6 +310,7 @@ function headlines() {
   const ob = D.oaxaca; if (ob) h.push(`Shorts trail longs by ${sgn(ob.total_gap,3)}R per trade; only ${sgn(ob.composition_effect,3)}R of that is the regime mix — the rest happens within the same regimes.`);
   const sel = D.ml.oos_selected||{}, all = D.ml.oos_all||{};
   if (sel.holdout) h.push(`The walk-forward model lifts holdout expectancy from ${sgn(all.holdout.avg_r,3)}R to ${sgn(sel.holdout.avg_r,3)}R: a real but small signal that does not clear costs.`);
+  const rc = D.reality_check; if (rc && rc.n_hypotheses) h.push(`White's Reality Check over ${rc.n_hypotheses} hypotheses: the best one (<span class="mono">${esc(rc.best)}</span>) has studentised p = ${num(rc.p_studentised,3)}; <b>${(rc.rw_survivors||[]).length}</b> survive family-wise correction.`);
   const hs = D.hindsight_best_alt||{}; const top = Object.entries(hs)[0];
   if (top) h.push(`In hindsight, "${esc(top[0])}" would have rescued ${pct(top[1])} of losers — yet as a rule it adds nothing. Hindsight fixes are not edges.`);
   return "<ul style='margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px'>" + h.map(x=>`<li>${x}</li>`).join("") + "</ul>";
@@ -426,6 +436,37 @@ function lookalikes() {
     {label:"Pairs",num:1,k:"n_pairs"},{label:"q",num:1,f:r=>num(r.q_value,4)}])}</div>`;
 }
 
+function events() {
+  const P = D.event_paths.paths, keys = Object.keys(P).sort();
+  const rows = keys.map(k => ({k, setup:k.split("|")[0], dir:+k.split("|")[1], ...P[k]}));
+  return `<h2>Event studies: the average path around each setup</h2>
+  <p class="lead">Price relative to the trade direction, in ATR at the decision, from 24 hours before to 48 hours after the trigger (hour 0). Above zero = the move the setup expects. The dashed line is gold's unconditional drift, so a setup has to beat it, not zero.</p>
+  <div class="row"><label for="ev_sel">Setup</label><select id="ev_sel">${keys.map(k=>`<option value="${k}">${k.split("|")[0]} ${+k.split("|")[1]>0?"long":"short"}</option>`).join("")}</select></div>
+  <div class="grid"><div class="panel"><h3>Average path, interquartile band</h3><div id="ev_chart" class="chart" style="min-height:380px"></div></div>
+  <div class="panel"><h3>Winners vs losers (descriptive, outcome-labelled)</h3><div id="ev_wl" class="chart" style="min-height:380px"></div></div></div>
+  <div class="panel"><h3>Where every setup's average path ends up</h3>${table(rows, [{label:"Setup",k:"setup"},{label:"Side",f:r=>dirName(r.dir)},{label:"n",num:1,k:"n"},
+    {label:"Move into trigger (−24h→0)",num:1,f:r=>sgn(-r.mean[0],2),cls:r=>cls(-r.mean[0]),sort:r=>-r.mean[0]},
+    {label:"+12h",num:1,f:r=>sgn(r.fwd12,3),cls:r=>cls(r.fwd12),sort:r=>r.fwd12},{label:"+48h",num:1,f:r=>sgn(r.fwd48,3),cls:r=>cls(r.fwd48),sort:r=>r.fwd48}])}
+  <p class="note">"Move into trigger" is how far price had already travelled in the trade direction during the 24h before the signal.</p></div>`;
+}
+function eventsAfter() {
+  const E = D.event_paths;
+  const draw = () => { const k = $("#ev_sel").value, p = E.paths[k], d = +k.split("|")[1];
+    const drift = E.drift_long.map(v => v * d);
+    plot("ev_chart", [
+      {type:"scatter", mode:"lines", x:E.k, y:p.q75, line:{width:0}, showlegend:false, hoverinfo:"skip"},
+      {type:"scatter", mode:"lines", x:E.k, y:p.q25, line:{width:0}, fill:"tonexty", fillcolor:"rgba(166,124,0,0.15)", name:"25–75%", hoverinfo:"skip"},
+      {type:"scatter", mode:"lines", x:E.k, y:p.mean, name:"mean", line:{width:2.5, color:css("--gold")}, hovertemplate:"h %{x}: %{y:+.2f} ATR<extra></extra>"},
+      {type:"scatter", mode:"lines", x:E.k, y:drift, name:"drift", line:{width:1.5, dash:"dash", color:css("--muted")}}],
+      {xaxis:{title:"hours from decision"}, yaxis:{title:"ATR in trade direction", zerolinecolor:css("--muted")},
+       shapes:[{type:"line", x0:0, x1:0, yref:"paper", y0:0, y1:1, line:{color:css("--ink"), width:1, dash:"dot"}}]});
+    plot("ev_wl", [p.win?{type:"scatter", mode:"lines", x:E.k, y:p.win, name:"winners", line:{width:2, color:css("--pos")}}:null,
+      p.loss?{type:"scatter", mode:"lines", x:E.k, y:p.loss, name:"losers", line:{width:2, color:css("--neg")}}:null].filter(Boolean),
+      {xaxis:{title:"hours from decision"}, yaxis:{title:"ATR in trade direction", zerolinecolor:css("--muted")},
+       shapes:[{type:"line", x0:0, x1:0, yref:"paper", y0:0, y1:1, line:{color:css("--ink"), width:1, dash:"dot"}}]}); };
+  $("#ev_sel").onchange = draw; draw();
+}
+
 function behaviour() {
   const a = D.asymmetry;
   return `<h2>Why price behaves this way</h2>
@@ -474,8 +515,17 @@ function discoveries() {
     <div class="grid"><div><h3>9 · Regimes</h3>${table((d.regimes||[]).filter(r=>r.dimension!=="session"), [{label:"Dim",k:"dimension"},{label:"Regime",k:"regime"},{label:"n",num:1,k:"n"},{label:"Avg R",num:1,f:r=>sgn(r.avg_r),cls:r=>cls(r.avg_r)}])}</div>
     <div><h3>10 · Out-of-sample (${d.holdout_revealed?"validation + holdout":"validation only"})</h3><dl class="kv"><dt>n</dt><dd>${o.n}</dd><dt>avg R</dt><dd class="${cls(o.avg_r)}">${sgn(o.avg_r)}</dd><dt>block-bootstrap 95% CI</dt><dd>[${num(d.oos_bootstrap_ci[0])}, ${num(d.oos_bootstrap_ci[1])}]</dd><dt>max DD</dt><dd>${num(o.max_dd,1)}R</dd><dt>trials at test</dt><dd>${d.n_trials_at_test}</dd></dl>
     <h3 style="margin-top:10px">2 · Examples / 3 · counterexamples</h3><p class="mono">${(d.examples||[]).map(x=>`<a href="#inspector" data-tid="${x}">${x}</a>`).join(" ")}</p><p class="mono">${(d.counterexamples||[]).map(x=>`<a href="#inspector" data-tid="${x}">${x}</a>`).join(" ")}</p>
+    ${stressHtml(d.stress)}
     ${(d.relations||[]).map(r=>`<p class="note">⟂ ${esc(r.type)}${r.with?" with "+esc(r.with):""}: ${esc(r.note)}</p>`).join("")}</div>
     <div><h3>Equity (R)</h3><div id="deq${i}" style="min-height:200px"></div></div></div></article>`;}).join("")}`;
+}
+function stressHtml(st) {
+  if (!st || st.error) return "";
+  const pill = st.robust ? '<span class="pill good">passes stress tests</span>' : st.flags.map(f=>`<span class="pill crit">${esc(f)}</span>`).join(" ");
+  return `<h3 style="margin-top:10px">Stress (${esc(st.allowed_splits.join(" + "))})</h3><div class="row">${pill}</div>
+   <dl class="kv"><dt>threshold shifts still positive</dt><dd>${st.neighbourhood_positive_share==null?"n/a (no thresholds)":pct(st.neighbourhood_positive_share)}</dd>
+   <dt>break-even cost multiple</dt><dd>${num(st.breakeven_cost_mult,2)}x</dd><dt>years positive</dt><dd>${pct(st.years_positive_share)} of ${st.n_years}</dd>
+   <dt>95% reshuffled max DD</dt><dd>${num(st.mc_dd_95,1)}R</dd></dl>`;
 }
 function discoveriesAfter() {
   (D.discoveries||[]).forEach((d,i) => plot("deq"+i, [{type:"scatter",mode:"lines",x:d.equity.map(e=>e.t),y:d.equity.map(e=>e.r),line:{color:css("--gold"),width:2}}], {margin:{l:40,r:8,t:8,b:30}, showlegend:false}));
@@ -487,9 +537,21 @@ function experiments() {
   return `<h2>Experiment ledger</h2>
   <p class="lead">Append-only. ${e.n_records} records over ${e.n_hypotheses} hypotheses. Nothing is deleted; failed hypotheses count toward the ${e.n_trials_total.toLocaleString()}-trial multiple-testing denominator.</p>
   <div class="kpis">${Object.entries(e.status_counts).map(([k,v])=>`<div class="kpi"><small>${statusPill(k)}</small><b>${v}</b></div>`).join("")}</div>
+  ${rcPanel()}
   <div class="panel"><h3>Next experiments proposed by the engine</h3>${table(e.next, [{label:"Priority",num:1,f:r=>num(r.priority,0)},{label:"Origin",k:"origin"},{label:"Hypothesis",k:"description"},{label:"Why",k:"rationale"}])}</div>
   <div class="row"><label for="lg_q">Filter</label><input id="lg_q" placeholder="setup, status, feature…" size="30"></div>
   <div class="panel" id="lg_tbl"></div>`;
+}
+function rcPanel() {
+  const rc = D.reality_check; if (!rc || !rc.n_hypotheses) return "";
+  const sp = D.scan_pairs || {};
+  return `<div class="panel"><h3>Data-snooping controls</h3><dl class="kv">
+    <dt>White's Reality Check (family)</dt><dd>${rc.n_hypotheses} hypotheses × ${rc.n_days} discovery days · p = ${num(rc.p_reality_check,3)} (raw), ${num(rc.p_studentised,3)} (studentised)</dd>
+    <dt>Best hypothesis in family</dt><dd>${esc(rc.best)} · t = ${num(rc.best_t,2)} vs 95% luck threshold ${num(rc.boot_tmax_95,2)}</dd>
+    <dt>Romano-Wolf survivors (FWER 5%)</dt><dd>${(rc.rw_survivors||[]).length ? rc.rw_survivors.map(esc).join("<br>") : "none"}</dd>
+    <dt>Single-feature scan</dt><dd>${D.scan.cells} cells · ${D.scan.observed_p05} at p&lt;0.05 vs ${Math.round(D.scan.expected_false_at_p05)} expected by chance</dd>
+    <dt>Two-feature interaction scan</dt><dd>${sp.cells||0} cells · ${sp.observed_p05||0} at p&lt;0.05 vs ${Math.round(sp.expected_false_at_p05||0)} expected · FDR survivors ${sp.fdr_survivors||0}</dd></dl>
+    <p class="note">Stationary block bootstrap of daily R (mean block 10 days), centred under "no edge". It asks whether the best result is better than the best of the same number of zero-edge strategies would be by luck.</p></div>`;
 }
 function experimentsAfter() {
   const draw = () => { const q = $("#lg_q").value.toLowerCase();

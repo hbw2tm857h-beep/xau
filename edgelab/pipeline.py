@@ -17,7 +17,7 @@ from .trades import simulate_decisions
 from .counterfactual import run_counterfactuals, policy_table, hindsight_fix, VARIANTS
 from .taxonomy import flag_trades, category_stats, category_table, M as MISTAKES
 from .comparison import lookalike_pairs, compare_pairs, replication
-from .discovery import scan, walk_forward_ml
+from .discovery import scan, pair_scan, walk_forward_ml
 from .experiments import Engine
 from .ledger import Ledger, legacy_trial_count
 from . import behaviour as B
@@ -119,13 +119,19 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     R["heat_hour_dow"] = hm.to_dict("records")
 
     # ------------------------------------------------------------- discovery scan + ML
-    sc = scan(T)
+    sc1 = scan(T)
+    pairs_sc = pair_scan(T, sc1)
+    sc = pd.concat([sc1, pairs_sc], ignore_index=True).sort_values("t", ascending=False).reset_index(drop=True)
     STORE.mkdir(parents=True, exist_ok=True)
-    sc.head(400).to_csv(STORE / "scan_discovery_top.csv", index=False)
-    R["scan"] = {"cells": int(len(sc)), "fdr_survivors": int((sc["q"] < 0.05).sum()),
-                 "expected_false_at_p05": float(0.05 * len(sc)), "observed_p05": int((sc["p"] < 0.05).sum()),
-                 "top": sc.head(25).to_dict("records")}
-    ml = walk_forward_ml(T)
+    sc.head(400).drop(columns=["conds"], errors="ignore").to_csv(STORE / "scan_discovery_top.csv", index=False)
+    R["scan_pairs"] = {"cells": int(len(pairs_sc)), "observed_p05": int((pairs_sc["p"] < 0.05).sum()),
+                       "expected_false_at_p05": float(0.05 * len(pairs_sc)),
+                       "fdr_survivors": int((pairs_sc["q"] < 0.05).sum()) if len(pairs_sc) else 0}
+    sc1 = sc[sc["op"] != "pair"]
+    R["scan"] = {"cells": int(len(sc1)), "fdr_survivors": int((sc1["q"] < 0.05).sum()),
+                 "expected_false_at_p05": float(0.05 * len(sc1)), "observed_p05": int((sc1["p"] < 0.05).sum()),
+                 "top": sc.head(25).drop(columns=["conds"], errors="ignore").to_dict("records")}
+    ml = walk_forward_ml(T, cf=cf)
     pred = ml.pop("predictions")
     pred[["trade_id", "p"]].to_pickle(CACHE / "ml_pred.pkl")
     R["ml"] = ml
@@ -137,6 +143,7 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     eng = Engine(T, cf, led, scan_df=sc, lookalike=rep if len(rep) else None, extra_trials=len(sc))
     if not eng.queue and not led.records():
         eng.seed(cs, pol_d)
+    eng.seed_momentum_track()
     print(f"[engine] running {budget} experiments (queue {len(eng.queue)})")
     eng.run(budget)
     eng.rebuild_reports()
@@ -148,6 +155,23 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
         "next": eng.next_proposals(12),
     }
     R["ledger"] = _ledger_rows(led)
+    # family-wise data-snooping control across every hypothesis the engine has tested + top scan cells
+    from .robustness import daily_matrix, reality_check
+    from .hypothesis import describe
+    from .discovery import scan_to_spec
+    seen, fam = set(), []
+    for rec in led.records():
+        if rec.get("split") == "discovery" and rec.get("hyp_id") not in seen and rec.get("spec"):
+            seen.add(rec["hyp_id"]); fam.append(rec["spec"])
+    fam += [scan_to_spec(r) for _, r in sc.head(600).iterrows()]
+    X, keep = daily_matrix(T, cf, fam)
+    rc = reality_check(X, n_boot=500)
+    if rc.get("n_hypotheses"):
+        rc["best"] = describe(fam[keep[rc["best_index"]]])
+        rc["rw_survivors"] = [describe(fam[keep[j]]) for j in rc["rw_survivors"]]
+    R["reality_check"] = rc
+    print(f"[reality-check] {rc.get('n_hypotheses')} hypotheses, p={rc.get('p_reality_check')}, studentised p={rc.get('p_studentised')}")
+    R["event_paths"] = B.event_paths(f, T)
     R["discoveries"] = sorted(eng.discoveries, key=lambda d: -d.get("evidence_score", 0))
 
     # ------------------------------------------------------------- personal / directional profile

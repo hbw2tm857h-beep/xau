@@ -19,7 +19,7 @@ CONTEXT = [
     "h4_structure", "d_ema50_slope", "d_dist_ema50", "d_dist_ema200", "d_er20", "d_mom20", "d_volpct",
     "regime_trend", "regime_vol", "regime_char", "regime", "d_dir", "d_structure", "h1_trend", "d_trend",
     "mtf_align", "mtf_votes", "dist_pdh", "dist_pdl", "d_ext", "event", "event_next", "split", "year",
-    "real_yield_chg20", "usd_chg20", "vix",
+    "real_yield_chg20", "usd_chg20", "vix", "htf_room_up", "htf_room_dn", "htf_lvl_above", "htf_lvl_below",
 ]
 
 # Direction-relative versions: positive always means "in favour of the trade"
@@ -28,6 +28,12 @@ DIRECTIONAL = ["body", "clv", "dist_ema20", "dist_ema50", "dist_ema200", "ema20_
                "h4_mom6", "h4_dir", "h4_structure", "d_ema50_slope", "d_dist_ema50", "d_dist_ema200",
                "d_mom20", "d_dir", "d_structure", "h1_trend", "d_trend", "mtf_votes", "d_ext",
                "real_yield_chg20", "usd_chg20"]
+
+
+CODE = {"breakout": "BRK", "range_breakout": "RBO", "sweep_reversal": "SWP", "pullback_ema": "PBE", "bb_fade": "BBF",
+        "bb_squeeze_breakout": "BBS", "ma_cross": "MAX", "wick_rejection": "WCK", "retest": "RTS", "failed_break": "FBK",
+        "exhaustion_fade": "EXH", "momentum_bar": "MOM", "rsi_extreme": "RSI", "session_breakout": "SES",
+        "double_top_bottom": "DTB", "engulfing": "ENG", "momentum_burst": "BUR", "burst_pullback": "BPB"}
 
 
 def add_relative(t: pd.DataFrame) -> pd.DataFrame:
@@ -49,6 +55,9 @@ def add_relative(t: pd.DataFrame) -> pd.DataFrame:
     t["dist_prev_day_fwd"] = np.where(d > 0, t["dist_pdh"], t["dist_pdl"])
     t["with_daily"] = (np.sign(t["d_ema50_slope"].fillna(0)) == d).astype(int)
     t["room_in_r"] = t["room_fwd"] / t["stop_atr"]
+    t["room_fwd_htf"] = np.where(d > 0, t["htf_room_up"], t["htf_room_dn"])
+    t["room_back_htf"] = np.where(d > 0, t["htf_room_dn"], t["htf_room_up"])
+    t["room_in_r_htf"] = t["room_fwd_htf"] / t["stop_atr"]
     return t
 
 
@@ -71,8 +80,9 @@ def simulate_decisions(dec: pd.DataFrame, f: pd.DataFrame, path: Path, cfg: LabC
     t = t[t["filled"]].reset_index(drop=True)
     t["win"] = (t["r"] > 0).astype(int)
     t = add_relative(t)
-    t.insert(0, "trade_id", [f"{s[:3].upper()}{'L' if d > 0 else 'S'}-{pd.Timestamp(x):%Y%m%d%H}"
+    t.insert(0, "trade_id", [f"{CODE.get(s, s[:4].upper())}{'L' if d > 0 else 'S'}-{pd.Timestamp(x):%Y%m%d%H}"
                              for s, d, x in zip(t["setup"], t["direction"], t["tc"])])
+    assert t["trade_id"].is_unique, "trade_id collision: extend CODE"
     # embargo: a trade still open at a split boundary is flagged
     t["crosses_split"] = t["exit_time"].map(_split_of_ts) != t["split"]
     return t

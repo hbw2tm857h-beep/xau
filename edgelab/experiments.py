@@ -33,7 +33,7 @@ GATES = {
     "holdout": {"min_n": 15, "min_avg_r": 0.0, "min_t": 1.0},
 }
 EXIT_VARIANTS = ["target_1r", "target_3r", "breakeven_1r", "stop_1.5x", "time_exit_12h", "retest_limit",
-                 "confirm_close"]
+                 "confirm_close", "trail_2atr", "trail_3atr_after_1r", "partial_1r_trail"]
 
 
 def _passes(s: dict, gate: dict) -> bool:
@@ -142,6 +142,28 @@ class Engine:
                                    "rationale": f"Policy replay: '{ex}' added {g:+.3f}R on discovery for {s_}."}, 72)
         # 5. scan
         self.refill_from_scan(40)
+        self.save()
+
+    def seed_momentum_track(self):
+        """Dedicated follow-up of the replicated 'momentum persists' finding (and the short-side asymmetry)."""
+        why = "Taxonomy E2 'late entry' replicated as an ADVANTAGE; fast moves continue beyond drift."
+        for setup in ("momentum_burst", "burst_pullback"):
+            for d in (1, -1):
+                for ex in ("base", "trail_2atr", "partial_1r_trail", "confirm_close"):
+                    self.push({"setup": setup, "direction": d, "conditions": [], "exit": ex,
+                               "origin": "momentum_track", "rationale": why}, 92)
+                for thr in (3.5, 4.5):
+                    self.push({"setup": "momentum_burst", "direction": d,
+                               "conditions": [{"f": "rel_mom6", "op": ">=", "v": thr}], "exit": "trail_2atr",
+                               "origin": "momentum_track",
+                               "rationale": f"Only very fast moves (>{thr} ATR/6h) continue; down-moves especially."}, 91)
+        for d in (1, -1):
+            for f_, op, v, why2 in (("with_daily", "==", 1, "Momentum aligned with the daily trend."),
+                                     ("room_fwd_htf", ">", 1.5, "Momentum with room to the next H4/D1 level."),
+                                     ("session", "==", "ny_overlap", "Momentum during the deepest liquidity."),
+                                     ("atr_pct", ">", 0.6, "Momentum when volatility is already elevated.")):
+                self.push({"setup": "momentum_burst", "direction": d, "conditions": [{"f": f_, "op": op, "v": v}],
+                           "exit": "trail_2atr", "origin": "momentum_track", "rationale": why2}, 90)
         self.save()
 
     def refill_from_scan(self, k: int):
@@ -328,6 +350,11 @@ class Engine:
                          if x.get("hyp_id") == hid and x.get("split") == "discovery"), self.n_trials())
             rep = full_report(self.t, self.cf, r["spec"], n_tr, var_sr, reveal_holdout=hid in holdout_seen)
             rep.update(status=status, n_trials_at_test=n_tr)
+            from .robustness import stress
+            try:
+                rep["stress"] = stress(self.t, self.cf, r["spec"], hid in holdout_seen)
+            except Exception as e:  # noqa
+                rep["stress"] = {"error": str(e)}
             rep["evidence_score"] = evidence_score(rep["by_split"], rep["regimes"])
             out.append(rep)
         self.discoveries = []

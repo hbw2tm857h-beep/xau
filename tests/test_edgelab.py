@@ -87,3 +87,20 @@ def test_truncation_audit_clean():
     from edgelab.validation import truncation_audit
     a = truncation_audit(D.load_h1(), n_cuts=2, window=3000)
     assert a["mismatches"].sum() == 0
+
+
+def test_trailing_stop_uses_only_past_bars():
+    # long from 100, stop 99; price rallies to 105 then drops; trail 1 ATR -> exit near 104
+    p = _path([(100, 100.2, 99.8, 100), (100, 102, 99.9, 102), (102, 105, 101.9, 104.8), (104.8, 104.9, 101, 101.5)])
+    r = simulate(p, 0, 1, 99.0, None, 600, 1.0, costs=ZERO, min_risk_atr=0, trail_atr=1.0)
+    assert r["exit_reason"] == "trail" and r["exit"] == pytest.approx(104.0)
+    # the same-bar high of bar 2 must not tighten bar 2's own stop
+    p2 = _path([(100, 100.2, 99.8, 100), (100, 105, 101.5, 102)])
+    r2 = simulate(p2, 0, 1, 99.0, None, 600, 1.0, costs=ZERO, min_risk_atr=0, trail_atr=1.0)
+    assert r2["exit_reason"] == "time"
+
+
+def test_every_setup_has_unique_trade_code():
+    from edgelab.setups import SETUPS
+    from edgelab.trades import CODE
+    assert set(SETUPS) <= set(CODE) and len(set(CODE.values())) == len(CODE)
