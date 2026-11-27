@@ -43,9 +43,11 @@ def clean(df: pd.DataFrame, minutes: int) -> pd.DataFrame:
     return df[["t", "tc", "open", "high", "low", "close"]]
 
 
-def load_h1() -> pd.DataFrame:
+def load_h1(extend: bool = True) -> pd.DataFrame:
     parts = [_read(DATA / f) for f in H1_FILES if (DATA / f).exists()]
     df = clean(pd.concat(parts, ignore_index=True), 60)
+    if extend:
+        df = extend_h1_with_m15(df, load_m15())
     vol_path = DATA / "volume" / "xauusd_h1_vol.csv.gz"
     if vol_path.exists():
         v = _read(vol_path)
@@ -53,6 +55,21 @@ def load_h1() -> pd.DataFrame:
     else:
         df["volume"] = np.nan
     return df
+
+
+def extend_h1_with_m15(h1: pd.DataFrame, m15: pd.DataFrame) -> pd.DataFrame:
+    """Append H1 bars built from M15 for any period after the H1 files end (keeps data current)."""
+    last = h1["t"].max()
+    tail = m15[m15["t"] >= last + pd.Timedelta(hours=1)]
+    if not len(tail):
+        return h1
+    g = tail.groupby(tail["t"].dt.floor("h"))
+    add = pd.DataFrame({"t": g["t"].first().dt.floor("h"), "open": g["open"].first(), "high": g["high"].max(),
+                        "low": g["low"].min(), "close": g["close"].last(), "n": g["open"].size()})
+    add = add[add["n"] == 4].drop(columns="n").reset_index(drop=True)   # complete hours only
+    add["tc"] = add["t"] + pd.Timedelta(hours=1)
+    add["volume"] = np.nan
+    return pd.concat([h1, add[h1.columns]], ignore_index=True)
 
 
 def load_m15() -> pd.DataFrame:

@@ -138,8 +138,21 @@ def stress(t: pd.DataFrame, cf, spec: dict, reveal_holdout: bool) -> dict:
     # 4. drawdown under reshuffles
     rr = r[base_m].dropna().values
     out["mc_dd_95"] = mc_drawdown(rr, 500) if len(rr) > 10 else None
+    # 5. drift control: same direction, same exit, ALL setups, same calendar month
+    bm = (t["direction"] == spec["direction"]) if int(spec.get("direction", 0)) else pd.Series(True, index=t.index)
+    bm &= t["split"].isin(allowed) & ~t["crosses_split"]
+    mon = t["tc"].dt.to_period("M")
+    bench = r[bm].groupby(mon[bm]).mean()
+    ex = (r[base_m] - bench.reindex(mon[base_m]).values).dropna()
+    out["month_matched_excess"] = float(ex.mean()) if len(ex) else None
+    out["month_matched_excess_by_split"] = {sp: float(ex[t.loc[ex.index, "split"] == sp].mean())
+                                            for sp in allowed if (t.loc[ex.index, "split"] == sp).any()}
+    rg = r[base_m].groupby(t.loc[base_m, "regime_trend"]).mean()
+    out["by_trend_regime"] = {k: float(v) for k, v in rg.items()}
     # verdict
     flags = []
+    if out["month_matched_excess"] is not None and out["month_matched_excess"] <= 0:
+        flags.append("no edge over drift: same-month benchmark does as well")
     if out["neighbourhood_positive_share"] is not None and out["neighbourhood_positive_share"] < 0.6:
         flags.append("spike: small threshold shifts kill it")
     if out["breakeven_cost_mult"] is not None and out["breakeven_cost_mult"] < 1.5:

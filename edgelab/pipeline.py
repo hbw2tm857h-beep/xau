@@ -125,7 +125,7 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     STORE.mkdir(parents=True, exist_ok=True)
     sc.head(400).drop(columns=["conds"], errors="ignore").to_csv(STORE / "scan_discovery_top.csv", index=False)
     R["scan_pairs"] = {"cells": int(len(pairs_sc)), "observed_p05": int((pairs_sc["p"] < 0.05).sum()),
-                       "expected_false_at_p05": float(0.05 * len(pairs_sc)),
+                       "expected_false_at_p05": None,   # cells are built from pre-selected winners: no valid chance baseline
                        "fdr_survivors": int((pairs_sc["q"] < 0.05).sum()) if len(pairs_sc) else 0}
     sc1 = sc[sc["op"] != "pair"]
     R["scan"] = {"cells": int(len(sc1)), "fdr_survivors": int((sc1["q"] < 0.05).sum()),
@@ -136,6 +136,7 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     pred[["trade_id", "p"]].to_pickle(CACHE / "ml_pred.pkl")
     R["ml"] = ml
     T = T.drop(columns=["ml_p"], errors="ignore").merge(pred[["trade_id", "p"]].rename(columns={"p": "ml_p"}), on="trade_id", how="left")
+    T["ml_sel"] = T["trade_id"].isin(set(pred.loc[pred["selected"], "trade_id"]))
     lab.trades = T
 
     # ------------------------------------------------------------- experiment engine
@@ -144,6 +145,7 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     if not eng.queue and not led.records():
         eng.seed(cs, pol_d)
     eng.seed_momentum_track()
+    eng.seed_ml()
     print(f"[engine] running {budget} experiments (queue {len(eng.queue)})")
     eng.run(budget)
     eng.rebuild_reports()
@@ -172,6 +174,10 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     R["reality_check"] = rc
     print(f"[reality-check] {rc.get('n_hypotheses')} hypotheses, p={rc.get('p_reality_check')}, studentised p={rc.get('p_studentised')}")
     R["event_paths"] = B.event_paths(f, T)
+    from . import forward as FW
+    data_end = str(f["tc"].max())
+    R["frozen"] = FW.freeze(eng.discoveries, data_end)
+    R["forward"] = FW.score(T, cf)
     R["discoveries"] = sorted(eng.discoveries, key=lambda d: -d.get("evidence_score", 0))
 
     # ------------------------------------------------------------- personal / directional profile

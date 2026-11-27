@@ -166,6 +166,22 @@ class Engine:
                            "exit": "trail_2atr", "origin": "momentum_track", "rationale": why2}, 90)
         self.save()
 
+    def seed_ml(self):
+        """Walk-forward model selections (ml_sel = top 20% predicted, scored out-of-sample each year).
+
+        The exit list was chosen after seeing the model's per-exit table on all splits, so these
+        are post-hoc; they pay the full multiple-testing price like everything else.
+        """
+        if "ml_sel" not in self.t:
+            return
+        for ex in ("base", "trail_3atr_after_1r", "trail_2atr", "time_exit_12h", "target_3r"):
+            for d in (0, 1, -1):
+                self.push({"setup": "*", "direction": d, "conditions": [{"f": "ml_sel", "op": "==", "v": True}],
+                           "exit": ex, "origin": "ml",
+                           "rationale": "Model trained only on earlier years picked these trades (top 20%); "
+                                        "exit chosen post hoc from the per-exit table."}, 93)
+        self.save()
+
     def refill_from_scan(self, k: int):
         from .discovery import scan_to_spec
         if self.scan_df is None or not len(self.scan_df):
@@ -357,8 +373,10 @@ class Engine:
                 rep["stress"] = {"error": str(e)}
             rep["evidence_score"] = evidence_score(rep["by_split"], rep["regimes"])
             out.append(rep)
+        notes = [r for r in self.ledger.records() if r.get("type") == "note" and r.get("hyp_ids")]
         self.discoveries = []
         for rep in out:
+            rep["caveats"] = [n["note"] for n in notes if rep["hyp_id"] in n["hyp_ids"]]
             rep["relations"] = self.relate(rep["spec"], rep)
             self.discoveries.append(rep)
         self.save()

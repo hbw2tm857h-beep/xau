@@ -173,7 +173,8 @@ def walk_forward_ml(t: pd.DataFrame, first_test_year: int = 2012, top_frac: floa
     if cf is not None:
         x = sel.merge(cf, on="trade_id", how="left")
         cols = [c for c in cf.columns if c != "trade_id"]
-        exits = {sp: {c: float(g[c].mean()) for c in cols} for sp, g in x.groupby("split")}
+        # holdout deliberately NOT shown: choosing an exit from it would spend the holdout
+        exits = {sp: {c: float(g[c].mean()) for c in cols} for sp, g in x.groupby("split") if sp != "holdout"}
     else:
         exits = {}
     return {

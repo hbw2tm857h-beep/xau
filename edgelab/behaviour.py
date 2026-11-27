@@ -180,6 +180,12 @@ def event_paths(f: pd.DataFrame, t: pd.DataFrame, pre: int = 24, post: int = 48,
         out["paths"][f"{s}|{int(dr)}"] = rec
     # unconditional drift benchmark (trade-relative for longs; shorts are its negative)
     sample = np.arange(pre, n - post, 7)
-    M = (c[sample[:, None] + ks[None, :]] - c[sample][:, None]) / a[sample][:, None]
-    out["drift_long"] = np.round(M.mean(0), 3).tolist()
+    sample = sample[np.isin(f["split"].values[sample], list(splits))]
+    D0 = (c[sample[:, None] + ks[None, :]] - c[sample][:, None]) / a[sample][:, None]
+    drift = D0.mean(0)
+    out["drift_long"] = np.round(drift, 3).tolist()
+    for key, rec in out["paths"].items():
+        d_ = int(key.split("|")[1])
+        rec["excess12"] = rec["fwd12"] - d_ * float(drift[pre + 12])
+        rec["excess48"] = rec["fwd48"] - d_ * float(drift[pre + 48])
     return out

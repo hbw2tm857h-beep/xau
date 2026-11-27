@@ -96,9 +96,10 @@ def evaluate(t: pd.DataFrame, cf: pd.DataFrame | None, spec: dict, splits=("disc
         sel = m & (t["split"] == sp)
         rr = r_all[sel].dropna().values
         s = summarise(rr)
-        if spec.get("exit", "base") == "base":
-            g = summarise(t.loc[sel, "r_gross"].dropna().values)
-            s["avg_r_gross"], s["t_gross"] = g["avg_r"], g["t"]
+        # gross = before costs. Exact for base exits; for other exits the base trade's cost is used as a proxy.
+        gross = t.loc[sel, "r_gross"] if spec.get("exit", "base") == "base" else r_all[sel] + t.loc[sel, "cost_r"]
+        g = summarise(gross.dropna().values)
+        s["avg_r_gross"], s["t_gross"] = g["avg_r"], g["t"]
         s["dsr"] = deflated_sharpe(rr, n_trials, var_sr) if len(rr) >= 10 else np.nan
         # baseline = same setup/direction population without the conditions
         base_spec = {**spec, "conditions": []}

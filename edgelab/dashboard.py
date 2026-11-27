@@ -278,7 +278,7 @@ function overview() {
     <div class="panel"><h3>Headline findings</h3><div id="headlines"></div></div>
     <div class="panel"><h3>ML meta-filter, walk-forward (out-of-sample every year)</h3><div id="ml_chart" class="chart"></div>
       <p class="note">AUC ${Object.entries(ml.auc||{}).map(([k,v])=>k+" "+num(v,3)).join(" · ")}. Bars: average R of all trades vs the top 20% the model (trained only on earlier years) preferred.</p>
-      <h3>Model-selected trades under each exit (base R)</h3>${mlExits()}</div>
+      <h3>Model-selected trades under each exit (base R; holdout hidden on purpose)</h3>${mlExits()}</div>
   </div>
   <div class="panel"><h3>Data splits</h3><p class="note">${Object.entries(D.splits).map(([k,v])=>`<b>${k}</b> ${v[0]} → ${v[1].slice(0,10)}`).join(" · ")}. Holdout is out-of-sample for this lab, but earlier research rounds in <span class="mono">research/</span> viewed all years; their ${ex.legacy_trials} logged trials are added to the multiple-testing count.</p></div>`;
 }
@@ -446,8 +446,10 @@ function events() {
   <div class="panel"><h3>Winners vs losers (descriptive, outcome-labelled)</h3><div id="ev_wl" class="chart" style="min-height:380px"></div></div></div>
   <div class="panel"><h3>Where every setup's average path ends up</h3>${table(rows, [{label:"Setup",k:"setup"},{label:"Side",f:r=>dirName(r.dir)},{label:"n",num:1,k:"n"},
     {label:"Move into trigger (−24h→0)",num:1,f:r=>sgn(-r.mean[0],2),cls:r=>cls(-r.mean[0]),sort:r=>-r.mean[0]},
-    {label:"+12h",num:1,f:r=>sgn(r.fwd12,3),cls:r=>cls(r.fwd12),sort:r=>r.fwd12},{label:"+48h",num:1,f:r=>sgn(r.fwd48,3),cls:r=>cls(r.fwd48),sort:r=>r.fwd48}])}
-  <p class="note">"Move into trigger" is how far price had already travelled in the trade direction during the 24h before the signal.</p></div>`;
+    {label:"+12h",num:1,f:r=>sgn(r.fwd12,3)},{label:"+48h",num:1,f:r=>sgn(r.fwd48,3)},
+    {label:"+12h vs drift",num:1,f:r=>sgn(r.excess12,3),cls:r=>cls(r.excess12),sort:r=>r.excess12},
+    {label:"+48h vs drift",num:1,f:r=>sgn(r.excess48,3),cls:r=>cls(r.excess48),sort:r=>r.excess48}])}
+  <p class="note">"Move into trigger" is how far price had already travelled in the trade direction during the 24h before the signal. "vs drift" subtracts gold's average move over the same horizon (positive drift helps every long and hurts every short).</p></div>`;
 }
 function eventsAfter() {
   const E = D.event_paths;
@@ -506,7 +508,8 @@ function discoveries() {
   ${ds.map((d,i) => {
     const s = d.by_split, o = d.out_of_sample;
     return `<article class="disc"><header>${statusPill(d.status)}<b class="mono">${esc(d.hyp_id)}</b><span class="pill">evidence ${num(d.evidence_score,0)}</span><span class="note">origin: ${esc(d.spec.origin)}</span></header>
-    <div class="def">1 · ${esc(d.definition)}</div><p class="note" style="margin:0">${esc(d.spec.rationale||"")}</p>
+    <div class="def">1 · ${esc(d.definition)}</div>
+    ${(d.caveats||[]).map(c=>`<div class="callout note"><b>Caveat:</b> ${esc(c)}</div>`).join("")}<p class="note" style="margin:0">${esc(d.spec.rationale||"")}</p>
     ${d.holdout_revealed?"":'<p class="note" style="margin:0">Holdout withheld: this hypothesis did not pass validation, so it never earned its one look at 2022–2026.</p>'}
     ${table(["archive","discovery","validation","holdout"].filter(k=>s[k]).map(k=>({k, ...(s[k]||{})})), [
       {label:"Split",k:"k"},{label:"4 · n",num:1,k:"n"},{label:"5 · Win",num:1,f:r=>pct(r.win)},{label:"6 · Avg R",num:1,f:r=>sgn(r.avg_r),cls:r=>cls(r.avg_r)},
@@ -525,7 +528,9 @@ function stressHtml(st) {
   return `<h3 style="margin-top:10px">Stress (${esc(st.allowed_splits.join(" + "))})</h3><div class="row">${pill}</div>
    <dl class="kv"><dt>threshold shifts still positive</dt><dd>${st.neighbourhood_positive_share==null?"n/a (no thresholds)":pct(st.neighbourhood_positive_share)}</dd>
    <dt>break-even cost multiple</dt><dd>${num(st.breakeven_cost_mult,2)}x</dd><dt>years positive</dt><dd>${pct(st.years_positive_share)} of ${st.n_years}</dd>
-   <dt>95% reshuffled max DD</dt><dd>${num(st.mc_dd_95,1)}R</dd></dl>`;
+   <dt>95% reshuffled max DD</dt><dd>${num(st.mc_dd_95,1)}R</dd>
+   <dt>excess vs same-month benchmark</dt><dd>${sgn(st.month_matched_excess)}R (${Object.entries(st.month_matched_excess_by_split||{}).map(([k,v])=>k+" "+sgn(v)).join(", ")})</dd>
+   <dt>by daily trend regime</dt><dd>${Object.entries(st.by_trend_regime||{}).map(([k,v])=>k+" "+sgn(v)).join(" · ")}</dd></dl>`;
 }
 function discoveriesAfter() {
   (D.discoveries||[]).forEach((d,i) => plot("deq"+i, [{type:"scatter",mode:"lines",x:d.equity.map(e=>e.t),y:d.equity.map(e=>e.r),line:{color:css("--gold"),width:2}}], {margin:{l:40,r:8,t:8,b:30}, showlegend:false}));
@@ -538,6 +543,10 @@ function experiments() {
   <p class="lead">Append-only. ${e.n_records} records over ${e.n_hypotheses} hypotheses. Nothing is deleted; failed hypotheses count toward the ${e.n_trials_total.toLocaleString()}-trial multiple-testing denominator.</p>
   <div class="kpis">${Object.entries(e.status_counts).map(([k,v])=>`<div class="kpi"><small>${statusPill(k)}</small><b>${v}</b></div>`).join("")}</div>
   ${rcPanel()}
+  <div class="panel"><h3>Forward test (data after each hypothesis was frozen)</h3>${(D.forward||[]).length ? table(D.forward, [
+    {label:"Hypothesis",k:"definition"},{label:"Frozen at",f:r=>String(r.frozen_at).slice(0,16)},{label:"n",num:1,f:r=>r.forward?r.forward.n:"–"},
+    {label:"Avg R",num:1,f:r=>r.forward?sgn(r.forward.avg_r):"–",cls:r=>r.forward?cls(r.forward.avg_r):""}]) : '<p class="note">Nothing frozen yet.</p>'}
+    <p class="note">The only truly unseen data. Hypotheses are frozen at the last bar of the current data; refresh the price files and rerun to score them.</p></div>
   <div class="panel"><h3>Next experiments proposed by the engine</h3>${table(e.next, [{label:"Priority",num:1,f:r=>num(r.priority,0)},{label:"Origin",k:"origin"},{label:"Hypothesis",k:"description"},{label:"Why",k:"rationale"}])}</div>
   <div class="row"><label for="lg_q">Filter</label><input id="lg_q" placeholder="setup, status, feature…" size="30"></div>
   <div class="panel" id="lg_tbl"></div>`;
@@ -550,7 +559,7 @@ function rcPanel() {
     <dt>Best hypothesis in family</dt><dd>${esc(rc.best)} · t = ${num(rc.best_t,2)} vs 95% luck threshold ${num(rc.boot_tmax_95,2)}</dd>
     <dt>Romano-Wolf survivors (FWER 5%)</dt><dd>${(rc.rw_survivors||[]).length ? rc.rw_survivors.map(esc).join("<br>") : "none"}</dd>
     <dt>Single-feature scan</dt><dd>${D.scan.cells} cells · ${D.scan.observed_p05} at p&lt;0.05 vs ${Math.round(D.scan.expected_false_at_p05)} expected by chance</dd>
-    <dt>Two-feature interaction scan</dt><dd>${sp.cells||0} cells · ${sp.observed_p05||0} at p&lt;0.05 vs ${Math.round(sp.expected_false_at_p05||0)} expected · FDR survivors ${sp.fdr_survivors||0}</dd></dl>
+    <dt>Two-feature interaction scan</dt><dd>${sp.cells||0} cells · ${sp.observed_p05||0} at p&lt;0.05 · FDR survivors ${sp.fdr_survivors||0}. Pairs are built from the best single cells on the same data, so a chance baseline does not apply; they are counted as trials and judged by the Reality Check and later splits.</dd></dl>
     <p class="note">Stationary block bootstrap of daily R (mean block 10 days), centred under "no edge". It asks whether the best result is better than the best of the same number of zero-edge strategies would be by luck.</p></div>`;
 }
 function experimentsAfter() {
