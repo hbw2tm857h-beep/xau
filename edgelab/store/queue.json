@@ -1,349 +1,59 @@
 [
  {
-  "hyp_id": "H9362a05a1c",
-  "priority": 45.0,
+  "hyp_id": "H4baf9a6bdd",
+  "priority": 65.01405,
   "spec": {
-   "setup": "wick_rejection",
+   "setup": "session_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_mtf_votes",
+     "op": ">=",
+     "v": 1.0
+    },
+    {
+     "f": "rel_d_ext",
+     "op": "between",
+     "v": [
+      -0.808,
+      0.8737
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=3.00, lift +0.403R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H87ae084768",
+  "priority": 64.97519,
+  "spec": {
+   "setup": "breakout",
    "direction": 1,
    "conditions": [
     {
-     "f": "fwd_wick",
+     "f": "room_in_r_htf",
      "op": "<",
-     "v": 0.0673
+     "v": 0.4456
     },
     {
-     "f": "regime_char",
-     "op": "==",
-     "v": "trending"
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "H45f5a61f5c"
-  }
- },
- {
-  "hyp_id": "Hef0b73119b",
-  "priority": 45.0,
-  "spec": {
-   "setup": "wick_rejection",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "fwd_wick",
-     "op": "<",
-     "v": 0.0673
-    },
-    {
-     "f": "regime_char",
-     "op": "==",
-     "v": "trending"
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "H45f5a61f5c"
-  }
- },
- {
-  "hyp_id": "H9f3032e4fd",
-  "priority": 45.0,
-  "spec": {
-   "setup": "wick_rejection",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "fwd_wick",
-     "op": "<",
-     "v": 0.0673
-    },
-    {
-     "f": "regime_char",
-     "op": "==",
-     "v": "trending"
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "H45f5a61f5c"
-  }
- },
- {
-  "hyp_id": "H8b27855d4f",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_structure",
-     "op": "==",
-     "v": 1
-    },
-    {
-     "f": "room_in_r",
+     "f": "rel_mom24",
      "op": "between",
      "v": [
-      0.1434,
-      0.4323
+      0.8506,
+      3.1429
      ]
     }
    ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "Hd13f47709c"
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=3.00, lift +0.292R on discovery."
   }
  },
  {
-  "hyp_id": "H4a1c2b7bc2",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_structure",
-     "op": "==",
-     "v": 1
-    },
-    {
-     "f": "room_in_r",
-     "op": "between",
-     "v": [
-      0.1434,
-      0.4323
-     ]
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "Hd13f47709c"
-  }
- },
- {
-  "hyp_id": "H48d0ecba71",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_structure",
-     "op": "==",
-     "v": 1
-    },
-    {
-     "f": "room_in_r",
-     "op": "between",
-     "v": [
-      0.1434,
-      0.4323
-     ]
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "Hd13f47709c"
-  }
- },
- {
-  "hyp_id": "H73d0ce64d0",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_structure",
-     "op": "==",
-     "v": 1
-    },
-    {
-     "f": "room_in_r",
-     "op": "between",
-     "v": [
-      0.1434,
-      0.4323
-     ]
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "Hd13f47709c"
-  }
- },
- {
-  "hyp_id": "H0e13bf2040",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_structure",
-     "op": "==",
-     "v": 1
-    },
-    {
-     "f": "room_in_r",
-     "op": "between",
-     "v": [
-      0.1434,
-      0.4323
-     ]
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "Hd13f47709c"
-  }
- },
- {
-  "hyp_id": "Ha9bc7899f8",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_structure",
-     "op": "==",
-     "v": 1
-    },
-    {
-     "f": "room_in_r",
-     "op": "between",
-     "v": [
-      0.1434,
-      0.4323
-     ]
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "Hd13f47709c"
-  }
- },
- {
-  "hyp_id": "H745099e2bd",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_structure",
-     "op": "==",
-     "v": 1
-    },
-    {
-     "f": "room_in_r",
-     "op": "between",
-     "v": [
-      0.1434,
-      0.4323
-     ]
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "Hd13f47709c"
-  }
- },
- {
-  "hyp_id": "H11b61b3aa9",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_structure",
-     "op": "==",
-     "v": 1
-    },
-    {
-     "f": "room_in_r",
-     "op": "between",
-     "v": [
-      0.1434,
-      0.4323
-     ]
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "Hd13f47709c"
-  }
- },
- {
-  "hyp_id": "Hf525440453",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_structure",
-     "op": "==",
-     "v": 1
-    },
-    {
-     "f": "room_in_r",
-     "op": "between",
-     "v": [
-      0.1434,
-      0.4323
-     ]
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "Hd13f47709c"
-  }
- },
- {
-  "hyp_id": "Hacd3d61161",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_structure",
-     "op": "==",
-     "v": 1
-    },
-    {
-     "f": "room_in_r",
-     "op": "between",
-     "v": [
-      0.1434,
-      0.4323
-     ]
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "Hd13f47709c"
-  }
- },
- {
-  "hyp_id": "H84e567651d",
-  "priority": 45.0,
+  "hyp_id": "Hd2a1f4ee83",
+  "priority": 64.87225,
   "spec": {
    "setup": "momentum_burst",
    "direction": -1,
@@ -355,3687 +65,6 @@
       0.4238,
       0.7679
      ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "H4b86995ac5"
-  }
- },
- {
-  "hyp_id": "H5ab18f3a1f",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "H4b86995ac5"
-  }
- },
- {
-  "hyp_id": "H0e0914f3be",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "H4b86995ac5"
-  }
- },
- {
-  "hyp_id": "Hfa8a3c75c3",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "H4b86995ac5"
-  }
- },
- {
-  "hyp_id": "H0ba96479bd",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "H4b86995ac5"
-  }
- },
- {
-  "hyp_id": "Hc561ae9ebc",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "H4b86995ac5"
-  }
- },
- {
-  "hyp_id": "H1824f1bbd6",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "H4b86995ac5"
-  }
- },
- {
-  "hyp_id": "Ha6a9df3884",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "H4b86995ac5"
-  }
- },
- {
-  "hyp_id": "Hd1b83bfd4c",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "H4b86995ac5"
-  }
- },
- {
-  "hyp_id": "H108e61fc14",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "H4b86995ac5"
-  }
- },
- {
-  "hyp_id": "He93ba46efd",
-  "priority": 45.0,
-  "spec": {
-   "setup": "range_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "Hbfa59b3c1b"
-  }
- },
- {
-  "hyp_id": "H0ec4b946ea",
-  "priority": 45.0,
-  "spec": {
-   "setup": "range_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "Hbfa59b3c1b"
-  }
- },
- {
-  "hyp_id": "Hb38d53a7fd",
-  "priority": 45.0,
-  "spec": {
-   "setup": "range_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "Hbfa59b3c1b"
-  }
- },
- {
-  "hyp_id": "H43359a3b16",
-  "priority": 45.0,
-  "spec": {
-   "setup": "range_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "Hbfa59b3c1b"
-  }
- },
- {
-  "hyp_id": "Hb00df71b0e",
-  "priority": 45.0,
-  "spec": {
-   "setup": "range_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "Hbfa59b3c1b"
-  }
- },
- {
-  "hyp_id": "Hfe52ecb99b",
-  "priority": 45.0,
-  "spec": {
-   "setup": "range_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "Hbfa59b3c1b"
-  }
- },
- {
-  "hyp_id": "H39d99d2403",
-  "priority": 45.0,
-  "spec": {
-   "setup": "range_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "Hbfa59b3c1b"
-  }
- },
- {
-  "hyp_id": "H65b02259d4",
-  "priority": 45.0,
-  "spec": {
-   "setup": "range_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "Hbfa59b3c1b"
-  }
- },
- {
-  "hyp_id": "Hd78db0ad6e",
-  "priority": 45.0,
-  "spec": {
-   "setup": "range_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "Hbfa59b3c1b"
-  }
- },
- {
-  "hyp_id": "H90b3167708",
-  "priority": 45.0,
-  "spec": {
-   "setup": "range_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "Hbfa59b3c1b"
-  }
- },
- {
-  "hyp_id": "H4897eadcdf",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "room_fwd",
-     "op": "between",
-     "v": [
-      0.2577,
-      0.7774
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "<",
-     "v": 0.4695
-    }
-   ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "H5b982548be"
-  }
- },
- {
-  "hyp_id": "H182b51579c",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "room_fwd",
-     "op": "between",
-     "v": [
-      0.2577,
-      0.7774
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "<",
-     "v": 0.4695
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "H5b982548be"
-  }
- },
- {
-  "hyp_id": "Hc9a1be4441",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "room_fwd",
-     "op": "between",
-     "v": [
-      0.2577,
-      0.7774
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "<",
-     "v": 0.4695
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "H5b982548be"
-  }
- },
- {
-  "hyp_id": "Ha99a52629d",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "room_fwd",
-     "op": "between",
-     "v": [
-      0.2577,
-      0.7774
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "<",
-     "v": 0.4695
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "H5b982548be"
-  }
- },
- {
-  "hyp_id": "Hb67a26186f",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "room_fwd",
-     "op": "between",
-     "v": [
-      0.2577,
-      0.7774
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "<",
-     "v": 0.4695
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "H5b982548be"
-  }
- },
- {
-  "hyp_id": "H0702367e5e",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "room_fwd",
-     "op": "between",
-     "v": [
-      0.2577,
-      0.7774
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "<",
-     "v": 0.4695
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "H5b982548be"
-  }
- },
- {
-  "hyp_id": "H351b0074de",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "room_fwd",
-     "op": "between",
-     "v": [
-      0.2577,
-      0.7774
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "<",
-     "v": 0.4695
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "H5b982548be"
-  }
- },
- {
-  "hyp_id": "Hec34d82a5d",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "room_fwd",
-     "op": "between",
-     "v": [
-      0.2577,
-      0.7774
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "<",
-     "v": 0.4695
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "H5b982548be"
-  }
- },
- {
-  "hyp_id": "Hd56753b44f",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "room_fwd",
-     "op": "between",
-     "v": [
-      0.2577,
-      0.7774
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "<",
-     "v": 0.4695
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "H5b982548be"
-  }
- },
- {
-  "hyp_id": "Hea031cc657",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "room_fwd",
-     "op": "between",
-     "v": [
-      0.2577,
-      0.7774
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "<",
-     "v": 0.4695
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "H5b982548be"
-  }
- },
- {
-  "hyp_id": "H058a7c4d9c",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_bar",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_d_ema50_slope",
-     "op": "between",
-     "v": [
-      -0.5846,
-      0.2126
-     ]
-    },
-    {
-     "f": "rel_ema50_slope",
-     "op": "<",
-     "v": -0.2235
-    }
-   ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "H98384e451e"
-  }
- },
- {
-  "hyp_id": "H415bf1d6b4",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_bar",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_d_ema50_slope",
-     "op": "between",
-     "v": [
-      -0.5846,
-      0.2126
-     ]
-    },
-    {
-     "f": "rel_ema50_slope",
-     "op": "<",
-     "v": -0.2235
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "H98384e451e"
-  }
- },
- {
-  "hyp_id": "H97148b0760",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_bar",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_d_ema50_slope",
-     "op": "between",
-     "v": [
-      -0.5846,
-      0.2126
-     ]
-    },
-    {
-     "f": "rel_ema50_slope",
-     "op": "<",
-     "v": -0.2235
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "H98384e451e"
-  }
- },
- {
-  "hyp_id": "H765912db02",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_bar",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_d_ema50_slope",
-     "op": "between",
-     "v": [
-      -0.5846,
-      0.2126
-     ]
-    },
-    {
-     "f": "rel_ema50_slope",
-     "op": "<",
-     "v": -0.2235
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "H98384e451e"
-  }
- },
- {
-  "hyp_id": "Hcd2069c491",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_bar",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_d_ema50_slope",
-     "op": "between",
-     "v": [
-      -0.5846,
-      0.2126
-     ]
-    },
-    {
-     "f": "rel_ema50_slope",
-     "op": "<",
-     "v": -0.2235
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "H98384e451e"
-  }
- },
- {
-  "hyp_id": "H701ef7691f",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_bar",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_d_ema50_slope",
-     "op": "between",
-     "v": [
-      -0.5846,
-      0.2126
-     ]
-    },
-    {
-     "f": "rel_ema50_slope",
-     "op": "<",
-     "v": -0.2235
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "H98384e451e"
-  }
- },
- {
-  "hyp_id": "H4f84ae3127",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_bar",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_d_ema50_slope",
-     "op": "between",
-     "v": [
-      -0.5846,
-      0.2126
-     ]
-    },
-    {
-     "f": "rel_ema50_slope",
-     "op": "<",
-     "v": -0.2235
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "H98384e451e"
-  }
- },
- {
-  "hyp_id": "Hb68afc51e7",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_bar",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_d_ema50_slope",
-     "op": "between",
-     "v": [
-      -0.5846,
-      0.2126
-     ]
-    },
-    {
-     "f": "rel_ema50_slope",
-     "op": "<",
-     "v": -0.2235
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "H98384e451e"
-  }
- },
- {
-  "hyp_id": "H2bad133959",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_bar",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_d_ema50_slope",
-     "op": "between",
-     "v": [
-      -0.5846,
-      0.2126
-     ]
-    },
-    {
-     "f": "rel_ema50_slope",
-     "op": "<",
-     "v": -0.2235
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "H98384e451e"
-  }
- },
- {
-  "hyp_id": "He6b2a92290",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_bar",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_d_ema50_slope",
-     "op": "between",
-     "v": [
-      -0.5846,
-      0.2126
-     ]
-    },
-    {
-     "f": "rel_ema50_slope",
-     "op": "<",
-     "v": -0.2235
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "H98384e451e"
-  }
- },
- {
-  "hyp_id": "H0a03a928ad",
-  "priority": 45.0,
-  "spec": {
-   "setup": "ma_cross",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "dist_round50",
-     "op": ">=",
-     "v": 4.7634
-    },
-    {
-     "f": "regime_trend",
-     "op": "==",
-     "v": "neutral"
-    }
-   ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "H22857b3b84"
-  }
- },
- {
-  "hyp_id": "H1eeb5261bd",
-  "priority": 45.0,
-  "spec": {
-   "setup": "ma_cross",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "dist_round50",
-     "op": ">=",
-     "v": 4.7634
-    },
-    {
-     "f": "regime_trend",
-     "op": "==",
-     "v": "neutral"
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "H22857b3b84"
-  }
- },
- {
-  "hyp_id": "H1668940cf9",
-  "priority": 45.0,
-  "spec": {
-   "setup": "ma_cross",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "dist_round50",
-     "op": ">=",
-     "v": 4.7634
-    },
-    {
-     "f": "regime_trend",
-     "op": "==",
-     "v": "neutral"
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "H22857b3b84"
-  }
- },
- {
-  "hyp_id": "H4f78b0bf1e",
-  "priority": 45.0,
-  "spec": {
-   "setup": "ma_cross",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "dist_round50",
-     "op": ">=",
-     "v": 4.7634
-    },
-    {
-     "f": "regime_trend",
-     "op": "==",
-     "v": "neutral"
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "H22857b3b84"
-  }
- },
- {
-  "hyp_id": "Ha16b81dba1",
-  "priority": 45.0,
-  "spec": {
-   "setup": "ma_cross",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "dist_round50",
-     "op": ">=",
-     "v": 4.7634
-    },
-    {
-     "f": "regime_trend",
-     "op": "==",
-     "v": "neutral"
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "H22857b3b84"
-  }
- },
- {
-  "hyp_id": "H38458d809d",
-  "priority": 45.0,
-  "spec": {
-   "setup": "ma_cross",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "dist_round50",
-     "op": ">=",
-     "v": 4.7634
-    },
-    {
-     "f": "regime_trend",
-     "op": "==",
-     "v": "neutral"
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "H22857b3b84"
-  }
- },
- {
-  "hyp_id": "He2c75bbb71",
-  "priority": 45.0,
-  "spec": {
-   "setup": "ma_cross",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "dist_round50",
-     "op": ">=",
-     "v": 4.7634
-    },
-    {
-     "f": "regime_trend",
-     "op": "==",
-     "v": "neutral"
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "H22857b3b84"
-  }
- },
- {
-  "hyp_id": "Ha753c5eba2",
-  "priority": 45.0,
-  "spec": {
-   "setup": "ma_cross",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "dist_round50",
-     "op": ">=",
-     "v": 4.7634
-    },
-    {
-     "f": "regime_trend",
-     "op": "==",
-     "v": "neutral"
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "H22857b3b84"
-  }
- },
- {
-  "hyp_id": "H5d26b658fd",
-  "priority": 45.0,
-  "spec": {
-   "setup": "ma_cross",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "dist_round50",
-     "op": ">=",
-     "v": 4.7634
-    },
-    {
-     "f": "regime_trend",
-     "op": "==",
-     "v": "neutral"
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "H22857b3b84"
-  }
- },
- {
-  "hyp_id": "H13f82610ce",
-  "priority": 45.0,
-  "spec": {
-   "setup": "ma_cross",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "dist_round50",
-     "op": ">=",
-     "v": 4.7634
-    },
-    {
-     "f": "regime_trend",
-     "op": "==",
-     "v": "neutral"
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "H22857b3b84"
-  }
- },
- {
-  "hyp_id": "Hc457b64591",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "room_fwd_htf",
-     "op": "between",
-     "v": [
-      0.8861,
-      2.4279
-     ]
-    }
-   ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "H34bdf4238d"
-  }
- },
- {
-  "hyp_id": "H92fda55cb4",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "room_fwd_htf",
-     "op": "between",
-     "v": [
-      0.8861,
-      2.4279
-     ]
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "H34bdf4238d"
-  }
- },
- {
-  "hyp_id": "He7bd9d5be0",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "room_fwd_htf",
-     "op": "between",
-     "v": [
-      0.8861,
-      2.4279
-     ]
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "H34bdf4238d"
-  }
- },
- {
-  "hyp_id": "Hce1b2acb5f",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "room_fwd_htf",
-     "op": "between",
-     "v": [
-      0.8861,
-      2.4279
-     ]
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "H34bdf4238d"
-  }
- },
- {
-  "hyp_id": "Hddbf8d8872",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "room_fwd_htf",
-     "op": "between",
-     "v": [
-      0.8861,
-      2.4279
-     ]
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "H34bdf4238d"
-  }
- },
- {
-  "hyp_id": "H5579959ccb",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "room_fwd_htf",
-     "op": "between",
-     "v": [
-      0.8861,
-      2.4279
-     ]
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "H34bdf4238d"
-  }
- },
- {
-  "hyp_id": "H5975e90c8f",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "room_fwd_htf",
-     "op": "between",
-     "v": [
-      0.8861,
-      2.4279
-     ]
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "H34bdf4238d"
-  }
- },
- {
-  "hyp_id": "H808bac6799",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "room_fwd_htf",
-     "op": "between",
-     "v": [
-      0.8861,
-      2.4279
-     ]
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "H34bdf4238d"
-  }
- },
- {
-  "hyp_id": "Ha6292d16a9",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "room_fwd_htf",
-     "op": "between",
-     "v": [
-      0.8861,
-      2.4279
-     ]
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "H34bdf4238d"
-  }
- },
- {
-  "hyp_id": "H72ddef66a9",
-  "priority": 45.0,
-  "spec": {
-   "setup": "momentum_burst",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "room_fwd_htf",
-     "op": "between",
-     "v": [
-      0.8861,
-      2.4279
-     ]
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "H34bdf4238d"
-  }
- },
- {
-  "hyp_id": "H69ea61d930",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      1.0434,
-      1.8235
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "between",
-     "v": [
-      0.547,
-      1.524
-     ]
-    }
-   ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "H0236f3bcd5"
-  }
- },
- {
-  "hyp_id": "Hc5ff2ce8b3",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      1.0434,
-      1.8235
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "between",
-     "v": [
-      0.547,
-      1.524
-     ]
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "H0236f3bcd5"
-  }
- },
- {
-  "hyp_id": "Hea53995bbc",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      1.0434,
-      1.8235
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "between",
-     "v": [
-      0.547,
-      1.524
-     ]
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "H0236f3bcd5"
-  }
- },
- {
-  "hyp_id": "H4810216e91",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      1.0434,
-      1.8235
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "between",
-     "v": [
-      0.547,
-      1.524
-     ]
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "H0236f3bcd5"
-  }
- },
- {
-  "hyp_id": "H9e8f566f82",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      1.0434,
-      1.8235
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "between",
-     "v": [
-      0.547,
-      1.524
-     ]
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "H0236f3bcd5"
-  }
- },
- {
-  "hyp_id": "H2c03df3b48",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      1.0434,
-      1.8235
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "between",
-     "v": [
-      0.547,
-      1.524
-     ]
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "H0236f3bcd5"
-  }
- },
- {
-  "hyp_id": "H418458544e",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      1.0434,
-      1.8235
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "between",
-     "v": [
-      0.547,
-      1.524
-     ]
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "H0236f3bcd5"
-  }
- },
- {
-  "hyp_id": "Hd496be7f75",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      1.0434,
-      1.8235
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "between",
-     "v": [
-      0.547,
-      1.524
-     ]
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "H0236f3bcd5"
-  }
- },
- {
-  "hyp_id": "Hbb88899f1e",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      1.0434,
-      1.8235
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "between",
-     "v": [
-      0.547,
-      1.524
-     ]
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "H0236f3bcd5"
-  }
- },
- {
-  "hyp_id": "H541273a8ff",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      1.0434,
-      1.8235
-     ]
-    },
-    {
-     "f": "room_in_r_htf",
-     "op": "between",
-     "v": [
-      0.547,
-      1.524
-     ]
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "H0236f3bcd5"
-  }
- },
- {
-  "hyp_id": "H92d23bd411",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "range20_atr",
-     "op": "between",
-     "v": [
-      3.2481,
-      3.8372
-     ]
-    },
-    {
-     "f": "vix",
-     "op": "between",
-     "v": [
-      14.8967,
-      20.8767
-     ]
-    }
-   ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "H3b02a03548"
-  }
- },
- {
-  "hyp_id": "Hee8f466260",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "range20_atr",
-     "op": "between",
-     "v": [
-      3.2481,
-      3.8372
-     ]
-    },
-    {
-     "f": "vix",
-     "op": "between",
-     "v": [
-      14.8967,
-      20.8767
-     ]
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "H3b02a03548"
-  }
- },
- {
-  "hyp_id": "Hfd190504dd",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "range20_atr",
-     "op": "between",
-     "v": [
-      3.2481,
-      3.8372
-     ]
-    },
-    {
-     "f": "vix",
-     "op": "between",
-     "v": [
-      14.8967,
-      20.8767
-     ]
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "H3b02a03548"
-  }
- },
- {
-  "hyp_id": "H79c025277c",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "range20_atr",
-     "op": "between",
-     "v": [
-      3.2481,
-      3.8372
-     ]
-    },
-    {
-     "f": "vix",
-     "op": "between",
-     "v": [
-      14.8967,
-      20.8767
-     ]
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "H3b02a03548"
-  }
- },
- {
-  "hyp_id": "H18e240d430",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "range20_atr",
-     "op": "between",
-     "v": [
-      3.2481,
-      3.8372
-     ]
-    },
-    {
-     "f": "vix",
-     "op": "between",
-     "v": [
-      14.8967,
-      20.8767
-     ]
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "H3b02a03548"
-  }
- },
- {
-  "hyp_id": "H8aa3233304",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "range20_atr",
-     "op": "between",
-     "v": [
-      3.2481,
-      3.8372
-     ]
-    },
-    {
-     "f": "vix",
-     "op": "between",
-     "v": [
-      14.8967,
-      20.8767
-     ]
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "H3b02a03548"
-  }
- },
- {
-  "hyp_id": "Ha9a8c44554",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "range20_atr",
-     "op": "between",
-     "v": [
-      3.2481,
-      3.8372
-     ]
-    },
-    {
-     "f": "vix",
-     "op": "between",
-     "v": [
-      14.8967,
-      20.8767
-     ]
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "H3b02a03548"
-  }
- },
- {
-  "hyp_id": "H2b65dce9a9",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "range20_atr",
-     "op": "between",
-     "v": [
-      3.2481,
-      3.8372
-     ]
-    },
-    {
-     "f": "vix",
-     "op": "between",
-     "v": [
-      14.8967,
-      20.8767
-     ]
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "H3b02a03548"
-  }
- },
- {
-  "hyp_id": "H09287c8762",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "range20_atr",
-     "op": "between",
-     "v": [
-      3.2481,
-      3.8372
-     ]
-    },
-    {
-     "f": "vix",
-     "op": "between",
-     "v": [
-      14.8967,
-      20.8767
-     ]
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "H3b02a03548"
-  }
- },
- {
-  "hyp_id": "H360bb7a4ee",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "range20_atr",
-     "op": "between",
-     "v": [
-      3.2481,
-      3.8372
-     ]
-    },
-    {
-     "f": "vix",
-     "op": "between",
-     "v": [
-      14.8967,
-      20.8767
-     ]
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "H3b02a03548"
-  }
- },
- {
-  "hyp_id": "Hd8c224cbd2",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "back_wick",
-     "op": ">=",
-     "v": 0.1648
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "H176648bf22"
-  }
- },
- {
-  "hyp_id": "Hf3b3740e90",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "back_wick",
-     "op": ">=",
-     "v": 0.1648
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "H176648bf22"
-  }
- },
- {
-  "hyp_id": "H5bc0377bcf",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "back_wick",
-     "op": ">=",
-     "v": 0.1648
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "H176648bf22"
-  }
- },
- {
-  "hyp_id": "H96f11c3168",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "back_wick",
-     "op": ">=",
-     "v": 0.1648
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "H176648bf22"
-  }
- },
- {
-  "hyp_id": "H9991d213bf",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "back_wick",
-     "op": ">=",
-     "v": 0.1648
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "H176648bf22"
-  }
- },
- {
-  "hyp_id": "H8179a146d8",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "back_wick",
-     "op": ">=",
-     "v": 0.1648
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "H176648bf22"
-  }
- },
- {
-  "hyp_id": "H8041ec5341",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "back_wick",
-     "op": ">=",
-     "v": 0.1648
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "H176648bf22"
-  }
- },
- {
-  "hyp_id": "H71dde8d230",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "back_wick",
-     "op": ">=",
-     "v": 0.1648
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "H176648bf22"
-  }
- },
- {
-  "hyp_id": "H1b5248a267",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "back_wick",
-     "op": ">=",
-     "v": 0.1648
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "H176648bf22"
-  }
- },
- {
-  "hyp_id": "H89f805ea23",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "back_wick",
-     "op": ">=",
-     "v": 0.1648
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "H176648bf22"
-  }
- },
- {
-  "hyp_id": "Haa24450ff6",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      0.3055,
-      0.6307
-     ]
-    },
-    {
-     "f": "regime_vol",
-     "op": "==",
-     "v": "midvol"
-    }
-   ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "H2927731af0"
-  }
- },
- {
-  "hyp_id": "H383c9a0ce6",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      0.3055,
-      0.6307
-     ]
-    },
-    {
-     "f": "regime_vol",
-     "op": "==",
-     "v": "midvol"
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "H2927731af0"
-  }
- },
- {
-  "hyp_id": "He723eb51d2",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      0.3055,
-      0.6307
-     ]
-    },
-    {
-     "f": "regime_vol",
-     "op": "==",
-     "v": "midvol"
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "H2927731af0"
-  }
- },
- {
-  "hyp_id": "He3230406ee",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      0.3055,
-      0.6307
-     ]
-    },
-    {
-     "f": "regime_vol",
-     "op": "==",
-     "v": "midvol"
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "H2927731af0"
-  }
- },
- {
-  "hyp_id": "H77c4cf67b2",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      0.3055,
-      0.6307
-     ]
-    },
-    {
-     "f": "regime_vol",
-     "op": "==",
-     "v": "midvol"
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "H2927731af0"
-  }
- },
- {
-  "hyp_id": "Haff1a24992",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      0.3055,
-      0.6307
-     ]
-    },
-    {
-     "f": "regime_vol",
-     "op": "==",
-     "v": "midvol"
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "H2927731af0"
-  }
- },
- {
-  "hyp_id": "H0262e3f391",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      0.3055,
-      0.6307
-     ]
-    },
-    {
-     "f": "regime_vol",
-     "op": "==",
-     "v": "midvol"
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "H2927731af0"
-  }
- },
- {
-  "hyp_id": "H739cc95461",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      0.3055,
-      0.6307
-     ]
-    },
-    {
-     "f": "regime_vol",
-     "op": "==",
-     "v": "midvol"
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "H2927731af0"
-  }
- },
- {
-  "hyp_id": "H47384cf95e",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      0.3055,
-      0.6307
-     ]
-    },
-    {
-     "f": "regime_vol",
-     "op": "==",
-     "v": "midvol"
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "H2927731af0"
-  }
- },
- {
-  "hyp_id": "H0751771643",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "rel_dist_ema20",
-     "op": "between",
-     "v": [
-      0.3055,
-      0.6307
-     ]
-    },
-    {
-     "f": "regime_vol",
-     "op": "==",
-     "v": "midvol"
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "H2927731af0"
-  }
- },
- {
-  "hyp_id": "H4ff8641713",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "Hc002bf5ac1"
-  }
- },
- {
-  "hyp_id": "Hf3515ce6e0",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "Hc002bf5ac1"
-  }
- },
- {
-  "hyp_id": "H00394b1b2e",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "Hc002bf5ac1"
-  }
- },
- {
-  "hyp_id": "H5a6decc1b0",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "Hc002bf5ac1"
-  }
- },
- {
-  "hyp_id": "Hb862ad162a",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "Hc002bf5ac1"
-  }
- },
- {
-  "hyp_id": "H6720085d63",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "Hc002bf5ac1"
-  }
- },
- {
-  "hyp_id": "H6fc2327591",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "Hc002bf5ac1"
-  }
- },
- {
-  "hyp_id": "H551452eed8",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "Hc002bf5ac1"
-  }
- },
- {
-  "hyp_id": "H61909a3830",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "Hc002bf5ac1"
-  }
- },
- {
-  "hyp_id": "Hd0551cb5e6",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "rel_ema20_slope",
-     "op": "between",
-     "v": [
-      0.4238,
-      0.7679
-     ]
-    },
-    {
-     "f": "rel_rsi",
-     "op": "between",
-     "v": [
-      65.0541,
-      71.8778
-     ]
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "Hc002bf5ac1"
-  }
- },
- {
-  "hyp_id": "H0db2971048",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "Hafedcaae1c"
-  }
- },
- {
-  "hyp_id": "Hc8006e330c",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "Hafedcaae1c"
-  }
- },
- {
-  "hyp_id": "H0e599b09bf",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "Hafedcaae1c"
-  }
- },
- {
-  "hyp_id": "H12756d9192",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "Hafedcaae1c"
-  }
- },
- {
-  "hyp_id": "H3b8adad021",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "Hafedcaae1c"
-  }
- },
- {
-  "hyp_id": "Hd95ce0c248",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "Hafedcaae1c"
-  }
- },
- {
-  "hyp_id": "Hb63af52209",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "Hafedcaae1c"
-  }
- },
- {
-  "hyp_id": "H1d3d955945",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "Hafedcaae1c"
-  }
- },
- {
-  "hyp_id": "H2591eac6d2",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "Hafedcaae1c"
-  }
- },
- {
-  "hyp_id": "He9b567de1b",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "Hafedcaae1c"
-  }
- },
- {
-  "hyp_id": "H0a621b2a8e",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "target_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_1r'.",
-   "parent": "H62ed349059"
-  }
- },
- {
-  "hyp_id": "H306279b625",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "target_3r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'target_3r'.",
-   "parent": "H62ed349059"
-  }
- },
- {
-  "hyp_id": "H227d5d6708",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "breakeven_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'breakeven_1r'.",
-   "parent": "H62ed349059"
-  }
- },
- {
-  "hyp_id": "H02749d0530",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "stop_1.5x",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'stop_1.5x'.",
-   "parent": "H62ed349059"
-  }
- },
- {
-  "hyp_id": "H9053af9924",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "time_exit_12h",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'time_exit_12h'.",
-   "parent": "H62ed349059"
-  }
- },
- {
-  "hyp_id": "H3b8dd05c77",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "retest_limit",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'retest_limit'.",
-   "parent": "H62ed349059"
-  }
- },
- {
-  "hyp_id": "Hc975ef12a3",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'confirm_close'.",
-   "parent": "H62ed349059"
-  }
- },
- {
-  "hyp_id": "H74e7b53c67",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_2atr'.",
-   "parent": "H62ed349059"
-  }
- },
- {
-  "hyp_id": "H2d31b2de58",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "trail_3atr_after_1r",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
-   "parent": "H62ed349059"
-  }
- },
- {
-  "hyp_id": "H69df342276",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "adx",
-     "op": "<",
-     "v": 18.2088
-    },
-    {
-     "f": "rel_pos50",
-     "op": "between",
-     "v": [
-      0.7081,
-      0.9291
-     ]
-    }
-   ],
-   "exit": "partial_1r_trail",
-   "origin": "mutation",
-   "rationale": "Same entry, exit 'partial_1r_trail'.",
-   "parent": "H62ed349059"
-  }
- },
- {
-  "hyp_id": "H48079a254a",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "room_fwd",
-     "op": "between",
-     "v": [
-      0.2577,
-      0.7774
-     ]
-    },
-    {
-     "f": "room_fwd_htf",
-     "op": "<",
-     "v": 0.9294
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "mutation",
-   "rationale": "Does the condition generalise across all setups?",
-   "parent": "Hea7c533d93"
-  }
- },
- {
-  "hyp_id": "Ha13ef9610f",
-  "priority": 45.0,
-  "spec": {
-   "setup": "session_breakout",
-   "direction": 1,
-   "conditions": [
-    {
-     "f": "room_fwd",
-     "op": "between",
-     "v": [
-      0.2577,
-      0.7774
-     ]
-    },
-    {
-     "f": "room_fwd_htf",
-     "op": "<",
-     "v": 0.9294
-    }
-   ],
-   "exit": "trail_2atr",
-   "origin": "contradiction",
-   "rationale": "Directional asymmetry probe: same condition, other side.",
-   "parent": "Hea7c533d93"
-  }
- },
- {
-  "hyp_id": "H79d2a4d797",
-  "priority": 45.0,
-  "spec": {
-   "setup": "*",
-   "direction": -1,
-   "conditions": [
-    {
-     "f": "back_wick",
-     "op": ">=",
-     "v": 0.1648
     },
     {
      "f": "adx",
@@ -4043,34 +72,2788 @@
      "v": 22.0907
     }
    ],
-   "exit": "confirm_close",
-   "origin": "mutation",
-   "rationale": "Does the condition generalise across all setups?",
-   "parent": "He0027c2405"
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.97, lift +0.391R on discovery."
   }
  },
  {
-  "hyp_id": "H2c9dd5e7ad",
-  "priority": 45.0,
+  "hyp_id": "Ha5008de261",
+  "priority": 64.87093,
+  "spec": {
+   "setup": "range_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0088,
+      0.0051
+     ]
+    },
+    {
+     "f": "er10",
+     "op": ">=",
+     "v": 0.5196
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.97, lift +0.451R on discovery."
+  }
+ },
+ {
+  "hyp_id": "Hfa730df4ba",
+  "priority": 64.83823,
+  "spec": {
+   "setup": "breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema20_slope",
+     "op": "between",
+     "v": [
+      0.1414,
+      0.4659
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": "<",
+     "v": 2.3855
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.97, lift +0.299R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H660c4de9a6",
+  "priority": 64.82387,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd",
+     "op": "between",
+     "v": [
+      0.2577,
+      0.7774
+     ]
+    },
+    {
+     "f": "rel_d_ext",
+     "op": "between",
+     "v": [
+      -0.808,
+      0.8737
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.96, lift +0.539R on discovery."
+  }
+ },
+ {
+  "hyp_id": "Ha6dacbeb8a",
+  "priority": 64.75586,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "room_in_r_htf",
+     "op": "between",
+     "v": [
+      0.547,
+      1.524
+     ]
+    },
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      58.7131,
+      66.5796
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.95, lift +0.592R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H16a211f268",
+  "priority": 64.63259,
+  "spec": {
+   "setup": "range_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "adx",
+     "op": "<",
+     "v": 18.513
+    },
+    {
+     "f": "rel_h4_dist_ema20",
+     "op": "between",
+     "v": [
+      -0.2356,
+      0.7644
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.93, lift +0.388R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H5e0da7bcad",
+  "priority": 64.62759,
+  "spec": {
+   "setup": "burst_pullback",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      59.3054,
+      66.0358
+     ]
+    },
+    {
+     "f": "rel_h4_dist_ema20",
+     "op": "between",
+     "v": [
+      0.8645,
+      1.8348
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.93, lift +0.579R on discovery."
+  }
+ },
+ {
+  "hyp_id": "Hca5306a7e2",
+  "priority": 64.48877,
+  "spec": {
+   "setup": "bb_squeeze_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "range20_atr",
+     "op": "between",
+     "v": [
+      3.2481,
+      3.8372
+     ]
+    },
+    {
+     "f": "rel_mom24",
+     "op": "between",
+     "v": [
+      0.8887,
+      2.4038
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.90, lift +0.399R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H73e8a3b17e",
+  "priority": 64.45103,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "room_in_r_htf",
+     "op": "between",
+     "v": [
+      0.547,
+      1.524
+     ]
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      0.9401,
+      2.6517
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.89, lift +0.553R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H51d5d0c612",
+  "priority": 50.0,
+  "spec": {
+   "setup": "*",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_h4_structure",
+     "op": "==",
+     "v": 1.0
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "neutral"
+    }
+   ],
+   "exit": "base",
+   "origin": "mutation",
+   "rationale": "Does the condition generalise across all setups?",
+   "parent": "H4d4744f707"
+  }
+ },
+ {
+  "hyp_id": "He31bac292a",
+  "priority": 50.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_h4_structure",
+     "op": "==",
+     "v": 1.0
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "neutral"
+    }
+   ],
+   "exit": "base",
+   "origin": "contradiction",
+   "rationale": "Directional asymmetry probe: same condition, other side.",
+   "parent": "H4d4744f707"
+  }
+ },
+ {
+  "hyp_id": "Hcf11f3d3c0",
+  "priority": 50.0,
+  "spec": {
+   "setup": "*",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "<",
+     "v": 0.9294
+    },
+    {
+     "f": "room_in_r",
+     "op": "between",
+     "v": [
+      0.1434,
+      0.4323
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mutation",
+   "rationale": "Does the condition generalise across all setups?",
+   "parent": "Hbbc500a9b6"
+  }
+ },
+ {
+  "hyp_id": "H9140c7a62c",
+  "priority": 50.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "<",
+     "v": 0.9294
+    },
+    {
+     "f": "room_in_r",
+     "op": "between",
+     "v": [
+      0.1434,
+      0.4323
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "contradiction",
+   "rationale": "Directional asymmetry probe: same condition, other side.",
+   "parent": "Hbbc500a9b6"
+  }
+ },
+ {
+  "hyp_id": "H4ea3bd032c",
+  "priority": 50.0,
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.0442,
+      2.9893
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mutation",
+   "rationale": "Does the condition generalise across all setups?",
+   "parent": "Hafc5fa65fd"
+  }
+ },
+ {
+  "hyp_id": "Hf63083c6f3",
+  "priority": 50.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.0442,
+      2.9893
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "contradiction",
+   "rationale": "Directional asymmetry probe: same condition, other side.",
+   "parent": "Hafc5fa65fd"
+  }
+ },
+ {
+  "hyp_id": "H95a42f4c8b",
+  "priority": 50.0,
+  "spec": {
+   "setup": "*",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.5846,
+      0.2126
+     ]
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "<",
+     "v": 0.9503
+    }
+   ],
+   "exit": "base",
+   "origin": "mutation",
+   "rationale": "Does the condition generalise across all setups?",
+   "parent": "H28f55990e7"
+  }
+ },
+ {
+  "hyp_id": "Hbb0d212829",
+  "priority": 50.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_d_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.5846,
+      0.2126
+     ]
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "<",
+     "v": 0.9503
+    }
+   ],
+   "exit": "base",
+   "origin": "contradiction",
+   "rationale": "Directional asymmetry probe: same condition, other side.",
+   "parent": "H28f55990e7"
+  }
+ },
+ {
+  "hyp_id": "H2c854c52c5",
+  "priority": 50.0,
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.1031,
+      0.6463
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": ">=",
+     "v": 5.3557
+    }
+   ],
+   "exit": "base",
+   "origin": "mutation",
+   "rationale": "Does the condition generalise across all setups?",
+   "parent": "H7fc42d954c"
+  }
+ },
+ {
+  "hyp_id": "Ha79173e2c1",
+  "priority": 50.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.1031,
+      0.6463
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": ">=",
+     "v": 5.3557
+    }
+   ],
+   "exit": "base",
+   "origin": "contradiction",
+   "rationale": "Directional asymmetry probe: same condition, other side.",
+   "parent": "H7fc42d954c"
+  }
+ },
+ {
+  "hyp_id": "Ha326697425",
+  "priority": 50.0,
+  "spec": {
+   "setup": "*",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    },
+    {
+     "f": "rel_h4_mom6",
+     "op": "between",
+     "v": [
+      0.4452,
+      1.5669
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mutation",
+   "rationale": "Does the condition generalise across all setups?",
+   "parent": "Hee7e231f5e"
+  }
+ },
+ {
+  "hyp_id": "H314f850a2b",
+  "priority": 50.0,
   "spec": {
    "setup": "momentum_burst",
    "direction": 1,
    "conditions": [
     {
-     "f": "back_wick",
-     "op": ">=",
-     "v": 0.1648
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
     },
     {
-     "f": "adx",
-     "op": "<",
-     "v": 22.0907
+     "f": "rel_h4_mom6",
+     "op": "between",
+     "v": [
+      0.4452,
+      1.5669
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "contradiction",
+   "rationale": "Directional asymmetry probe: same condition, other side.",
+   "parent": "Hee7e231f5e"
+  }
+ },
+ {
+  "hyp_id": "H741a543409",
+  "priority": 50.0,
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "bb_width_pct",
+     "op": "between",
+     "v": [
+      0.2787,
+      0.552
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mutation",
+   "rationale": "Does the condition generalise across all setups?",
+   "parent": "H91e3f013a5"
+  }
+ },
+ {
+  "hyp_id": "H4d15f23b7d",
+  "priority": 50.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "bb_width_pct",
+     "op": "between",
+     "v": [
+      0.2787,
+      0.552
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "contradiction",
+   "rationale": "Directional asymmetry probe: same condition, other side.",
+   "parent": "H91e3f013a5"
+  }
+ },
+ {
+  "hyp_id": "Hcc683917cf",
+  "priority": 50.0,
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "atr_ratio",
+     "op": ">=",
+     "v": 1.1345
+    },
+    {
+     "f": "session",
+     "op": "==",
+     "v": "ny_late"
+    }
+   ],
+   "exit": "base",
+   "origin": "mutation",
+   "rationale": "Does the condition generalise across all setups?",
+   "parent": "H781473cbae"
+  }
+ },
+ {
+  "hyp_id": "H924a0eb911",
+  "priority": 50.0,
+  "spec": {
+   "setup": "failed_break",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "atr_ratio",
+     "op": ">=",
+     "v": 1.1345
+    },
+    {
+     "f": "session",
+     "op": "==",
+     "v": "ny_late"
+    }
+   ],
+   "exit": "base",
+   "origin": "contradiction",
+   "rationale": "Directional asymmetry probe: same condition, other side.",
+   "parent": "H781473cbae"
+  }
+ },
+ {
+  "hyp_id": "Hbd7b349695",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_h4_structure",
+     "op": "==",
+     "v": 1.0
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "neutral"
+    }
+   ],
+   "exit": "target_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_1r'.",
+   "parent": "H4d4744f707"
+  }
+ },
+ {
+  "hyp_id": "H536c3ee257",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_h4_structure",
+     "op": "==",
+     "v": 1.0
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "neutral"
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_3r'.",
+   "parent": "H4d4744f707"
+  }
+ },
+ {
+  "hyp_id": "H9843e703ad",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_h4_structure",
+     "op": "==",
+     "v": 1.0
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "neutral"
+    }
+   ],
+   "exit": "breakeven_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'breakeven_1r'.",
+   "parent": "H4d4744f707"
+  }
+ },
+ {
+  "hyp_id": "H50b3cf67d7",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_h4_structure",
+     "op": "==",
+     "v": 1.0
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "neutral"
+    }
+   ],
+   "exit": "stop_1.5x",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'stop_1.5x'.",
+   "parent": "H4d4744f707"
+  }
+ },
+ {
+  "hyp_id": "H12882a11c9",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_h4_structure",
+     "op": "==",
+     "v": 1.0
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "neutral"
+    }
+   ],
+   "exit": "time_exit_12h",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'time_exit_12h'.",
+   "parent": "H4d4744f707"
+  }
+ },
+ {
+  "hyp_id": "H4c9f9bf563",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_h4_structure",
+     "op": "==",
+     "v": 1.0
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "neutral"
+    }
+   ],
+   "exit": "retest_limit",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'retest_limit'.",
+   "parent": "H4d4744f707"
+  }
+ },
+ {
+  "hyp_id": "Hef87371054",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_h4_structure",
+     "op": "==",
+     "v": 1.0
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "neutral"
     }
    ],
    "exit": "confirm_close",
-   "origin": "contradiction",
-   "rationale": "Directional asymmetry probe: same condition, other side.",
-   "parent": "He0027c2405"
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'confirm_close'.",
+   "parent": "H4d4744f707"
+  }
+ },
+ {
+  "hyp_id": "H3335cd6db9",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_h4_structure",
+     "op": "==",
+     "v": 1.0
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "neutral"
+    }
+   ],
+   "exit": "trail_2atr",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_2atr'.",
+   "parent": "H4d4744f707"
+  }
+ },
+ {
+  "hyp_id": "H3e2c7d07b5",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_h4_structure",
+     "op": "==",
+     "v": 1.0
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "neutral"
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
+   "parent": "H4d4744f707"
+  }
+ },
+ {
+  "hyp_id": "H0ad75c1d50",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_h4_structure",
+     "op": "==",
+     "v": 1.0
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "neutral"
+    }
+   ],
+   "exit": "partial_1r_trail",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'partial_1r_trail'.",
+   "parent": "H4d4744f707"
+  }
+ },
+ {
+  "hyp_id": "Hd4474ce8ba",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "<",
+     "v": 0.9294
+    },
+    {
+     "f": "room_in_r",
+     "op": "between",
+     "v": [
+      0.1434,
+      0.4323
+     ]
+    }
+   ],
+   "exit": "target_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_1r'.",
+   "parent": "Hbbc500a9b6"
+  }
+ },
+ {
+  "hyp_id": "H6a0eb16b90",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "<",
+     "v": 0.9294
+    },
+    {
+     "f": "room_in_r",
+     "op": "between",
+     "v": [
+      0.1434,
+      0.4323
+     ]
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_3r'.",
+   "parent": "Hbbc500a9b6"
+  }
+ },
+ {
+  "hyp_id": "Hd6a12415a3",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "<",
+     "v": 0.9294
+    },
+    {
+     "f": "room_in_r",
+     "op": "between",
+     "v": [
+      0.1434,
+      0.4323
+     ]
+    }
+   ],
+   "exit": "breakeven_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'breakeven_1r'.",
+   "parent": "Hbbc500a9b6"
+  }
+ },
+ {
+  "hyp_id": "H5c637af55a",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "<",
+     "v": 0.9294
+    },
+    {
+     "f": "room_in_r",
+     "op": "between",
+     "v": [
+      0.1434,
+      0.4323
+     ]
+    }
+   ],
+   "exit": "stop_1.5x",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'stop_1.5x'.",
+   "parent": "Hbbc500a9b6"
+  }
+ },
+ {
+  "hyp_id": "H628a938d11",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "<",
+     "v": 0.9294
+    },
+    {
+     "f": "room_in_r",
+     "op": "between",
+     "v": [
+      0.1434,
+      0.4323
+     ]
+    }
+   ],
+   "exit": "time_exit_12h",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'time_exit_12h'.",
+   "parent": "Hbbc500a9b6"
+  }
+ },
+ {
+  "hyp_id": "H53d3ee64cf",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "<",
+     "v": 0.9294
+    },
+    {
+     "f": "room_in_r",
+     "op": "between",
+     "v": [
+      0.1434,
+      0.4323
+     ]
+    }
+   ],
+   "exit": "retest_limit",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'retest_limit'.",
+   "parent": "Hbbc500a9b6"
+  }
+ },
+ {
+  "hyp_id": "H2bfd6d6bed",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "<",
+     "v": 0.9294
+    },
+    {
+     "f": "room_in_r",
+     "op": "between",
+     "v": [
+      0.1434,
+      0.4323
+     ]
+    }
+   ],
+   "exit": "confirm_close",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'confirm_close'.",
+   "parent": "Hbbc500a9b6"
+  }
+ },
+ {
+  "hyp_id": "H93636d1d83",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "<",
+     "v": 0.9294
+    },
+    {
+     "f": "room_in_r",
+     "op": "between",
+     "v": [
+      0.1434,
+      0.4323
+     ]
+    }
+   ],
+   "exit": "trail_2atr",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_2atr'.",
+   "parent": "Hbbc500a9b6"
+  }
+ },
+ {
+  "hyp_id": "H6556ee1714",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "<",
+     "v": 0.9294
+    },
+    {
+     "f": "room_in_r",
+     "op": "between",
+     "v": [
+      0.1434,
+      0.4323
+     ]
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
+   "parent": "Hbbc500a9b6"
+  }
+ },
+ {
+  "hyp_id": "H33537acc19",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "<",
+     "v": 0.9294
+    },
+    {
+     "f": "room_in_r",
+     "op": "between",
+     "v": [
+      0.1434,
+      0.4323
+     ]
+    }
+   ],
+   "exit": "partial_1r_trail",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'partial_1r_trail'.",
+   "parent": "Hbbc500a9b6"
+  }
+ },
+ {
+  "hyp_id": "Hb31dfea285",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.0442,
+      2.9893
+     ]
+    }
+   ],
+   "exit": "target_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_1r'.",
+   "parent": "Hafc5fa65fd"
+  }
+ },
+ {
+  "hyp_id": "H81b6720587",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.0442,
+      2.9893
+     ]
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_3r'.",
+   "parent": "Hafc5fa65fd"
+  }
+ },
+ {
+  "hyp_id": "H6c916652e8",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.0442,
+      2.9893
+     ]
+    }
+   ],
+   "exit": "breakeven_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'breakeven_1r'.",
+   "parent": "Hafc5fa65fd"
+  }
+ },
+ {
+  "hyp_id": "H69ab6aed85",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.0442,
+      2.9893
+     ]
+    }
+   ],
+   "exit": "stop_1.5x",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'stop_1.5x'.",
+   "parent": "Hafc5fa65fd"
+  }
+ },
+ {
+  "hyp_id": "H99d780179d",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.0442,
+      2.9893
+     ]
+    }
+   ],
+   "exit": "time_exit_12h",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'time_exit_12h'.",
+   "parent": "Hafc5fa65fd"
+  }
+ },
+ {
+  "hyp_id": "H9a3971eef2",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.0442,
+      2.9893
+     ]
+    }
+   ],
+   "exit": "retest_limit",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'retest_limit'.",
+   "parent": "Hafc5fa65fd"
+  }
+ },
+ {
+  "hyp_id": "H7daf914cb9",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.0442,
+      2.9893
+     ]
+    }
+   ],
+   "exit": "confirm_close",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'confirm_close'.",
+   "parent": "Hafc5fa65fd"
+  }
+ },
+ {
+  "hyp_id": "H442a3fa8c5",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.0442,
+      2.9893
+     ]
+    }
+   ],
+   "exit": "trail_2atr",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_2atr'.",
+   "parent": "Hafc5fa65fd"
+  }
+ },
+ {
+  "hyp_id": "H4e8351f5c4",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.0442,
+      2.9893
+     ]
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
+   "parent": "Hafc5fa65fd"
+  }
+ },
+ {
+  "hyp_id": "H1383e319e9",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.0442,
+      2.9893
+     ]
+    }
+   ],
+   "exit": "partial_1r_trail",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'partial_1r_trail'.",
+   "parent": "Hafc5fa65fd"
+  }
+ },
+ {
+  "hyp_id": "H7aed8e94f5",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.5846,
+      0.2126
+     ]
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "<",
+     "v": 0.9503
+    }
+   ],
+   "exit": "target_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_1r'.",
+   "parent": "H28f55990e7"
+  }
+ },
+ {
+  "hyp_id": "H4ef8f50306",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.5846,
+      0.2126
+     ]
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "<",
+     "v": 0.9503
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_3r'.",
+   "parent": "H28f55990e7"
+  }
+ },
+ {
+  "hyp_id": "H2e349d1f78",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.5846,
+      0.2126
+     ]
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "<",
+     "v": 0.9503
+    }
+   ],
+   "exit": "breakeven_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'breakeven_1r'.",
+   "parent": "H28f55990e7"
+  }
+ },
+ {
+  "hyp_id": "Ha40e1205de",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.5846,
+      0.2126
+     ]
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "<",
+     "v": 0.9503
+    }
+   ],
+   "exit": "stop_1.5x",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'stop_1.5x'.",
+   "parent": "H28f55990e7"
+  }
+ },
+ {
+  "hyp_id": "H203a4882fe",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.5846,
+      0.2126
+     ]
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "<",
+     "v": 0.9503
+    }
+   ],
+   "exit": "time_exit_12h",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'time_exit_12h'.",
+   "parent": "H28f55990e7"
+  }
+ },
+ {
+  "hyp_id": "Hf151beb5af",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.5846,
+      0.2126
+     ]
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "<",
+     "v": 0.9503
+    }
+   ],
+   "exit": "retest_limit",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'retest_limit'.",
+   "parent": "H28f55990e7"
+  }
+ },
+ {
+  "hyp_id": "H891f2f6fa4",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.5846,
+      0.2126
+     ]
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "<",
+     "v": 0.9503
+    }
+   ],
+   "exit": "confirm_close",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'confirm_close'.",
+   "parent": "H28f55990e7"
+  }
+ },
+ {
+  "hyp_id": "H6f78578f7e",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.5846,
+      0.2126
+     ]
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "<",
+     "v": 0.9503
+    }
+   ],
+   "exit": "trail_2atr",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_2atr'.",
+   "parent": "H28f55990e7"
+  }
+ },
+ {
+  "hyp_id": "H5a4b2c1363",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.5846,
+      0.2126
+     ]
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "<",
+     "v": 0.9503
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
+   "parent": "H28f55990e7"
+  }
+ },
+ {
+  "hyp_id": "H268aabcb68",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.5846,
+      0.2126
+     ]
+    },
+    {
+     "f": "rel_dist_ema50",
+     "op": "<",
+     "v": 0.9503
+    }
+   ],
+   "exit": "partial_1r_trail",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'partial_1r_trail'.",
+   "parent": "H28f55990e7"
+  }
+ },
+ {
+  "hyp_id": "H85cb58995a",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.1031,
+      0.6463
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": ">=",
+     "v": 5.3557
+    }
+   ],
+   "exit": "target_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_1r'.",
+   "parent": "H7fc42d954c"
+  }
+ },
+ {
+  "hyp_id": "Hf2e3e39f95",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.1031,
+      0.6463
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": ">=",
+     "v": 5.3557
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_3r'.",
+   "parent": "H7fc42d954c"
+  }
+ },
+ {
+  "hyp_id": "H8fdb81b422",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.1031,
+      0.6463
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": ">=",
+     "v": 5.3557
+    }
+   ],
+   "exit": "breakeven_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'breakeven_1r'.",
+   "parent": "H7fc42d954c"
+  }
+ },
+ {
+  "hyp_id": "H5380b0d8a7",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.1031,
+      0.6463
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": ">=",
+     "v": 5.3557
+    }
+   ],
+   "exit": "stop_1.5x",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'stop_1.5x'.",
+   "parent": "H7fc42d954c"
+  }
+ },
+ {
+  "hyp_id": "Hde1fbcdf5e",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.1031,
+      0.6463
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": ">=",
+     "v": 5.3557
+    }
+   ],
+   "exit": "time_exit_12h",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'time_exit_12h'.",
+   "parent": "H7fc42d954c"
+  }
+ },
+ {
+  "hyp_id": "H3da25839e0",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.1031,
+      0.6463
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": ">=",
+     "v": 5.3557
+    }
+   ],
+   "exit": "retest_limit",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'retest_limit'.",
+   "parent": "H7fc42d954c"
+  }
+ },
+ {
+  "hyp_id": "Ha63cea6a33",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.1031,
+      0.6463
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": ">=",
+     "v": 5.3557
+    }
+   ],
+   "exit": "confirm_close",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'confirm_close'.",
+   "parent": "H7fc42d954c"
+  }
+ },
+ {
+  "hyp_id": "H6e9bda7ea9",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.1031,
+      0.6463
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": ">=",
+     "v": 5.3557
+    }
+   ],
+   "exit": "trail_2atr",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_2atr'.",
+   "parent": "H7fc42d954c"
+  }
+ },
+ {
+  "hyp_id": "H4e637853c4",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.1031,
+      0.6463
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": ">=",
+     "v": 5.3557
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
+   "parent": "H7fc42d954c"
+  }
+ },
+ {
+  "hyp_id": "H0d9cb6f1b9",
+  "priority": 45.0,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.1031,
+      0.6463
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": ">=",
+     "v": 5.3557
+    }
+   ],
+   "exit": "partial_1r_trail",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'partial_1r_trail'.",
+   "parent": "H7fc42d954c"
+  }
+ },
+ {
+  "hyp_id": "H74723f4a4d",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    },
+    {
+     "f": "rel_h4_mom6",
+     "op": "between",
+     "v": [
+      0.4452,
+      1.5669
+     ]
+    }
+   ],
+   "exit": "target_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_1r'.",
+   "parent": "Hee7e231f5e"
+  }
+ },
+ {
+  "hyp_id": "H6f23c693f3",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    },
+    {
+     "f": "rel_h4_mom6",
+     "op": "between",
+     "v": [
+      0.4452,
+      1.5669
+     ]
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_3r'.",
+   "parent": "Hee7e231f5e"
+  }
+ },
+ {
+  "hyp_id": "H03c6fbe8bd",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    },
+    {
+     "f": "rel_h4_mom6",
+     "op": "between",
+     "v": [
+      0.4452,
+      1.5669
+     ]
+    }
+   ],
+   "exit": "breakeven_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'breakeven_1r'.",
+   "parent": "Hee7e231f5e"
+  }
+ },
+ {
+  "hyp_id": "H2ef2ab4c8b",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    },
+    {
+     "f": "rel_h4_mom6",
+     "op": "between",
+     "v": [
+      0.4452,
+      1.5669
+     ]
+    }
+   ],
+   "exit": "stop_1.5x",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'stop_1.5x'.",
+   "parent": "Hee7e231f5e"
+  }
+ },
+ {
+  "hyp_id": "Hb55201ff22",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    },
+    {
+     "f": "rel_h4_mom6",
+     "op": "between",
+     "v": [
+      0.4452,
+      1.5669
+     ]
+    }
+   ],
+   "exit": "time_exit_12h",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'time_exit_12h'.",
+   "parent": "Hee7e231f5e"
+  }
+ },
+ {
+  "hyp_id": "H46a040cd0a",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    },
+    {
+     "f": "rel_h4_mom6",
+     "op": "between",
+     "v": [
+      0.4452,
+      1.5669
+     ]
+    }
+   ],
+   "exit": "retest_limit",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'retest_limit'.",
+   "parent": "Hee7e231f5e"
+  }
+ },
+ {
+  "hyp_id": "H4418867220",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    },
+    {
+     "f": "rel_h4_mom6",
+     "op": "between",
+     "v": [
+      0.4452,
+      1.5669
+     ]
+    }
+   ],
+   "exit": "confirm_close",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'confirm_close'.",
+   "parent": "Hee7e231f5e"
+  }
+ },
+ {
+  "hyp_id": "Hf870778921",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    },
+    {
+     "f": "rel_h4_mom6",
+     "op": "between",
+     "v": [
+      0.4452,
+      1.5669
+     ]
+    }
+   ],
+   "exit": "trail_2atr",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_2atr'.",
+   "parent": "Hee7e231f5e"
+  }
+ },
+ {
+  "hyp_id": "Hc114163d03",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    },
+    {
+     "f": "rel_h4_mom6",
+     "op": "between",
+     "v": [
+      0.4452,
+      1.5669
+     ]
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
+   "parent": "Hee7e231f5e"
+  }
+ },
+ {
+  "hyp_id": "H4c3bdb2917",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    },
+    {
+     "f": "rel_h4_mom6",
+     "op": "between",
+     "v": [
+      0.4452,
+      1.5669
+     ]
+    }
+   ],
+   "exit": "partial_1r_trail",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'partial_1r_trail'.",
+   "parent": "Hee7e231f5e"
+  }
+ },
+ {
+  "hyp_id": "Hb94bcb076f",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "bb_width_pct",
+     "op": "between",
+     "v": [
+      0.2787,
+      0.552
+     ]
+    }
+   ],
+   "exit": "target_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_1r'.",
+   "parent": "H91e3f013a5"
+  }
+ },
+ {
+  "hyp_id": "H44429dbed8",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "bb_width_pct",
+     "op": "between",
+     "v": [
+      0.2787,
+      0.552
+     ]
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_3r'.",
+   "parent": "H91e3f013a5"
+  }
+ },
+ {
+  "hyp_id": "H5a64e1250b",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "bb_width_pct",
+     "op": "between",
+     "v": [
+      0.2787,
+      0.552
+     ]
+    }
+   ],
+   "exit": "breakeven_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'breakeven_1r'.",
+   "parent": "H91e3f013a5"
+  }
+ },
+ {
+  "hyp_id": "Ha4d7dbc85d",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "bb_width_pct",
+     "op": "between",
+     "v": [
+      0.2787,
+      0.552
+     ]
+    }
+   ],
+   "exit": "stop_1.5x",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'stop_1.5x'.",
+   "parent": "H91e3f013a5"
+  }
+ },
+ {
+  "hyp_id": "Hcdefb8c559",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "bb_width_pct",
+     "op": "between",
+     "v": [
+      0.2787,
+      0.552
+     ]
+    }
+   ],
+   "exit": "time_exit_12h",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'time_exit_12h'.",
+   "parent": "H91e3f013a5"
+  }
+ },
+ {
+  "hyp_id": "Hd74374a8d6",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "bb_width_pct",
+     "op": "between",
+     "v": [
+      0.2787,
+      0.552
+     ]
+    }
+   ],
+   "exit": "retest_limit",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'retest_limit'.",
+   "parent": "H91e3f013a5"
+  }
+ },
+ {
+  "hyp_id": "H933493aead",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "bb_width_pct",
+     "op": "between",
+     "v": [
+      0.2787,
+      0.552
+     ]
+    }
+   ],
+   "exit": "confirm_close",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'confirm_close'.",
+   "parent": "H91e3f013a5"
+  }
+ },
+ {
+  "hyp_id": "H2126b9bc66",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "bb_width_pct",
+     "op": "between",
+     "v": [
+      0.2787,
+      0.552
+     ]
+    }
+   ],
+   "exit": "trail_2atr",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_2atr'.",
+   "parent": "H91e3f013a5"
+  }
+ },
+ {
+  "hyp_id": "H68d47d932f",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "bb_width_pct",
+     "op": "between",
+     "v": [
+      0.2787,
+      0.552
+     ]
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
+   "parent": "H91e3f013a5"
+  }
+ },
+ {
+  "hyp_id": "H4a31740053",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "session",
+     "op": "==",
+     "v": "asia"
+    },
+    {
+     "f": "bb_width_pct",
+     "op": "between",
+     "v": [
+      0.2787,
+      0.552
+     ]
+    }
+   ],
+   "exit": "partial_1r_trail",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'partial_1r_trail'.",
+   "parent": "H91e3f013a5"
+  }
+ },
+ {
+  "hyp_id": "Had90c49606",
+  "priority": 45.0,
+  "spec": {
+   "setup": "failed_break",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "atr_ratio",
+     "op": ">=",
+     "v": 1.1345
+    },
+    {
+     "f": "session",
+     "op": "==",
+     "v": "ny_late"
+    }
+   ],
+   "exit": "target_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_1r'.",
+   "parent": "H781473cbae"
+  }
+ },
+ {
+  "hyp_id": "H5b9576e98c",
+  "priority": 45.0,
+  "spec": {
+   "setup": "failed_break",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "atr_ratio",
+     "op": ">=",
+     "v": 1.1345
+    },
+    {
+     "f": "session",
+     "op": "==",
+     "v": "ny_late"
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_3r'.",
+   "parent": "H781473cbae"
+  }
+ },
+ {
+  "hyp_id": "Ha6c3f9bd64",
+  "priority": 45.0,
+  "spec": {
+   "setup": "failed_break",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "atr_ratio",
+     "op": ">=",
+     "v": 1.1345
+    },
+    {
+     "f": "session",
+     "op": "==",
+     "v": "ny_late"
+    }
+   ],
+   "exit": "breakeven_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'breakeven_1r'.",
+   "parent": "H781473cbae"
+  }
+ },
+ {
+  "hyp_id": "Hbb889bf54b",
+  "priority": 45.0,
+  "spec": {
+   "setup": "failed_break",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "atr_ratio",
+     "op": ">=",
+     "v": 1.1345
+    },
+    {
+     "f": "session",
+     "op": "==",
+     "v": "ny_late"
+    }
+   ],
+   "exit": "stop_1.5x",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'stop_1.5x'.",
+   "parent": "H781473cbae"
+  }
+ },
+ {
+  "hyp_id": "He55705d76b",
+  "priority": 45.0,
+  "spec": {
+   "setup": "failed_break",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "atr_ratio",
+     "op": ">=",
+     "v": 1.1345
+    },
+    {
+     "f": "session",
+     "op": "==",
+     "v": "ny_late"
+    }
+   ],
+   "exit": "time_exit_12h",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'time_exit_12h'.",
+   "parent": "H781473cbae"
+  }
+ },
+ {
+  "hyp_id": "H50c1c49d36",
+  "priority": 45.0,
+  "spec": {
+   "setup": "failed_break",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "atr_ratio",
+     "op": ">=",
+     "v": 1.1345
+    },
+    {
+     "f": "session",
+     "op": "==",
+     "v": "ny_late"
+    }
+   ],
+   "exit": "retest_limit",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'retest_limit'.",
+   "parent": "H781473cbae"
+  }
+ },
+ {
+  "hyp_id": "Hb70527040f",
+  "priority": 45.0,
+  "spec": {
+   "setup": "failed_break",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "atr_ratio",
+     "op": ">=",
+     "v": 1.1345
+    },
+    {
+     "f": "session",
+     "op": "==",
+     "v": "ny_late"
+    }
+   ],
+   "exit": "confirm_close",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'confirm_close'.",
+   "parent": "H781473cbae"
+  }
+ },
+ {
+  "hyp_id": "Hbe3abc54c8",
+  "priority": 45.0,
+  "spec": {
+   "setup": "failed_break",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "atr_ratio",
+     "op": ">=",
+     "v": 1.1345
+    },
+    {
+     "f": "session",
+     "op": "==",
+     "v": "ny_late"
+    }
+   ],
+   "exit": "trail_2atr",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_2atr'.",
+   "parent": "H781473cbae"
+  }
+ },
+ {
+  "hyp_id": "H6d8b52c76c",
+  "priority": 45.0,
+  "spec": {
+   "setup": "failed_break",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "atr_ratio",
+     "op": ">=",
+     "v": 1.1345
+    },
+    {
+     "f": "session",
+     "op": "==",
+     "v": "ny_late"
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
+   "parent": "H781473cbae"
+  }
+ },
+ {
+  "hyp_id": "Hc1f124b592",
+  "priority": 45.0,
+  "spec": {
+   "setup": "failed_break",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "atr_ratio",
+     "op": ">=",
+     "v": 1.1345
+    },
+    {
+     "f": "session",
+     "op": "==",
+     "v": "ny_late"
+    }
+   ],
+   "exit": "partial_1r_trail",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'partial_1r_trail'.",
+   "parent": "H781473cbae"
   }
  },
  {
@@ -4167,6 +2950,330 @@
    "origin": "mutation",
    "rationale": "Add look-alike discriminator room_fwd.",
    "parent": "Had4fcc4f2f"
+  }
+ },
+ {
+  "hyp_id": "H3a0acd4fb6",
+  "priority": 85.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "target_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_1r'.",
+   "parent": "H3e89f10c1d"
+  }
+ },
+ {
+  "hyp_id": "H5908512e05",
+  "priority": 85.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_3r'.",
+   "parent": "H3e89f10c1d"
+  }
+ },
+ {
+  "hyp_id": "Hd561d01c70",
+  "priority": 85.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "breakeven_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'breakeven_1r'.",
+   "parent": "H3e89f10c1d"
+  }
+ },
+ {
+  "hyp_id": "H6b18211303",
+  "priority": 85.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "stop_1.5x",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'stop_1.5x'.",
+   "parent": "H3e89f10c1d"
+  }
+ },
+ {
+  "hyp_id": "Hbe04787015",
+  "priority": 85.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "time_exit_12h",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'time_exit_12h'.",
+   "parent": "H3e89f10c1d"
+  }
+ },
+ {
+  "hyp_id": "H71a533e874",
+  "priority": 85.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "retest_limit",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'retest_limit'.",
+   "parent": "H3e89f10c1d"
+  }
+ },
+ {
+  "hyp_id": "Hdb825bda16",
+  "priority": 85.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "confirm_close",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'confirm_close'.",
+   "parent": "H3e89f10c1d"
+  }
+ },
+ {
+  "hyp_id": "Hd83e51a775",
+  "priority": 85.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "trail_2atr",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_2atr'.",
+   "parent": "H3e89f10c1d"
+  }
+ },
+ {
+  "hyp_id": "Hf37f4a4905",
+  "priority": 85.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
+   "parent": "H3e89f10c1d"
+  }
+ },
+ {
+  "hyp_id": "H079f62522a",
+  "priority": 85.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "partial_1r_trail",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'partial_1r_trail'.",
+   "parent": "H3e89f10c1d"
+  }
+ },
+ {
+  "hyp_id": "H8d087bf6a4",
+  "priority": 90.0,
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mutation",
+   "rationale": "Does the condition generalise across all setups?",
+   "parent": "H3e89f10c1d"
+  }
+ },
+ {
+  "hyp_id": "H7934e861f2",
+  "priority": 90.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "contradiction",
+   "rationale": "Directional asymmetry probe: same condition, other side.",
+   "parent": "H3e89f10c1d"
   }
  }
 ]

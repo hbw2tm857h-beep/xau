@@ -89,5 +89,168 @@
   "status_at_freeze": "validated",
   "frozen_at": "2026-11-23 12:00:00",
   "frozen_on": "2026-11-27"
+ },
+ {
+  "hyp_id": "Hca3a5b9b71",
+  "spec": {
+   "setup": "*",
+   "direction": 0,
+   "conditions": [
+    {
+     "f": "stop_atr",
+     "op": ">",
+     "v": 2.5
+    },
+    {
+     "f": "flag_E2",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "base",
+   "origin": "agenda",
+   "rationale": "Two contradicted 'mistakes' combined: late entry after a >3 ATR move (E2) with a wide stop (V4). Momentum + room to breathe. [claude, cycle 0]"
+  },
+  "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 00:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "Hc0f44c1033",
+  "spec": {
+   "setup": "*",
+   "direction": 0,
+   "conditions": [
+    {
+     "f": "stop_atr",
+     "op": ">",
+     "v": 2.5
+    },
+    {
+     "f": "flag_E2",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_3r'.",
+   "parent": "Hca3a5b9b71"
+  },
+  "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True [exit: target_3r]",
+  "status_at_freeze": "weak_holdout",
+  "frozen_at": "2026-11-27 00:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "Ha27af59d2f",
+  "spec": {
+   "setup": "*",
+   "direction": 0,
+   "conditions": [
+    {
+     "f": "stop_atr",
+     "op": ">",
+     "v": 2.5
+    },
+    {
+     "f": "flag_E2",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "breakeven_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'breakeven_1r'.",
+   "parent": "Hca3a5b9b71"
+  },
+  "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True [exit: breakeven_1r]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 00:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H6c1054b621",
+  "spec": {
+   "setup": "*",
+   "direction": 0,
+   "conditions": [
+    {
+     "f": "stop_atr",
+     "op": ">",
+     "v": 2.5
+    },
+    {
+     "f": "flag_E2",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "stop_1.5x",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'stop_1.5x'.",
+   "parent": "Hca3a5b9b71"
+  },
+  "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True [exit: stop_1.5x]",
+  "status_at_freeze": "weak_holdout",
+  "frozen_at": "2026-11-27 00:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "Hef0b73119b",
+  "spec": {
+   "setup": "wick_rejection",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "fwd_wick",
+     "op": "<",
+     "v": 0.0673
+    },
+    {
+     "f": "regime_char",
+     "op": "==",
+     "v": "trending"
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
+   "parent": "H45f5a61f5c"
+  },
+  "definition": "LONG wick_rejection when fwd_wick < 0.067 AND regime_char == trending [exit: trail_3atr_after_1r]",
+  "status_at_freeze": "weak_holdout",
+  "frozen_at": "2026-11-27 00:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H3e89f10c1d",
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=3.00, lift +0.353R on discovery."
+  },
+  "definition": "LONG momentum_bar when rel_mom12 >= 2.676 AND rel_usd_chg20 in [-0.006, 0.008)",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 00:00:00",
+  "frozen_on": "2026-11-28"
  }
 ]
