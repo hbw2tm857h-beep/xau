@@ -4,6 +4,30 @@ Newest first. Written automatically by `python -m aurum cycle`.
 
 
 
+## Cycle 2026-11-28 11:09 UTC
+
+- +153 hypotheses tested (total 2,503; trials counted 2,045,874).
+- **validated**: LONG any setup when range20_atr in [3.248, 3.837) AND rel_mom24 in [0.889, 2.404) [exit: trail_3atr_after_1r] (new)
+- **contradicted_holdout**: LONG session_breakout when room_in_r_htf in [0.547, 1.524) AND rel_rsi in [58.713, 66.58) [exit: stop_1.5x] (new)
+- **contradicted_holdout**: LONG session_breakout when room_in_r_htf in [0.547, 1.524) AND rel_rsi in [58.713, 66.58) [exit: confirm_close] (new)
+- **contradicted_holdout**: SHORT bb_squeeze_breakout when range20_atr in [3.248, 3.837) AND rel_mom24 in [0.889, 2.404) [exit: target_3r] (new)
+- **contradicted_holdout**: LONG session_breakout when room_in_r_htf in [0.547, 1.524) AND rel_dist_ema50 in [0.94, 2.652) [exit: stop_1.5x] (new)
+- **contradicted_holdout**: SHORT any setup when flag_L2 == True AND flag_X2 == True AND flag_T2 == True [exit: opposite] (new)
+- **contradicted_holdout**: LONG session_breakout when room_in_r_htf in [0.547, 1.524) AND rel_dist_ema50 in [0.94, 2.652) [exit: target_3r] (new)
+- **contradicted_holdout**: LONG session_breakout when room_in_r_htf in [0.547, 1.524) AND rel_rsi in [58.713, 66.58) [exit: breakeven_1r] (new)
+- **contradicted_holdout**: LONG session_breakout when room_in_r_htf in [0.547, 1.524) AND rel_dist_ema50 in [0.94, 2.652) [exit: breakeven_1r] (new)
+- **contradicted_holdout**: LONG session_breakout when room_in_r_htf in [0.547, 1.524) AND rel_rsi in [58.713, 66.58) [exit: target_3r] (new)
+- **contradicted_holdout**: LONG any setup when room_in_r_htf in [0.547, 1.524) AND rel_rsi in [58.713, 66.58) [exit: target_3r] (new)
+- **contradicted_holdout**: LONG session_breakout when room_in_r_htf in [0.547, 1.524) AND rel_dist_ema50 in [0.94, 2.652) [exit: retest_limit] (new)
+- Reality Check (studentised) p = 0.334; best: SHORT range_breakout when er10 >= 0.52 AND rel_mtf_votes >= 1.0 [exit: trail_3atr_after_1r]; Romano-Wolf survivors: 0.
+
+Next in the queue:
+- LONG burst_pullback when rel_rsi in [59.305, 66.036) AND room_fwd >= 1.003
+- SHORT any setup when rel_d_ema50_slope in [-0.585, 0.213) AND regime_trend == neutral
+- LONG momentum_bar when rel_d_ema50_slope in [-0.585, 0.213) AND regime_trend == neutral
+- SHORT any setup when vix in [14.897, 20.877) AND range_atr in [1.418, 2.05)
+- LONG bb_squeeze_breakout when vix in [14.897, 20.877) AND range_atr in [1.418, 2.05)
+
 ## Cycle 2026-11-28 07:41 UTC
 
 - Data extended from 2026-11-26 23:00 to 2026-11-27 18:00 (+13 reconstructed trades).

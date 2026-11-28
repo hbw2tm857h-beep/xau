@@ -940,5 +940,38 @@
   "status_at_freeze": "validated",
   "frozen_at": "2026-11-27 19:00:00",
   "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H4143ac8026",
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "range20_atr",
+     "op": "between",
+     "v": [
+      3.2481,
+      3.8372
+     ]
+    },
+    {
+     "f": "rel_mom24",
+     "op": "between",
+     "v": [
+      0.8887,
+      2.4038
+     ]
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "contradiction",
+   "rationale": "Directional asymmetry probe: same condition, other side.",
+   "parent": "H0ad7f90637"
+  },
+  "definition": "LONG any setup when range20_atr in [3.248, 3.837) AND rel_mom24 in [0.889, 2.404) [exit: trail_3atr_after_1r]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
  }
 ]

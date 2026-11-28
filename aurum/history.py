@@ -230,7 +230,8 @@ def build() -> dict:
             "Does the bot's timeframe-conflict warning keep separating weaker trades live? (journal.json now records the flag)",
             "Personal profile: needs the owner's own trade history in aurum/store/my_trades.csv to test the short-side self-assessment.",
             "Better execution data: real historical spreads and tick data around news would tighten every cost-sensitive result."],
-        "commit_history": commits.splitlines()[-200:],
+        "commit_history": [c for c in commits.splitlines()
+                           if any(k in c for k in ("Edge Lab", "Aurum", "aurum", "edgelab", "Bot loss", "Rename"))][-200:],
     }
     return jsonable(history)
 

@@ -1,0 +1,1482 @@
+{
+ "schema": "aurum-history/1",
+ "generated_at_utc": "2026-11-28 11:10",
+ "project": {
+  "name": "Aurum",
+  "previous_name": "The Edge Lab (package 'edgelab'), renamed 2026-11-28 at the owner's request",
+  "what_it_is": "An autonomous research laboratory that reverse-engineers why discretionary XAUUSD (gold) trades succeed or fail: it reconstructs trading decisions candle by candle, classifies mistakes, replays every trade under alternative decisions, tests hypotheses with strict out-of-sample discipline, and feeds what it learns back into the owner's live alert bot (signals.py).",
+  "what_it_is_not": "Not a trading bot. It never connects to a broker, never places orders, never gives trading advice.",
+  "repository": "hbw2tm857h-beep/xau",
+  "branch": "claude/edge-lab-trading-research-mz973e",
+  "owner_brief": {
+   "core_objective": "Reverse-engineer the underlying principles of profitable discretionary trading by systematically investigating bad trades, failed setups, execution mistakes, misleading price action and successful trades.",
+   "phases_requested": [
+    "1 Mistake taxonomy",
+    "2 Historical chart reconstruction (no look-ahead)",
+    "3 Counterfactual testing",
+    "4 Success vs failure comparison of look-alike setups",
+    "5 Edge discovery with 10-point reports",
+    "6 Personal edge profiling (attempt to disprove the self-assessment)",
+    "7 Autonomous experimentation",
+    "8 Interactive research dashboard",
+    "9 Validation (walk-forward, out-of-sample, costs, multiple testing)"
+   ],
+   "later_requests": [
+    "Push it further",
+    "Make the process ongoing",
+    "Open the dashboard",
+    "Test every possible combination of mistakes and their remedy",
+    "Make my bot understand the anatomy and essence of losing trades so it can better catch good trades",
+    "Rename it and provide a JSON that explains everything"
+   ]
+  }
+ },
+ "timeline": [
+  {
+   "date": "2026-11-27",
+   "stage": "Round 1: build the laboratory",
+   "built": [
+    "Data layer on the repo's Dukascopy files: H1 2003-2026, M15 2008-2026, H4/D1 on the 17:00 New York close, FOMC/CPI/NFP windows, FRED macro lagged one day.",
+    "Causal features (116 columns), swing structure that only becomes known after confirmation, causal daily regimes.",
+    "16 discretionary setup archetypes x long/short, each tied to the conventional claim it embodies.",
+    "M15-resolved execution simulator: spread + slippage, worse costs in news and rollover, gap fills, stop-first ambiguity.",
+    "Mistake taxonomy (56 categories: ex-ante, ex-post, execution), each with a measurable rule and a statistical verdict.",
+    "17 counterfactual replays per trade, with hindsight kept separate from policy.",
+    "Look-alike winner/loser matching, condition scan, walk-forward ML meta-labelling, append-only experiment ledger and engine.",
+    "Truncation-based look-ahead audit, tests, and a single-file dashboard."
+   ],
+   "findings": [
+    "No textbook setup had an out-of-sample edge, even before costs.",
+    "The condition scan produced fewer significant cells than chance.",
+    "'Late entry after the move' was contradicted: chasing did better (+0.17R / +0.19R).",
+    "Look-alike winners and losers differed by only a few hundredths of a standard deviation.",
+    "In hindsight 'take the opposite trade' rescued 49% of losers but adds nothing as a rule."
+   ]
+  },
+  {
+   "date": "2026-11-27",
+   "stage": "Round 2: push further",
+   "built": [
+    "Trailing and partial exits; two momentum setups; H4/daily 'significant' levels; event studies.",
+    "Two-feature interaction scan; White's Reality Check, studentised test and Romano-Wolf step-down over the family.",
+    "Per-discovery stress tests (threshold neighbourhood, cost multiples, years, Monte-Carlo drawdown, same-month drift benchmark).",
+    "Forward-test registry; H1 extended from M15."
+   ],
+   "findings": [
+    "The whole hypothesis family failed the Reality Check; nothing survived Romano-Wolf.",
+    "Momentum is real (0.1-0.3 ATR beyond drift) but too small to trade alone.",
+    "Pushing continuation trades into higher-timeframe levels did better, not worse.",
+    "Model-selected longs held on a 3 ATR trail after +1R looked validated, but the holdout was contaminated (see integrity log)."
+   ]
+  },
+  {
+   "date": "2026-11-27/28",
+   "stage": "Make it ongoing",
+   "built": [
+    "Direct Dukascopy updater (BID minute candles -> M15), verified to match the existing files exactly.",
+    "`cycle` command: update -> pre-registered agenda -> engine -> Reality Check -> freeze & forward-score -> research log -> dashboard.",
+    "Fixed holdout (2022-01 .. 2026-11-23) plus a 'forward' split for all later data.",
+    "Weekly Claude research session (scheduled task) and a GitHub Actions workflow (active once merged to main).",
+    "Holdout sealed in every descriptive view after a design leak was found."
+   ],
+   "findings": [
+    "The pre-registered 'late entry + wide stop' idea passed all splits, but its design had seen pooled holdout verdicts.",
+    "Cycles kept producing a few validated variants; none passed family-wise correction."
+   ]
+  },
+  {
+   "date": "2026-11-28",
+   "stage": "Round 3: every mistake x every remedy",
+   "built": [
+    "Composite remedies: 5 entry x 4 stop x 8 exit fixes + skip + opposite = 162 per trade (~11 million re-simulations).",
+    "Atlas over 40 ex-ante mistakes, all pairs and supported triples, per side and per setup: 2,035,040 cells, all counted as trials.",
+    "Hindsight map for ex-post diagnoses."
+   ],
+   "findings": [
+    "Remedies that reduce losses replicate (25,192 cells vs ~4,220 expected by luck; 71% sign agreement).",
+    "Profit does not replicate (43% sign agreement, worse than a coin flip).",
+    "Best ingredients: waiting for a confirming close (helps in 87% of cells) and a 3 ATR trail after +1R (79%). Waiting 3 bars hurts."
+   ]
+  },
+  {
+   "date": "2026-11-28",
+   "stage": "Round 4: anatomy of the live bot's losing trades",
+   "built": [
+    "Replay of signals.py's own strategies (trend, 4H trend, inside-day): 1,968 trades since 2008, same counts the bot publishes.",
+    "Ex-ante, in-trade and loss-type anatomy; pre-declared rules scored once on the holdout.",
+    "Stdlib 'anatomy' code inside signals.py: warning-sign line on setup alerts, flags saved in the journal, opt-in '3 hours in' note, opt-in skip rule. 99.9% parity with the lab."
+   ],
+   "findings": [
+    "Before entry the bot's losers look like its winners; the one consistent warning sign is H1/4H/daily trend disagreement.",
+    "68% of losers never reach +0.5R (winners: 4%), but cutting slow starters early lowered expectancy in all 18 versions tested.",
+    "Trailing exits and the 4H conflict skip were positive or neutral on the holdout, not strong enough to change live trading yet."
+   ]
+  },
+  {
+   "date": "2026-11-28",
+   "stage": "Rename and this file",
+   "built": [
+    "Package renamed to 'aurum'; HISTORY.json generated from the live record and rebuilt every cycle."
+   ]
+  }
+ ],
+ "methodology": {
+  "decision_rule": "Every decision is made at the close of an H1 bar using only information known then; higher-timeframe bars attach only after their scheduled close.",
+  "splits": {
+   "archive": [
+    "2003-01-01",
+    "2007-12-31 23:59"
+   ],
+   "discovery": [
+    "2008-01-01",
+    "2017-12-31 23:59"
+   ],
+   "validation": [
+    "2018-01-01",
+    "2021-12-31 23:59"
+   ],
+   "holdout": [
+    "2022-01-01",
+    "2026-11-23 11:59"
+   ],
+   "forward": [
+    "2026-11-23 12:00",
+    "2100-01-01"
+   ]
+  },
+  "what_each_split_is_for": {
+   "archive": "2003-07, H1 only: robustness in a very different regime.",
+   "discovery": "Mining and fitting.",
+   "validation": "Must pass with nothing re-fitted.",
+   "holdout": "Scored once per hypothesis, only after validation passes. Sealed in all descriptive views.",
+   "forward": "Data after 2026-11-23: only frozen hypotheses are scored here, from their freeze time onward."
+  },
+  "gates": {
+   "discovery": "n>=40, avg R>0.03, t>=2",
+   "validation": "n>=20, avg R>0, t>=1",
+   "holdout": "n>=15, avg R>0, t>=1 (else weak or contradicted)"
+  },
+  "costs": {
+   "spread_min": 0.2,
+   "spread_bps": 0.8,
+   "slip_atr": 0.02,
+   "news_mult": 3.0,
+   "rollover_mult": 2.0,
+   "scale": 1.0
+  },
+  "multiple_testing": "Every scan cell, atlas cell and engine test is a trial (plus 1,430 legacy trials). BH-FDR, deflated Sharpe, White's Reality Check, studentised SPA-style test and Romano-Wolf step-down.",
+  "look_ahead_audit": "Features and setup signals are rebuilt on data truncated at random bars and must be identical to full-history values.",
+  "units": "R = profit or loss divided by the initial risk, after spread and slippage."
+ },
+ "architecture": {
+  "modules": {
+   "__init__.py": "AURUM \u2014 a research environment for reverse-engineering discretionary trading decisions on XAUUSD.",
+   "__main__.py": "Command line:  python -m aurum <command>",
+   "atlas.py": "The Mistake x Remedy atlas: every combination of ex-ante mistakes x every composite remedy.",
+   "behaviour.py": "Why does price behave the way it does around decisions? Market-level studies.",
+   "bot_anatomy.py": "Anatomy of the live bot's losing trades (signals.py), using the lab's tools.",
+   "comparison.py": "Success vs failure: compare trades that LOOKED the same but ended differently.",
+   "config.py": "Central configuration: paths, chronological splits, cost model, defaults.",
+   "counterfactual.py": "Counterfactual replay: what if the same decision had been executed differently?",
+   "cycle.py": "One autonomous research cycle. Designed to be run on a schedule, forever.",
+   "dashboard.py": "Build lab_output/dashboard.html: a single self-contained research dashboard.",
+   "data.py": "Historical data loading, cleaning, multi-timeframe construction.",
+   "discovery.py": "Edge discovery: exhaustive condition scan + walk-forward machine learning.",
+   "experiments.py": "Autonomous experiment engine.",
+   "features.py": "Causal technical features.",
+   "forward.py": "Forward test: the only data no hypothesis has ever seen.",
+   "frame.py": "Build the decision frame: H1 bars + causal features + structure + H4/D1 context.",
+   "history.py": "Builds aurum/HISTORY.json: the whole project explained, from its creation to now.",
+   "hypothesis.py": "Hypothesis specification + evaluation on the trade universe.",
+   "ledger.py": "Append-only hypothesis / experiment ledger.",
+   "pipeline.py": "End-to-end research run. ``python -m aurum run``",
+   "profile.py": "Personal edge profiling.",
+   "regimes.py": "Causal market-regime classification on daily bars.",
+   "remedies.py": "Composite remedies: every trade re-executed under ENTRY x STOP x EXIT fixes.",
+   "robustness.py": "Robustness and data-snooping controls for the whole hypothesis family.",
+   "setups.py": "Discretionary setup archetypes, reconstructed as decision points.",
+   "simulator.py": "Trade execution simulator.",
+   "stats.py": "Performance statistics and multiple-testing corrections.",
+   "structure.py": "Market structure: confirmed swing points, trend structure, S/R levels, liquidity.",
+   "taxonomy.py": "THE MISTAKE TAXONOMY.",
+   "trades.py": "Turn decisions into simulated trades with a full context snapshot.",
+   "updater.py": "Incremental XAUUSD data updater (Dukascopy public datafeed, BID minute candles -> M15).",
+   "validation.py": "Validation: leakage audits, walk-forward, robustness."
+  },
+  "commands": {
+   "python -m aurum audit": "look-ahead audit",
+   "python -m aurum cycle --budget N": "one research cycle (used by the schedulers)",
+   "python -m aurum run --budget N": "full run without the update/log steps",
+   "python -m aurum update": "download new candles",
+   "python -m aurum history": "rebuild this file",
+   "python -m aurum template": "CSV template for personal trades"
+  }
+ },
+ "data_now": {
+  "h1_bars": 142175,
+  "h1_from": "2003-05-05 00:00:00",
+  "h1_to": "2026-11-27 18:00:00",
+  "m15_bars": 452310,
+  "m15_from": "2008-01-01 00:00:00",
+  "m15_to": "2026-11-27 19:30:00",
+  "trades": 78392,
+  "by_split": {
+   "discovery": 33392,
+   "archive": 16078,
+   "holdout": 15847,
+   "validation": 13019,
+   "forward": 56
+  }
+ },
+ "state_now": {
+  "trials_counted": 2045874,
+  "hypotheses_in_ledger": 2503,
+  "ledger_records": 3373,
+  "status_counts": {
+   "rejected_discovery": 1656,
+   "negative_edge": 106,
+   "failed_validation": 678,
+   "robustness_check": 60,
+   "bot_rule_holdout_once": 3
+  },
+  "reality_check": {
+   "n_hypotheses": 3081,
+   "p_reality_check": 0.042,
+   "p_studentised": 0.334,
+   "best": "SHORT range_breakout when er10 >= 0.52 AND rel_mtf_votes >= 1.0 [exit: trail_3atr_after_1r]",
+   "rw_survivors": []
+  },
+  "taxonomy_verdicts": {
+   "folklore (no measurable effect)": 24,
+   "CONTRADICTED: flagged trades do better": 10,
+   "confirmed mistake": 6,
+   "diagnostic (ex-post)": 18
+  },
+  "replicated_mistakes": [
+   {
+    "id": "E2",
+    "name": "Late entry after the move",
+    "verdict": "CONTRADICTED: flagged trades do better"
+   },
+   {
+    "id": "X3",
+    "name": "Climax-bar entry",
+    "verdict": "CONTRADICTED: flagged trades do better"
+   },
+   {
+    "id": "S5",
+    "name": "Selling into higher-timeframe support / buying into resistance",
+    "verdict": "CONTRADICTED: flagged trades do better"
+   },
+   {
+    "id": "V3",
+    "name": "Stop too tight for volatility",
+    "verdict": "confirmed mistake"
+   },
+   {
+    "id": "V4",
+    "name": "Stop unnecessarily wide",
+    "verdict": "CONTRADICTED: flagged trades do better"
+   }
+  ],
+  "atlas": {
+   "n_cells": 2035040,
+   "n_combos": 12640,
+   "ev_replicated": 3970,
+   "ev_replicated_expected": 2083.05,
+   "delta_replicated": 25192,
+   "delta_replicated_expected": 4220.25,
+   "ev_sign_agreement": 0.43355,
+   "delta_sign_agreement": 0.71205,
+   "components": [
+    {
+     "part": "entry",
+     "value": "confirm",
+     "mean_delta": 0.07439,
+     "share_positive": 0.86875
+    },
+    {
+     "part": "entry",
+     "value": "late1",
+     "mean_delta": -0.02357,
+     "share_positive": 0.57734
+    },
+    {
+     "part": "entry",
+     "value": "late3",
+     "mean_delta": -0.05911,
+     "share_positive": 0.47266
+    },
+    {
+     "part": "entry",
+     "value": "mkt",
+     "mean_delta": 0.0446,
+     "share_positive": 0.81452
+    },
+    {
+     "part": "entry",
+     "value": "retest",
+     "mean_delta": 0.03947,
+     "share_positive": 0.76172
+    },
+    {
+     "part": "stop",
+     "value": "1.5x",
+     "mean_delta": -0.00631,
+     "share_positive": 0.605
+    },
+    {
+     "part": "stop",
+     "value": "1x",
+     "mean_delta": 0.04386,
+     "share_positive": 0.76154
+    },
+    {
+     "part": "stop",
+     "value": "2x",
+     "mean_delta": 0.03461,
+     "share_positive": 0.71813
+    },
+    {
+     "part": "stop",
+     "value": "atr2",
+     "mean_delta": -0.01155,
+     "share_positive": 0.71
+    },
+    {
+     "part": "exit",
+     "value": "be1r",
+     "mean_delta": 0.00494,
+     "share_positive": 0.6825
+    },
+    {
+     "part": "exit",
+     "value": "partial",
+     "mean_delta": 0.01052,
+     "share_positive": 0.69375
+    },
+    {
+     "part": "exit",
+     "value": "t1r",
+     "mean_delta": -0.01216,
+     "share_positive": 0.5425
+    },
+    {
+     "part": "exit",
+     "value": "t2r",
+     "mean_delta": 0.00207,
+     "share_positive": 0.64737
+    },
+    {
+     "part": "exit",
+     "value": "t3r",
+     "mean_delta": 0.01546,
+     "share_positive": 0.73875
+    },
+    {
+     "part": "exit",
+     "value": "time12",
+     "mean_delta": 0.01728,
+     "share_positive": 0.72
+    },
+    {
+     "part": "exit",
+     "value": "trail2",
+     "mean_delta": 0.03319,
+     "share_positive": 0.765
+    },
+    {
+     "part": "exit",
+     "value": "trail3a1",
+     "mean_delta": 0.04784,
+     "share_positive": 0.79375
+    }
+   ]
+  },
+  "top_discoveries": [
+   {
+    "hyp_id": "H5a9e534909",
+    "status": "validated",
+    "evidence": 91.7,
+    "definition": "LONG any setup when flag_E1 == True AND flag_S4 == True AND flag_S5 == True [exit: confirm|2x|t1r]",
+    "caveats": [],
+    "avg_r_by_split": {
+     "archive": -0.03357,
+     "discovery": 0.09631,
+     "validation": 0.14987,
+     "holdout": 0.05362
+    },
+    "n_by_split": {
+     "archive": 71,
+     "discovery": 333,
+     "validation": 152,
+     "holdout": 151
+    }
+   },
+   {
+    "hyp_id": "Hbdbfe6a4f5",
+    "status": "validated",
+    "evidence": 91.7,
+    "definition": "LONG any setup when flag_E1 == True AND flag_S5 == True [exit: confirm|2x|t1r]",
+    "caveats": [],
+    "avg_r_by_split": {
+     "archive": -0.03357,
+     "discovery": 0.09631,
+     "validation": 0.14987,
+     "holdout": 0.05362
+    },
+    "n_by_split": {
+     "archive": 71,
+     "discovery": 333,
+     "validation": 152,
+     "holdout": 151
+    }
+   },
+   {
+    "hyp_id": "H04721e7b26",
+    "status": "validated",
+    "evidence": 87.9,
+    "definition": "LONG any setup when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_3atr_after_1r]",
+    "caveats": [],
+    "avg_r_by_split": {
+     "archive": 0.02137,
+     "discovery": 0.22591,
+     "validation": 0.11327,
+     "holdout": 0.17492
+    },
+    "n_by_split": {
+     "archive": 584,
+     "discovery": 1403,
+     "validation": 658,
+     "holdout": 1233
+    }
+   },
+   {
+    "hyp_id": "Ha1b7886c9f",
+    "status": "validated",
+    "evidence": 86.8,
+    "definition": "long or short any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+    "caveats": [],
+    "avg_r_by_split": {
+     "archive": -0.0064,
+     "discovery": 0.19102,
+     "validation": 0.27256,
+     "holdout": 0.08524
+    },
+    "n_by_split": {
+     "archive": 18,
+     "discovery": 140,
+     "validation": 57,
+     "holdout": 45
+    }
+   },
+   {
+    "hyp_id": "Hca0be0a642",
+    "status": "validated",
+    "evidence": 86.8,
+    "definition": "long or short any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r]",
+    "caveats": [],
+    "avg_r_by_split": {
+     "archive": -0.0064,
+     "discovery": 0.18967,
+     "validation": 0.27256,
+     "holdout": 0.07828
+    },
+    "n_by_split": {
+     "archive": 18,
+     "discovery": 141,
+     "validation": 57,
+     "holdout": 49
+    }
+   },
+   {
+    "hyp_id": "H5248a114f8",
+    "status": "validated",
+    "evidence": 86.6,
+    "definition": "LONG any setup when ml_sel == True [exit: trail_3atr_after_1r]",
+    "caveats": [
+     "Holdout contaminated: the 'trail_3atr_after_1r' exit for model-selected trades was chosen after the dashboard showed per-exit results that included 2022-26. Treat the holdout result as in-sample. Supporting evidence that is clean: selection beats a same-month, same-exit benchmark in discovery and validation. Profit is concentrated in bull regimes. Needs forward (post-2026-11) data to confirm.",
+     "Same holdout contamination applies to every mutation of the model-selected + 'trail_3atr_after_1r' hypothesis (extra conditions were added after the exit was chosen with holdout in view)."
+    ],
+    "avg_r_by_split": {
+     "archive": null,
+     "discovery": 0.12958,
+     "validation": 0.09572,
+     "holdout": 0.21595
+    },
+    "n_by_split": {
+     "archive": 0,
+     "discovery": 1921,
+     "validation": 1773,
+     "holdout": 1548
+    }
+   },
+   {
+    "hyp_id": "Hacaf7066a6",
+    "status": "validated",
+    "evidence": 86.0,
+    "definition": "long or short any setup when flag_E1 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+    "caveats": [],
+    "avg_r_by_split": {
+     "archive": -0.0064,
+     "discovery": 0.12944,
+     "validation": 0.31698,
+     "holdout": 0.07376
+    },
+    "n_by_split": {
+     "archive": 18,
+     "discovery": 173,
+     "validation": 61,
+     "holdout": 52
+    }
+   },
+   {
+    "hyp_id": "Ha27af59d2f",
+    "status": "validated",
+    "evidence": 85.9,
+    "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True [exit: breakeven_1r]",
+    "caveats": [
+     "Partial holdout contamination: the cycle-0 agenda (and its mutations) was designed from taxonomy verdicts that pooled validation AND holdout. Treat holdout results for these as weaker evidence; the 2003-07 archive and forward split are clean. From now on all descriptive views use discovery + validation only (holdout sealed)."
+    ],
+    "avg_r_by_split": {
+     "archive": 0.11192,
+     "discovery": 0.10679,
+     "validation": 0.08148,
+     "holdout": 0.06832
+    },
+    "n_by_split": {
+     "archive": 316,
+     "discovery": 1201,
+     "validation": 418,
+     "holdout": 504
+    }
+   },
+   {
+    "hyp_id": "Hf3dcddc9da",
+    "status": "validated",
+    "evidence": 85.5,
+    "definition": "LONG any setup when ml_sel == True AND rel_h4_structure > 0.0 [exit: trail_3atr_after_1r]",
+    "caveats": [
+     "Same holdout contamination applies to every mutation of the model-selected + 'trail_3atr_after_1r' hypothesis (extra conditions were added after the exit was chosen with holdout in view)."
+    ],
+    "avg_r_by_split": {
+     "archive": null,
+     "discovery": 0.28786,
+     "validation": 0.09091,
+     "holdout": 0.4871
+    },
+    "n_by_split": {
+     "archive": 0,
+     "discovery": 695,
+     "validation": 575,
+     "holdout": 521
+    }
+   },
+   {
+    "hyp_id": "Hca3a5b9b71",
+    "status": "validated",
+    "evidence": 84.9,
+    "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True",
+    "caveats": [
+     "Partial holdout contamination: the cycle-0 agenda (and its mutations) was designed from taxonomy verdicts that pooled validation AND holdout. Treat holdout results for these as weaker evidence; the 2003-07 archive and forward split are clean. From now on all descriptive views use discovery + validation only (holdout sealed)."
+    ],
+    "avg_r_by_split": {
+     "archive": 0.12695,
+     "discovery": 0.10836,
+     "validation": 0.09835,
+     "holdout": 0.05964
+    },
+    "n_by_split": {
+     "archive": 316,
+     "discovery": 1201,
+     "validation": 418,
+     "holdout": 504
+    }
+   },
+   {
+    "hyp_id": "Hc0f44c1033",
+    "status": "weak_holdout",
+    "evidence": 82.8,
+    "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True [exit: target_3r]",
+    "caveats": [
+     "Partial holdout contamination: the cycle-0 agenda (and its mutations) was designed from taxonomy verdicts that pooled validation AND holdout. Treat holdout results for these as weaker evidence; the 2003-07 archive and forward split are clean. From now on all descriptive views use discovery + validation only (holdout sealed)."
+    ],
+    "avg_r_by_split": {
+     "archive": 0.13624,
+     "discovery": 0.11477,
+     "validation": 0.1304,
+     "holdout": 0.04264
+    },
+    "n_by_split": {
+     "archive": 316,
+     "discovery": 1201,
+     "validation": 418,
+     "holdout": 504
+    }
+   },
+   {
+    "hyp_id": "He80e22fbcb",
+    "status": "validated",
+    "evidence": 82.1,
+    "definition": "LONG breakout when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_3atr_after_1r]",
+    "caveats": [],
+    "avg_r_by_split": {
+     "archive": 0.12769,
+     "discovery": 0.36734,
+     "validation": 0.18768,
+     "holdout": 0.23445
+    },
+    "n_by_split": {
+     "archive": 85,
+     "discovery": 255,
+     "validation": 102,
+     "holdout": 189
+    }
+   },
+   {
+    "hyp_id": "H8768ac0b1a",
+    "status": "validated",
+    "evidence": 82.0,
+    "definition": "SHORT any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+    "caveats": [],
+    "avg_r_by_split": {
+     "archive": -0.00279,
+     "discovery": 0.18863,
+     "validation": 0.14336,
+     "holdout": 0.14606
+    },
+    "n_by_split": {
+     "archive": 10,
+     "discovery": 57,
+     "validation": 28,
+     "holdout": 20
+    }
+   },
+   {
+    "hyp_id": "H929f72d783",
+    "status": "validated",
+    "evidence": 81.9,
+    "definition": "SHORT any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r]",
+    "caveats": [],
+    "avg_r_by_split": {
+     "archive": -0.00279,
+     "discovery": 0.18863,
+     "validation": 0.14336,
+     "holdout": 0.12171
+    },
+    "n_by_split": {
+     "archive": 10,
+     "discovery": 57,
+     "validation": 28,
+     "holdout": 24
+    }
+   },
+   {
+    "hyp_id": "H3e89f10c1d",
+    "status": "validated",
+    "evidence": 80.9,
+    "definition": "LONG momentum_bar when rel_mom12 >= 2.676 AND rel_usd_chg20 in [-0.006, 0.008)",
+    "caveats": [],
+    "avg_r_by_split": {
+     "archive": -0.20056,
+     "discovery": 0.37266,
+     "validation": 0.18092,
+     "holdout": 0.31886
+    },
+    "n_by_split": {
+     "archive": 19,
+     "discovery": 100,
+     "validation": 57,
+     "holdout": 45
+    }
+   }
+  ],
+  "frozen_for_forward_test": [
+   {
+    "hyp_id": "He3def259a7",
+    "definition": "LONG momentum_bar when session == asia",
+    "frozen_at": "2026-11-23 12:00:00",
+    "status_at_freeze": "weak_holdout"
+   },
+   {
+    "hyp_id": "H266d017909",
+    "definition": "LONG momentum_bar when session == asia [exit: breakeven_1r]",
+    "frozen_at": "2026-11-23 12:00:00",
+    "status_at_freeze": "weak_holdout"
+   },
+   {
+    "hyp_id": "H5248a114f8",
+    "definition": "LONG any setup when ml_sel == True [exit: trail_3atr_after_1r]",
+    "frozen_at": "2026-11-23 12:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "Hf3dcddc9da",
+    "definition": "LONG any setup when ml_sel == True AND rel_h4_structure > 0.0 [exit: trail_3atr_after_1r]",
+    "frozen_at": "2026-11-23 12:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "Hca3a5b9b71",
+    "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True",
+    "frozen_at": "2026-11-27 00:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "Hc0f44c1033",
+    "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True [exit: target_3r]",
+    "frozen_at": "2026-11-27 00:00:00",
+    "status_at_freeze": "weak_holdout"
+   },
+   {
+    "hyp_id": "Ha27af59d2f",
+    "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True [exit: breakeven_1r]",
+    "frozen_at": "2026-11-27 00:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "H6c1054b621",
+    "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True [exit: stop_1.5x]",
+    "frozen_at": "2026-11-27 00:00:00",
+    "status_at_freeze": "weak_holdout"
+   },
+   {
+    "hyp_id": "Hef0b73119b",
+    "definition": "LONG wick_rejection when fwd_wick < 0.067 AND regime_char == trending [exit: trail_3atr_after_1r]",
+    "frozen_at": "2026-11-27 00:00:00",
+    "status_at_freeze": "weak_holdout"
+   },
+   {
+    "hyp_id": "H3e89f10c1d",
+    "definition": "LONG momentum_bar when rel_mom12 >= 2.676 AND rel_usd_chg20 in [-0.006, 0.008)",
+    "frozen_at": "2026-11-27 00:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "H6b18211303",
+    "definition": "LONG momentum_bar when rel_mom12 >= 2.676 AND rel_usd_chg20 in [-0.006, 0.008) [exit: stop_1.5x]",
+    "frozen_at": "2026-11-27 00:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "Hdb825bda16",
+    "definition": "LONG momentum_bar when rel_mom12 >= 2.676 AND rel_usd_chg20 in [-0.006, 0.008) [exit: confirm_close]",
+    "frozen_at": "2026-11-27 00:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "H16a211f268",
+    "definition": "SHORT range_breakout when adx < 18.513 AND rel_h4_dist_ema20 in [-0.236, 0.764)",
+    "frozen_at": "2026-11-27 00:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "H58c61f0bae",
+    "definition": "SHORT range_breakout when adx < 18.513 AND rel_h4_dist_ema20 in [-0.236, 0.764) [exit: target_3r]",
+    "frozen_at": "2026-11-27 00:00:00",
+    "status_at_freeze": "weak_holdout"
+   },
+   {
+    "hyp_id": "H1ace35ad69",
+    "definition": "SHORT range_breakout when adx < 18.513 AND rel_h4_dist_ema20 in [-0.236, 0.764) [exit: confirm_close]",
+    "frozen_at": "2026-11-27 00:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "H15c126f2c1",
+    "definition": "SHORT range_breakout when adx < 18.513 AND rel_h4_dist_ema20 in [-0.236, 0.764) [exit: trail_2atr]",
+    "frozen_at": "2026-11-27 00:00:00",
+    "status_at_freeze": "weak_holdout"
+   },
+   {
+    "hyp_id": "Hacaf7066a6",
+    "definition": "long or short any setup when flag_E1 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "H5e4841d69f",
+    "definition": "LONG any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "weak_holdout"
+   },
+   {
+    "hyp_id": "Hab499604dd",
+    "definition": "LONG any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "weak_holdout"
+   },
+   {
+    "hyp_id": "Hca973b78f8",
+    "definition": "LONG any setup when flag_E1 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "weak_holdout"
+   },
+   {
+    "hyp_id": "Ha1b7886c9f",
+    "definition": "long or short any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "Hca0be0a642",
+    "definition": "long or short any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "H0a6a27f620",
+    "definition": "long or short any setup when flag_E2 == True AND flag_V1 == True AND flag_R1 == True [exit: confirm|2x|t1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "weak_holdout"
+   },
+   {
+    "hyp_id": "H5a9e534909",
+    "definition": "LONG any setup when flag_E1 == True AND flag_S4 == True AND flag_S5 == True [exit: confirm|2x|t1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "Hbdbfe6a4f5",
+    "definition": "LONG any setup when flag_E1 == True AND flag_S5 == True [exit: confirm|2x|t1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "H9cb62b44dd",
+    "definition": "LONG any setup when flag_E1 == True AND flag_T1 == True AND flag_S5 == True [exit: confirm|1.5x|t1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "weak_holdout"
+   },
+   {
+    "hyp_id": "H8768ac0b1a",
+    "definition": "SHORT any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "H929f72d783",
+    "definition": "SHORT any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "H625faa35e4",
+    "definition": "LONG breakout when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_2atr]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "Hd3ac057c9f",
+    "definition": "LONG any setup when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_2atr]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "weak_holdout"
+   },
+   {
+    "hyp_id": "He80e22fbcb",
+    "definition": "LONG breakout when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_3atr_after_1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "H04721e7b26",
+    "definition": "LONG any setup when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_3atr_after_1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "H3170d96787",
+    "definition": "LONG breakout when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: partial_1r_trail]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "validated"
+   },
+   {
+    "hyp_id": "H4143ac8026",
+    "definition": "LONG any setup when range20_atr in [3.248, 3.837) AND rel_mom24 in [0.889, 2.404) [exit: trail_3atr_after_1r]",
+    "frozen_at": "2026-11-27 19:00:00",
+    "status_at_freeze": "validated"
+   }
+  ],
+  "forward_results": [
+   {
+    "definition": "LONG momentum_bar when session == asia",
+    "verdict": "accumulating (2/30 trades)",
+    "n": 2,
+    "avg_r": 0.47936
+   },
+   {
+    "definition": "LONG momentum_bar when session == asia [exit: breakeven_1r]",
+    "verdict": "accumulating (2/30 trades)",
+    "n": 2,
+    "avg_r": 0.47936
+   },
+   {
+    "definition": "LONG any setup when ml_sel == True [exit: trail_3atr_after_1r]",
+    "verdict": "accumulating (3/30 trades)",
+    "n": 3,
+    "avg_r": 0.31632
+   },
+   {
+    "definition": "LONG any setup when ml_sel == True AND rel_h4_structure > 0.0 [exit: trail_3atr_after_1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True [exit: target_3r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True [exit: breakeven_1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "long or short any setup when stop_atr > 2.5 AND flag_E2 == True [exit: stop_1.5x]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG wick_rejection when fwd_wick < 0.067 AND regime_char == trending [exit: trail_3atr_after_1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG momentum_bar when rel_mom12 >= 2.676 AND rel_usd_chg20 in [-0.006, 0.008)",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG momentum_bar when rel_mom12 >= 2.676 AND rel_usd_chg20 in [-0.006, 0.008) [exit: stop_1.5x]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG momentum_bar when rel_mom12 >= 2.676 AND rel_usd_chg20 in [-0.006, 0.008) [exit: confirm_close]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "SHORT range_breakout when adx < 18.513 AND rel_h4_dist_ema20 in [-0.236, 0.764)",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "SHORT range_breakout when adx < 18.513 AND rel_h4_dist_ema20 in [-0.236, 0.764) [exit: target_3r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "SHORT range_breakout when adx < 18.513 AND rel_h4_dist_ema20 in [-0.236, 0.764) [exit: confirm_close]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "SHORT range_breakout when adx < 18.513 AND rel_h4_dist_ema20 in [-0.236, 0.764) [exit: trail_2atr]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "long or short any setup when flag_E1 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG any setup when flag_E1 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "long or short any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "long or short any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "long or short any setup when flag_E2 == True AND flag_V1 == True AND flag_R1 == True [exit: confirm|2x|t1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG any setup when flag_E1 == True AND flag_S4 == True AND flag_S5 == True [exit: confirm|2x|t1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG any setup when flag_E1 == True AND flag_S5 == True [exit: confirm|2x|t1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG any setup when flag_E1 == True AND flag_T1 == True AND flag_S5 == True [exit: confirm|1.5x|t1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "SHORT any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "SHORT any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG breakout when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_2atr]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG any setup when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_2atr]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG breakout when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_3atr_after_1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG any setup when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_3atr_after_1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG breakout when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: partial_1r_trail]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   },
+   {
+    "definition": "LONG any setup when range20_atr in [3.248, 3.837) AND rel_mom24 in [0.889, 2.404) [exit: trail_3atr_after_1r]",
+    "verdict": "accumulating (0/30 trades)",
+    "n": 0,
+    "avg_r": null
+   }
+  ],
+  "bot": {
+   "n_trades": 1968,
+   "per_strategy": [
+    {
+     "strategy": "h4_trend",
+     "n": 383,
+     "win": 0.53264,
+     "avg_r": 0.05045,
+     "never_half_r_losers": 0.64804,
+     "never_half_r_winners": 0.0
+    },
+    {
+     "strategy": "inside_day",
+     "n": 558,
+     "win": 0.48029,
+     "avg_r": 0.0909,
+     "never_half_r_losers": 0.73103,
+     "never_half_r_winners": 0.10821
+    },
+    {
+     "strategy": "trend",
+     "n": 518,
+     "win": 0.59653,
+     "avg_r": 0.15227,
+     "never_half_r_losers": 0.65072,
+     "never_half_r_winners": 0.0
+    }
+   ],
+   "loss_types": [
+    {
+     "type": "partial move then reversal",
+     "n": 354,
+     "share": 0.52212,
+     "avg_r": -0.85048,
+     "by_strategy": {
+      "inside_day": 137,
+      "trend": 117,
+      "h4_trend": 100
+     },
+     "short_share": 0.46328
+    },
+    {
+     "type": "never worked, then drifted back",
+     "n": 149,
+     "share": 0.21976,
+     "avg_r": -0.78037,
+     "by_strategy": {
+      "inside_day": 75,
+      "h4_trend": 41,
+      "trend": 33
+     },
+     "short_share": 0.48993
+    },
+    {
+     "type": "never worked (failed immediately)",
+     "n": 138,
+     "share": 0.20354,
+     "avg_r": -0.97529,
+     "by_strategy": {
+      "inside_day": 52,
+      "trend": 51,
+      "h4_trend": 35
+     },
+     "short_share": 0.43478
+    },
+    {
+     "type": "worked +1R, then reversed",
+     "n": 22,
+     "share": 0.03245,
+     "avg_r": -0.72744,
+     "by_strategy": {
+      "inside_day": 19,
+      "trend": 2,
+      "h4_trend": 1
+     },
+     "short_share": 0.63636
+    },
+    {
+     "type": "stop hunted (target reached after the stop)",
+     "n": 15,
+     "share": 0.02212,
+     "avg_r": -1.00139,
+     "by_strategy": {
+      "inside_day": 7,
+      "trend": 6,
+      "h4_trend": 2
+     },
+     "short_share": 0.33333
+    }
+   ],
+   "early": {
+    "winners": {
+     "n": 781,
+     "mfe3h": 0.4785,
+     "mae3h": 0.28991,
+     "share_half_r_within_3h": 0.36492,
+     "median_hours_to_half_r": 5.0,
+     "share_never_half_r": 0.03713
+    },
+    "losers": {
+     "n": 678,
+     "mfe3h": 0.25915,
+     "mae3h": 0.43215,
+     "share_half_r_within_3h": 0.11357,
+     "median_hours_to_half_r": 4.875,
+     "share_never_half_r": 0.68437
+    },
+    "by_mfe3h": [
+     {
+      "mfe3h": "(-0.01, 0.25]",
+      "n": 767,
+      "win": 0.43677,
+      "avg_r": -0.06932
+     },
+     {
+      "mfe3h": "(0.25, 0.5]",
+      "n": 343,
+      "win": 0.50437,
+      "avg_r": 0.04097
+     },
+     {
+      "mfe3h": "(0.5, 1.0]",
+      "n": 245,
+      "win": 0.73061,
+      "avg_r": 0.39539
+     },
+     {
+      "mfe3h": "(1.0, 99.0]",
+      "n": 104,
+      "win": 0.90385,
+      "avg_r": 0.87662
+     }
+    ]
+   },
+   "rules": {
+    "BOT-1 trend: whole trade on 3 ATR trail after +1R (BE at +1R) instead of half 1R + rest 2R": {
+     "discovery": {
+      "n": 383,
+      "delta": 0.05981,
+      "t": 1.2319,
+      "new_avg_r": 0.20385,
+      "old_avg_r": 0.14404,
+      "new_dd": 10.20785,
+      "old_dd": 9.15274
+     },
+     "validation": {
+      "n": 135,
+      "delta": 0.08703,
+      "t": 1.07927,
+      "new_avg_r": 0.26193,
+      "old_avg_r": 0.17491,
+      "new_dd": 8.23206,
+      "old_dd": 5.58702
+     },
+     "holdout": {
+      "n": 202,
+      "delta": 0.01804,
+      "t": 0.28628,
+      "new_avg_r": 0.23517,
+      "old_avg_r": 0.21713,
+      "new_dd": 6.39647,
+      "old_dd": 5.13449
+     }
+    },
+    "BOT-2 inside_day: whole trade on 3 ATR trail after +1R (BE at +1R) instead of half 1R + rest 2R": {
+     "discovery": {
+      "n": 408,
+      "delta": 0.01546,
+      "t": 0.52056,
+      "new_avg_r": 0.11852,
+      "old_avg_r": 0.10306,
+      "new_dd": 16.19467,
+      "old_dd": 13.36337
+     },
+     "validation": {
+      "n": 149,
+      "delta": 0.05167,
+      "t": 0.97793,
+      "new_avg_r": 0.14279,
+      "old_avg_r": 0.09111,
+      "new_dd": 11.99274,
+      "old_dd": 9.97694
+     },
+     "holdout": {
+      "n": 164,
+      "delta": 0.09633,
+      "t": 1.96755,
+      "new_avg_r": 0.23818,
+      "old_avg_r": 0.14185,
+      "new_dd": 6.13123,
+      "old_dd": 4.17714
+     }
+    },
+    "BOT-3 h4_trend: skip when H1/H4/D1 trends disagree (T2)": {
+     "discovery": {
+      "n": 261,
+      "delta": 0.00513,
+      "t": 0.11881,
+      "new_avg_r": 0.10535,
+      "old_avg_r": 0.10022,
+      "new_dd": 11.34227,
+      "old_dd": 10.85165
+     },
+     "validation": {
+      "n": 122,
+      "delta": 0.11733,
+      "t": 1.88975,
+      "new_avg_r": 0.06131,
+      "old_avg_r": -0.05602,
+      "new_dd": 7.39395,
+      "old_dd": 16.8387
+     },
+     "holdout": {
+      "n": 143,
+      "delta": -0.03769,
+      "t": -0.70417,
+      "new_avg_r": 0.33752,
+      "old_avg_r": 0.37521,
+      "new_dd": 2.1143,
+      "old_dd": 6.16949
+     }
+    }
+   },
+   "forward": []
+  },
+  "personal_profile": {
+   "source": "market_baseline",
+   "tests": [
+    {
+     "id": "SA1",
+     "claim": "I am better on the short side than the long side.",
+     "verdict": "NOT supported"
+    },
+    {
+     "id": "SA2",
+     "claim": "My long-side weakness is explained by market conditions, not by skill.",
+     "verdict": "NOT supported"
+    },
+    {
+     "id": "SA3",
+     "claim": "I trade short-side momentum well.",
+     "verdict": "NOT supported"
+    },
+    {
+     "id": "SA4",
+     "claim": "I can identify exhausted moves.",
+     "verdict": "NOT supported"
+    },
+    {
+     "id": "SA5",
+     "claim": "My sell timing is good.",
+     "verdict": "supported"
+    },
+    {
+     "id": "SA6",
+     "claim": "I can tell continuation from reversal.",
+     "verdict": "NOT supported"
+    }
+   ]
+  }
+ },
+ "integrity_log": [
+  {
+   "issue": "Weekend filter precedence bug dropped most H1 bars on first load.",
+   "handled": "Fixed before any results were produced."
+  },
+  {
+   "issue": "Dashboard charts did not render (Plotly CDN path 404).",
+   "handled": "Switched to a pinned jsDelivr build."
+  },
+  {
+   "issue": "Discovery cards showed holdout numbers for hypotheses that failed validation.",
+   "handled": "Holdout is revealed only after validation passes; cards rebuilt."
+  },
+  {
+   "issue": "Trade-id collision (momentum_bar vs momentum_burst) corrupted counterfactual joins in one run.",
+   "handled": "643 ledger records from that run removed with a ledger note explaining why; ids made unique and tested."
+  },
+  {
+   "issue": "ML exit (3 ATR trail after +1R) was chosen after seeing a table that included holdout.",
+   "handled": "Recorded as contaminated in the ledger and on its cards; table now hides holdout; frozen for forward testing."
+  },
+  {
+   "issue": "Cycle-0 agenda was designed from taxonomy verdicts that pooled validation and holdout.",
+   "handled": "Ledger note on all 16 affected hypotheses; every descriptive view now uses discovery + validation only."
+  },
+  {
+   "issue": "Quadratic slowdowns as the ledger grew; one cycle hit the time limit.",
+   "handled": "In-memory ledger cache, indexed counterfactual lookups, cached relation sets."
+  },
+  {
+   "issue": "Atlas validation file (24 MB) committed once.",
+   "handled": "Replaced by a gzipped file of replicated cells only."
+  },
+  {
+   "issue": "Bot '3 hours in' note missed fills before gold's daily break hour.",
+   "handled": "Fires on the first bar at or after the 3-hour mark; tested."
+  },
+  {
+   "issue": "Externally scored bot rules in the ledger crashed the engine's report rebuild.",
+   "handled": "Engine and Reality Check skip origin 'bot' records."
+  },
+  {
+   "issue": "Earlier research rounds in research/ had already viewed 2008-2026.",
+   "handled": "Their 1,430 logged trials are added to the multiple-testing count; holdout is out-of-sample for this lab only."
+  }
+ ],
+ "automation": {
+  "weekly_claude_session": {
+   "schedule": "Sundays 04:23 UTC",
+   "scheduled_task_id": "trig_012CVbGxciPJWr3ZB2uiw4Cp",
+   "does": "runs a cycle, pre-registers 3-6 hypotheses in aurum/agenda.json, writes researcher notes, pushes"
+  },
+  "github_actions": {
+   "file": ".github/workflows/aurum.yml",
+   "schedule": "Sundays 03:17 UTC",
+   "note": "GitHub runs scheduled workflows only from the default branch: active once merged to main."
+  },
+  "cycles_so_far": [
+   {
+    "ts": "2026-11-28 00:20",
+    "bars_added": 0,
+    "changes": 1
+   },
+   {
+    "ts": "2026-11-28 00:48",
+    "bars_added": 0,
+    "changes": 18
+   },
+   {
+    "ts": "2026-11-28 07:41",
+    "bars_added": 0,
+    "changes": 28
+   },
+   {
+    "ts": "2026-11-28 11:09",
+    "bars_added": 0,
+    "changes": 14
+   }
+  ]
+ },
+ "files": {
+  "aurum/README.md": "methods and findings, round by round",
+  "aurum/RESEARCH_LOG.md": "what changed in each cycle (newest first)",
+  "aurum/agenda.json": "pre-registered hypotheses for the next cycle",
+  "aurum/store/experiments.jsonl": "append-only ledger of every test",
+  "aurum/store/frozen.json / forward_scores.jsonl": "forward-test registry and scores",
+  "aurum/store/bot_anatomy_model.json": "statistics the live bot reads for its notes",
+  "lab_output/dashboard.html": "the dashboard",
+  "lab_output/lab_results.json": "all results of the last run"
+ },
+ "open_questions": [
+  "Forward data: do the frozen hypotheses (ML-selected longs with trailing exit, the atlas cells, the late-entry + wide-stop idea) hold after 2026-11-23?",
+  "Does the bot's timeframe-conflict warning keep separating weaker trades live? (journal.json now records the flag)",
+  "Personal profile: needs the owner's own trade history in aurum/store/my_trades.csv to test the short-side self-assessment.",
+  "Better execution data: real historical spreads and tick data around news would tighten every cost-sensitive result."
+ ],
+ "commit_history": [
+  "2026-11-27 Add The Edge Lab: XAUUSD trade reverse-engineering research platform",
+  "2026-11-27 Edge Lab: trailing/partial exits, momentum track, HTF levels, event studies, reality check, robustness",
+  "2026-11-27 Edge Lab: drift control, contamination caveats, forward-test registry, H1 extended from M15",
+  "2026-11-27 Edge Lab round 2 results: reality check, momentum track, provisional ML+trail finding (holdout contaminated, frozen for forward test)",
+  "2026-11-27 Edge Lab: ongoing research cycles (Dukascopy updater, agenda, forward split, research log, weekly workflow)",
+  "2026-11-28 Edge Lab: seal holdout in all descriptive views; record agenda contamination",
+  "2026-11-28 Edge Lab: cycle 1 results and ledger notes (cycle 2 in progress)",
+  "2026-11-28 Edge Lab: cycle 2 results; lighter dashboard; quieter forward log",
+  "2026-11-28 Edge Lab: forward verdict column; data through 2026-11-27",
+  "2026-11-28 Edge Lab: mistake x remedy atlas (2M cells: 40 ex-ante mistakes, pairs, triples x 162 composite remedies)",
+  "2026-11-28 Edge Lab: remove quadratic slowdowns (ledger cache, cf index, relation sets)",
+  "2026-11-28 Edge Lab: data through 2026-11-27, ledger records from interrupted cycle 3",
+  "2026-11-28 Edge Lab: store only replicated atlas cells, gzipped",
+  "2026-11-28 Edge Lab cycle 3: atlas results, holdout tests of replicated cells",
+  "2026-11-28 Bot loss anatomy: replay signals.py trades, dissect losers, anatomy notes in alerts (behaviour switches off)",
+  "2026-11-28 Edge Lab: cycle in progress (ledger, queue)",
+  "2026-11-28 Rename The Edge Lab -> Aurum (package aurum); HISTORY.json generator; skip external bot records in engine"
+ ]
+}
