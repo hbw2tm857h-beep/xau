@@ -155,6 +155,36 @@ a forward-test registry; H1 extended to 2026-11-23 from M15. 2,091 hypotheses ar
    * it does not survive the family-wise Reality Check.
    It is frozen in `store/frozen.json` and will be scored only on data after 2026-11-23. That forward score is the honest test.
 
+## Round 3: the mistake × remedy atlas (`atlas.py`, `remedies.py`)
+
+Every ex-ante mistake (40), every pair, and every triple with ≥40 discovery trades, crossed with **162 remedies**:
+5 entry fixes (as taken, wait 1 bar, wait 3 bars, wait for a confirming close, limit back at the signal-bar midpoint) ×
+4 stop fixes (planned, 1.5×, 2×, 2 ATR) × 8 exit fixes (1R/2R/3R targets, breakeven at +1R, 12h time exit, 2 ATR trail,
+3 ATR trail after +1R, half at 1R plus half trailed), plus skip and take-the-opposite. These are evaluated for all trades,
+longs, shorts and every setup × side. That is **2,035,040 cells** and about 11 million re-simulated trades, all counted as trials.
+
+| Question | Discovery | Validation (nothing re-fitted) |
+|---|---|---|
+| Does a remedy **improve** the trades carrying a mistake? | 82,145 BH survivors | 25,192 replicate (≈4,220 expected by luck); 71% sign agreement |
+| Does mistake + remedy become **profitable**? | 130,686 cells at p<0.05 (101,120 expected by luck) | 3,970 replicate (≈2,083 expected); **43% sign agreement, worse than a coin flip** |
+
+What it means:
+1. **Remedies are real, but they are defences.** For almost every mistake, the best remedy turns a −0.05 to −0.18R trade
+   into roughly breakeven in validation. It does not turn it into a winner.
+2. **Remedy ingredients, ranked by how often they help across all single-mistake cells:** waiting for a confirming close
+   (helps in 87% of cells, +0.07R), the 3 ATR trail switched on at +1R (79%, +0.05R) and the 2 ATR trail (77%).
+   **Waiting three bars hurts** (−0.06R): the signal's information decays fast. Wider stops are mixed.
+3. **Profit does not generalise.** Mistake combinations that looked profitable after a remedy in 2008-17 were more likely to
+   flip sign in 2018-21 than to repeat.
+4. **Holdout check.** The engine re-tested the 40 best replicated cells under its normal gates. 26 failed its discovery bar,
+   which is stricter than the atlas's. Of the 12 that reached the holdout, 6 were positive. A typical one is "chasing
+   (E1) + trend-following in chop (T3), remedied by confirming close + 2 ATR stop + 1R target": +0.07R, t≈1.7, n≈50.
+   Most were flat or negative in 2003-07. They are frozen for forward testing but are weak evidence.
+5. **The hindsight fix is almost always "take the opposite trade"** for after-the-fact diagnoses (false breakout, stop hunt,
+   wrong direction). It is useless as a rule, because the opposite trade loses just as reliably on average.
+6. With about 2 million trials now counted, the Reality Check over the engine's 2,931 hypotheses gives p = 0.32, and
+   nothing survives Romano-Wolf.
+
 ## Ongoing research (how the lab keeps running)
 
 ```

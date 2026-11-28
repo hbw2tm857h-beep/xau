@@ -4,6 +4,44 @@ Newest first. Written automatically by `python -m edgelab cycle`.
 
 
 
+## Cycle 2026-11-28 07:41 UTC
+
+- Data extended from 2026-11-26 23:00 to 2026-11-27 18:00 (+13 reconstructed trades).
+- +400 hypotheses tested (total 2,350; trials counted 2,045,721).
+- **validated**: LONG any setup when flag_E1 == True AND flag_S4 == True AND flag_S5 == True [exit: confirm|2x|t1r] (new)
+- **validated**: LONG any setup when flag_E1 == True AND flag_S5 == True [exit: confirm|2x|t1r] (new)
+- **validated**: LONG any setup when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_3atr_after_1r] (new)
+- **validated**: long or short any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r] (new)
+- **validated**: long or short any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r] (new)
+- **validated**: long or short any setup when flag_E1 == True AND flag_T3 == True [exit: confirm|atr2|t1r] (new)
+- **validated**: LONG breakout when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_3atr_after_1r] (new)
+- **validated**: SHORT any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r] (new)
+- **validated**: SHORT any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r] (new)
+- **weak_holdout**: long or short any setup when flag_E2 == True AND flag_V1 == True AND flag_R1 == True [exit: confirm|2x|t1r] (new)
+- **validated**: LONG breakout when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_2atr] (new)
+- **weak_holdout**: LONG any setup when flag_E1 == True AND flag_T3 == True [exit: confirm|atr2|t1r] (new)
+- **weak_holdout**: LONG any setup when flag_E1 == True AND flag_T1 == True AND flag_S5 == True [exit: confirm|1.5x|t1r] (new)
+- **weak_holdout**: LONG any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r] (new)
+- **weak_holdout**: LONG any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r] (new)
+- **weak_holdout**: LONG any setup when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_2atr] (new)
+- **validated**: LONG breakout when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: partial_1r_trail] (new)
+- **contradicted_holdout**: LONG any setup when flag_L2 == True AND flag_X2 == True AND flag_T2 == True [exit: opposite] (new)
+- **contradicted_holdout**: long or short any setup when flag_E2 == True AND flag_V1 == True [exit: confirm|2x|partial] (new)
+- **contradicted_holdout**: SHORT any setup when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_3atr_after_1r] (new)
+- **contradicted_holdout**: LONG any setup when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: partial_1r_trail] (new)
+- **contradicted_holdout**: SHORT session_breakout when rel_mtf_votes >= 1.0 AND rel_d_ext in [-0.808, 0.874) [exit: target_1r] (new)
+- Reality Check (studentised) p = 0.324; best: SHORT range_breakout when er10 >= 0.52 AND rel_mtf_votes >= 1.0 [exit: trail_3atr_after_1r]; Romano-Wolf survivors: 0.
+- Forward: LONG momentum_bar when session == asia -> n=2, avg R 0.479, accumulating (2/30 trades)
+- Forward: LONG momentum_bar when session == asia [exit: breakeven_1r] -> n=2, avg R 0.479, accumulating (2/30 trades)
+- Forward: LONG any setup when ml_sel == True [exit: trail_3atr_after_1r] -> n=3, avg R 0.316, accumulating (3/30 trades)
+
+Next in the queue:
+- LONG any setup when room_in_r_htf < 0.446 AND rel_mom24 in [0.851, 3.143) [exit: trail_3atr_after_1r]
+- LONG any setup when room_in_r_htf < 0.446 AND rel_mom24 in [0.851, 3.143) [exit: partial_1r_trail]
+- SHORT any setup when rel_ema20_slope in [0.424, 0.768) AND adx < 22.091 [exit: target_1r]
+- SHORT any setup when rel_ema20_slope in [0.424, 0.768) AND adx < 22.091 [exit: target_3r]
+- SHORT any setup when rel_ema20_slope in [0.424, 0.768) AND adx < 22.091 [exit: breakeven_1r]
+
 ## Cycle 2026-11-28 00:48 UTC
 
 - +150 hypotheses tested (total 1,950; trials counted 10,281).

@@ -431,5 +431,514 @@
   "status_at_freeze": "weak_holdout",
   "frozen_at": "2026-11-27 00:00:00",
   "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "Hacaf7066a6",
+  "spec": {
+   "setup": "*",
+   "direction": 0,
+   "conditions": [
+    {
+     "f": "flag_E1",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_T3",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "confirm|atr2|t1r",
+   "origin": "atlas",
+   "rationale": "Atlas cell replicated in validation: mistakes E1+T3 with remedy 'wait for confirming close \u00b7 2 ATR stop \u00b7 1R target' (disc EV +0.129, valid EV +0.317)."
+  },
+  "definition": "long or short any setup when flag_E1 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H5e4841d69f",
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "flag_E1",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_E4",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_T3",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "confirm|atr2|t1r",
+   "origin": "atlas",
+   "rationale": "Atlas cell replicated in validation: mistakes E1+E4+T3 with remedy 'wait for confirming close \u00b7 2 ATR stop \u00b7 1R target' (disc EV +0.193, valid EV +0.397)."
+  },
+  "definition": "LONG any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+  "status_at_freeze": "weak_holdout",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "Hab499604dd",
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "flag_E1",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_T3",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_R1",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "confirm|atr2|t1r",
+   "origin": "atlas",
+   "rationale": "Atlas cell replicated in validation: mistakes E1+T3+R1 with remedy 'wait for confirming close \u00b7 2 ATR stop \u00b7 1R target' (disc EV +0.190, valid EV +0.397)."
+  },
+  "definition": "LONG any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r]",
+  "status_at_freeze": "weak_holdout",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "Hca973b78f8",
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "flag_E1",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_T3",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "confirm|atr2|t1r",
+   "origin": "atlas",
+   "rationale": "Atlas cell replicated in validation: mistakes E1+T3 with remedy 'wait for confirming close \u00b7 2 ATR stop \u00b7 1R target' (disc EV +0.172, valid EV +0.397)."
+  },
+  "definition": "LONG any setup when flag_E1 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+  "status_at_freeze": "weak_holdout",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "Ha1b7886c9f",
+  "spec": {
+   "setup": "*",
+   "direction": 0,
+   "conditions": [
+    {
+     "f": "flag_E1",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_E4",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_T3",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "confirm|atr2|t1r",
+   "origin": "atlas",
+   "rationale": "Atlas cell replicated in validation: mistakes E1+E4+T3 with remedy 'wait for confirming close \u00b7 2 ATR stop \u00b7 1R target' (disc EV +0.191, valid EV +0.273)."
+  },
+  "definition": "long or short any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "Hca0be0a642",
+  "spec": {
+   "setup": "*",
+   "direction": 0,
+   "conditions": [
+    {
+     "f": "flag_E1",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_T3",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_R1",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "confirm|atr2|t1r",
+   "origin": "atlas",
+   "rationale": "Atlas cell replicated in validation: mistakes E1+T3+R1 with remedy 'wait for confirming close \u00b7 2 ATR stop \u00b7 1R target' (disc EV +0.190, valid EV +0.273)."
+  },
+  "definition": "long or short any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H0a6a27f620",
+  "spec": {
+   "setup": "*",
+   "direction": 0,
+   "conditions": [
+    {
+     "f": "flag_E2",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_V1",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_R1",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "confirm|2x|t1r",
+   "origin": "atlas",
+   "rationale": "Atlas cell replicated in validation: mistakes E2+V1+R1 with remedy 'wait for confirming close \u00b7 stop 2x wider \u00b7 1R target' (disc EV +0.245, valid EV +0.291)."
+  },
+  "definition": "long or short any setup when flag_E2 == True AND flag_V1 == True AND flag_R1 == True [exit: confirm|2x|t1r]",
+  "status_at_freeze": "weak_holdout",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H5a9e534909",
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "flag_E1",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_S4",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_S5",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "confirm|2x|t1r",
+   "origin": "atlas",
+   "rationale": "Atlas cell replicated in validation: mistakes E1+S4+S5 with remedy 'wait for confirming close \u00b7 stop 2x wider \u00b7 1R target' (disc EV +0.096, valid EV +0.150)."
+  },
+  "definition": "LONG any setup when flag_E1 == True AND flag_S4 == True AND flag_S5 == True [exit: confirm|2x|t1r]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "Hbdbfe6a4f5",
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "flag_E1",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_S5",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "confirm|2x|t1r",
+   "origin": "atlas",
+   "rationale": "Atlas cell replicated in validation: mistakes E1+S5 with remedy 'wait for confirming close \u00b7 stop 2x wider \u00b7 1R target' (disc EV +0.096, valid EV +0.150)."
+  },
+  "definition": "LONG any setup when flag_E1 == True AND flag_S5 == True [exit: confirm|2x|t1r]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H9cb62b44dd",
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "flag_E1",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_T1",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_S5",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "confirm|1.5x|t1r",
+   "origin": "atlas",
+   "rationale": "Atlas cell replicated in validation: mistakes E1+T1+S5 with remedy 'wait for confirming close \u00b7 stop 1.5x wider \u00b7 1R target' (disc EV +0.100, valid EV +0.166)."
+  },
+  "definition": "LONG any setup when flag_E1 == True AND flag_T1 == True AND flag_S5 == True [exit: confirm|1.5x|t1r]",
+  "status_at_freeze": "weak_holdout",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H8768ac0b1a",
+  "spec": {
+   "setup": "*",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "flag_E1",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_E4",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_T3",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "confirm|atr2|t1r",
+   "origin": "contradiction",
+   "rationale": "Directional asymmetry probe: same condition, other side.",
+   "parent": "H5e4841d69f"
+  },
+  "definition": "SHORT any setup when flag_E1 == True AND flag_E4 == True AND flag_T3 == True [exit: confirm|atr2|t1r]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H929f72d783",
+  "spec": {
+   "setup": "*",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "flag_E1",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_T3",
+     "op": "==",
+     "v": true
+    },
+    {
+     "f": "flag_R1",
+     "op": "==",
+     "v": true
+    }
+   ],
+   "exit": "confirm|atr2|t1r",
+   "origin": "contradiction",
+   "rationale": "Directional asymmetry probe: same condition, other side.",
+   "parent": "Hab499604dd"
+  },
+  "definition": "SHORT any setup when flag_E1 == True AND flag_T3 == True AND flag_R1 == True [exit: confirm|atr2|t1r]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H625faa35e4",
+  "spec": {
+   "setup": "breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema20_slope",
+     "op": "between",
+     "v": [
+      0.1414,
+      0.4659
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": "<",
+     "v": 2.3855
+    }
+   ],
+   "exit": "trail_2atr",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_2atr'.",
+   "parent": "Hfa730df4ba"
+  },
+  "definition": "LONG breakout when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_2atr]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "Hd3ac057c9f",
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema20_slope",
+     "op": "between",
+     "v": [
+      0.1414,
+      0.4659
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": "<",
+     "v": 2.3855
+    }
+   ],
+   "exit": "trail_2atr",
+   "origin": "mutation",
+   "rationale": "Does the condition generalise across all setups?",
+   "parent": "H625faa35e4"
+  },
+  "definition": "LONG any setup when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_2atr]",
+  "status_at_freeze": "weak_holdout",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "He80e22fbcb",
+  "spec": {
+   "setup": "breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema20_slope",
+     "op": "between",
+     "v": [
+      0.1414,
+      0.4659
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": "<",
+     "v": 2.3855
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
+   "parent": "Hfa730df4ba"
+  },
+  "definition": "LONG breakout when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_3atr_after_1r]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H04721e7b26",
+  "spec": {
+   "setup": "*",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema20_slope",
+     "op": "between",
+     "v": [
+      0.1414,
+      0.4659
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": "<",
+     "v": 2.3855
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Does the condition generalise across all setups?",
+   "parent": "He80e22fbcb"
+  },
+  "definition": "LONG any setup when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: trail_3atr_after_1r]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H3170d96787",
+  "spec": {
+   "setup": "breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_ema20_slope",
+     "op": "between",
+     "v": [
+      0.1414,
+      0.4659
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": "<",
+     "v": 2.3855
+    }
+   ],
+   "exit": "partial_1r_trail",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'partial_1r_trail'.",
+   "parent": "Hfa730df4ba"
+  },
+  "definition": "LONG breakout when rel_ema20_slope in [0.141, 0.466) AND dist_round50 < 2.385 [exit: partial_1r_trail]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 19:00:00",
+  "frozen_on": "2026-11-28"
  }
 ]
