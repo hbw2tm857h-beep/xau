@@ -428,7 +428,8 @@ function experiments() {
   ${rcPanel()}
   <div class="panel"><h3>Forward test (data after each hypothesis was frozen)</h3>${(D.forward||[]).length ? table(D.forward, [
     {label:"Hypothesis",k:"definition"},{label:"Frozen at",f:r=>String(r.frozen_at).slice(0,16)},{label:"n",num:1,f:r=>r.forward?r.forward.n:"–"},
-    {label:"Avg R",num:1,f:r=>r.forward?sgn(r.forward.avg_r):"–",cls:r=>r.forward?cls(r.forward.avg_r):""}]) : '<p class="note">Nothing frozen yet.</p>'}
+    {label:"Avg R",num:1,f:r=>r.forward?sgn(r.forward.avg_r):"–",cls:r=>r.forward?cls(r.forward.avg_r):""},
+    {label:"Verdict",html:1,f:r=>{const v=r.verdict||""; return `<span class="pill ${v==="forward_confirmed"?"good":v==="forward_failed"?"crit":"muted"}">${esc(v)}</span>`;}}]) : '<p class="note">Nothing frozen yet.</p>'}
     <p class="note">The only truly unseen data. Hypotheses are frozen at the last bar of the current data; refresh the price files and rerun to score them.</p></div>
   <div class="panel"><h3>Next experiments proposed by the engine</h3>${table(e.next, [{label:"Priority",num:1,f:r=>num(r.priority,0)},{label:"Origin",k:"origin"},{label:"Hypothesis",k:"description"},{label:"Why",k:"rationale"}])}</div>
   <div class="row"><label for="lg_q">Filter</label><input id="lg_q" placeholder="setup, status, feature…" size="30"></div>
