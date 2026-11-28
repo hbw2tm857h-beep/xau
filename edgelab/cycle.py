@@ -69,7 +69,7 @@ def _diff(prev: dict | None, cur: dict) -> list[str]:
             out.append("**A hypothesis now survives family-wise correction**: " + "; ".join(cur["rw"]))
     for hid, fw in cur["forward"].items():
         old = (prev.get("forward") or {}).get(hid, {})
-        if fw["n"] != old.get("n"):
+        if fw["n"] and fw["n"] != old.get("n"):
             out.append(f"Forward: {fw['def']} -> n={fw['n']}, avg R {fw['avg_r'] if fw['avg_r'] is None else round(fw['avg_r'], 3)}, "
                        f"{fw['verdict']}")
     for k, v in cur["taxonomy"].items():

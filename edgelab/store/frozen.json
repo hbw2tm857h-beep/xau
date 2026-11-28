@@ -252,5 +252,184 @@
   "status_at_freeze": "validated",
   "frozen_at": "2026-11-27 00:00:00",
   "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H6b18211303",
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "stop_1.5x",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'stop_1.5x'.",
+   "parent": "H3e89f10c1d"
+  },
+  "definition": "LONG momentum_bar when rel_mom12 >= 2.676 AND rel_usd_chg20 in [-0.006, 0.008) [exit: stop_1.5x]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 00:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "Hdb825bda16",
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_mom12",
+     "op": ">=",
+     "v": 2.676
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "confirm_close",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'confirm_close'.",
+   "parent": "H3e89f10c1d"
+  },
+  "definition": "LONG momentum_bar when rel_mom12 >= 2.676 AND rel_usd_chg20 in [-0.006, 0.008) [exit: confirm_close]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 00:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H16a211f268",
+  "spec": {
+   "setup": "range_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "adx",
+     "op": "<",
+     "v": 18.513
+    },
+    {
+     "f": "rel_h4_dist_ema20",
+     "op": "between",
+     "v": [
+      -0.2356,
+      0.7644
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.93, lift +0.388R on discovery."
+  },
+  "definition": "SHORT range_breakout when adx < 18.513 AND rel_h4_dist_ema20 in [-0.236, 0.764)",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 00:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H58c61f0bae",
+  "spec": {
+   "setup": "range_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "adx",
+     "op": "<",
+     "v": 18.513
+    },
+    {
+     "f": "rel_h4_dist_ema20",
+     "op": "between",
+     "v": [
+      -0.2356,
+      0.7644
+     ]
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_3r'.",
+   "parent": "H16a211f268"
+  },
+  "definition": "SHORT range_breakout when adx < 18.513 AND rel_h4_dist_ema20 in [-0.236, 0.764) [exit: target_3r]",
+  "status_at_freeze": "weak_holdout",
+  "frozen_at": "2026-11-27 00:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H1ace35ad69",
+  "spec": {
+   "setup": "range_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "adx",
+     "op": "<",
+     "v": 18.513
+    },
+    {
+     "f": "rel_h4_dist_ema20",
+     "op": "between",
+     "v": [
+      -0.2356,
+      0.7644
+     ]
+    }
+   ],
+   "exit": "confirm_close",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'confirm_close'.",
+   "parent": "H16a211f268"
+  },
+  "definition": "SHORT range_breakout when adx < 18.513 AND rel_h4_dist_ema20 in [-0.236, 0.764) [exit: confirm_close]",
+  "status_at_freeze": "validated",
+  "frozen_at": "2026-11-27 00:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "hyp_id": "H15c126f2c1",
+  "spec": {
+   "setup": "range_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "adx",
+     "op": "<",
+     "v": 18.513
+    },
+    {
+     "f": "rel_h4_dist_ema20",
+     "op": "between",
+     "v": [
+      -0.2356,
+      0.7644
+     ]
+    }
+   ],
+   "exit": "trail_2atr",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_2atr'.",
+   "parent": "H16a211f268"
+  },
+  "definition": "SHORT range_breakout when adx < 18.513 AND rel_h4_dist_ema20 in [-0.236, 0.764) [exit: trail_2atr]",
+  "status_at_freeze": "weak_holdout",
+  "frozen_at": "2026-11-27 00:00:00",
+  "frozen_on": "2026-11-28"
  }
 ]

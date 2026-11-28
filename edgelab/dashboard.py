@@ -98,6 +98,11 @@ def _distributions(lab) -> dict:
 
 def build(R: dict, lab) -> str:
     payload = {k: R[k] for k in R}
+    # keep the page light as the ledger grows: every validated/holdout-scored card + the 40 strongest others
+    ds = R.get("discoveries", [])
+    keep = [d for d in ds if d.get("holdout_revealed")]
+    keep += [d for d in ds if not d.get("holdout_revealed")][:40]
+    payload["discoveries"] = sorted(keep, key=lambda d: -d.get("evidence_score", 0))
     payload["inspect"] = _inspect_payload(lab, R)
     payload["regime_series"] = _regime_series(lab)
     payload["dist"] = _distributions(lab)
