@@ -42,11 +42,14 @@ SYNONYMS = {
                   "open_time", "entry date", "date/time open", "time"],
     "close_time": ["close time", "closing time", "exit time", "time close", "close date", "date closed", "closed",
                    "close_time", "exit date"],
-    "direction": ["type", "side", "direction", "action", "opening direction", "buy/sell", "position"],
+    "direction": ["type", "side", "direction", "action", "opening direction", "buy/sell"],
     "entry": ["open price", "entry price", "price open", "opening price", "entry", "open", "price"],
     "exit": ["close price", "exit price", "closing price", "price close", "exit", "close"],
-    "stop": ["initial stop", "initial_stop", "s/l", "s / l", "sl", "stop", "stop loss", "stoploss"],
-    "target": ["t/p", "t / p", "tp", "take profit", "target"],
+    "stop": ["initial sl", "initial stop", "initial_stop", "s/l", "s / l", "sl", "stop", "stop loss", "stoploss"],
+    "target": ["initial tp", "t/p", "t / p", "tp", "take profit", "target"],
+    "magic": ["magic", "magic number", "expert id"],
+    "broker_id": ["position", "position id", "ticket", "order", "deal"],
+    "server_offset": ["server utc offset h"],
     "volume": ["volume", "size", "lots", "quantity", "qty", "closing quantity", "amount"],
     "pnl": ["profit", "pnl", "p&l", "net profit", "net usd", "realized pnl", "gross profit", "net", "result"],
     "commission": ["commission", "fees", "fee"],
@@ -199,7 +202,7 @@ def read_file(path: Path) -> pd.DataFrame:
         return from_mt5_report(path)          # MT5 'Report -> Excel' has a title block above the table
     if "trade #" in cols:
         return from_tradingview(df, path)
-    src = "manual" if path.name.startswith("manual") else "csv"
+    src = "manual" if path.name.startswith("manual") else ("aurum_export" if "initial sl" in cols else "csv")
     return from_generic(df, src, path)
 
 
@@ -232,6 +235,12 @@ def normalise(raw: pd.DataFrame) -> pd.DataFrame:
     o["symbol"] = o["symbol"].fillna("XAUUSD").astype(str)
     o = o[o["symbol"].str.contains(GOLD)]
     o = o.dropna(subset=["open_time", "direction", "entry"])
+    # who placed it: magic 0 = by hand, anything else = an expert advisor
+    if "magic" in o:
+        mg = pd.to_numeric(o["magic"], errors="coerce")
+        o["placed_by"] = np.where(mg.isna(), "unknown", np.where(mg == 0, "manual", "ea:" + mg.fillna(0).astype("int64").astype(str)))
+    else:
+        o["placed_by"] = "unknown"
     # stop quality
     kind = o["stop_kind"].fillna("initial")
     has = o["stop"].notna() & (o["stop"] > 0)
@@ -303,13 +312,18 @@ def ingest(paths: list[Path] | None = None, tz_offset: float | None = None, verb
             raw = read_file(p)
             n_raw = len(raw)
             t = normalise(raw)
-            off, info = (tz_offset, {"best_offset_h": tz_offset, "match_rate": None, "forced": True}) \
-                if tz_offset is not None else align_clock(t, m15)
+            if tz_offset is not None:
+                off, info = tz_offset, {"best_offset_h": tz_offset, "match_rate": None, "forced": True}
+            else:
+                off, info = align_clock(t, m15)
+                if "server_offset" in t and t["server_offset"].notna().any():
+                    info["exporter_reported_offset_h"] = float(pd.to_numeric(t["server_offset"], errors="coerce").dropna().iloc[0])
             for c in ("open_time", "close_time"):
                 t[c] = _to_utc(t[c], off)
             t["tz_offset_h"] = off
             frames.append(t)
             report["files"].append({"file": p.name, "rows": n_raw, "gold_trades": len(t), "clock": info,
+                                    "placed_by": t["placed_by"].value_counts().to_dict(),
                                     "stops": t["stop_kind"].value_counts().to_dict(),
                                     "warning": None if (info.get("match_rate") or 1) >= 0.7 else
                                     "Low price/candle match: check the symbol, the time zone or the price feed."})

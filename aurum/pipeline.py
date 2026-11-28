@@ -20,7 +20,7 @@ from .taxonomy import flag_trades, category_stats, category_table, M as MISTAKES
 from .comparison import lookalike_pairs, compare_pairs, replication
 from .discovery import scan, pair_scan, walk_forward_ml
 from .experiments import Engine
-from .ledger import Ledger, legacy_trial_count
+from .ledger import Ledger, legacy_trial_count, EXTERNAL_ORIGINS
 from . import behaviour as B
 from .stats import summarise, jsonable
 
@@ -192,7 +192,7 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     seen, fam = set(), []
     for rec in led.records():
         if rec.get("split") == "discovery" and rec.get("hyp_id") not in seen and rec.get("spec") \
-                and rec.get("origin") != "bot":
+                and rec.get("origin") not in EXTERNAL_ORIGINS:
             seen.add(rec["hyp_id"]); fam.append(rec["spec"])
     fam += [scan_to_spec(r) for _, r in sc.head(600).iterrows()]
     X, keep = daily_matrix(T, cf_ext, fam)

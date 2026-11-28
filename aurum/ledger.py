@@ -19,6 +19,9 @@ from .config import STORE, ROOT
 from .stats import jsonable, benjamini_hochberg
 
 LEDGER = STORE / "experiments.jsonl"
+# Records scored outside the engine (their specs are not engine-replayable): bot rules, bot transfer
+# candidates, personal tests. They stay in the ledger and the trial counts, but the engine never re-runs them.
+EXTERNAL_ORIGINS = {"bot", "bot_transfer", "personal"}
 DISCOVERIES = STORE / "discoveries.json"
 
 

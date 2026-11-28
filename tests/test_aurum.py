@@ -104,3 +104,8 @@ def test_every_setup_has_unique_trade_code():
     from aurum.setups import SETUPS
     from aurum.trades import CODE
     assert set(SETUPS) <= set(CODE) and len(set(CODE.values())) == len(CODE)
+
+
+def test_external_records_are_not_replayed_by_the_engine():
+    from aurum.ledger import EXTERNAL_ORIGINS
+    assert {"bot", "bot_transfer", "personal"} <= EXTERNAL_ORIGINS

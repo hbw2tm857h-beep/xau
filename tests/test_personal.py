@@ -58,3 +58,16 @@ def test_screenshot_rows_need_confirmation():
                         "entry": [2000, 2001], "source": ["screenshot:a.png", "manual"], "confirmed": ["", ""]})
     t = normalise(raw)
     assert list(t["confirmed"]) == [False, True]
+
+
+def test_aurum_export_format(tmp_path):
+    from aurum.ingest import read_file
+    p = tmp_path / "aurum_history.csv"
+    p.write_text("Position,Symbol,Type,Volume,Open Time,Open Price,Initial SL,Initial TP,Close Time,Close Price,"
+                 "Profit,Commission,Swap,Magic,Comment,Server UTC Offset h\n"
+                 "1001,XAUUSD,sell,0.10,2026.11.03 14:20:05,2650.12,2655.00,2640.00,2026.11.03 15:01:10,2645.10,50.2,0,0,0,,2.0\n"
+                 "1002,XAUUSD,buy,0.10,2026.11.04 09:00:00,2660.00,2655.00,,2026.11.04 10:00:00,2655.00,-50,0,0,261114,EA,2.0\n")
+    t = normalise(read_file(p))
+    assert list(t["placed_by"]) == ["manual", "ea:261114"]
+    assert list(t["stop_kind"]) == ["initial", "initial"] and t.iloc[0]["stop"] == 2655.0
+    assert t.iloc[0]["direction"] == -1

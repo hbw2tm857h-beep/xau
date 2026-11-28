@@ -20,7 +20,7 @@ import pandas as pd
 
 from .config import STORE
 from .hypothesis import evaluate, full_report, mask, describe
-from .ledger import Ledger, hyp_id
+from .ledger import Ledger, hyp_id, EXTERNAL_ORIGINS
 from .stats import jsonable
 from .setups import SETUPS
 
@@ -427,7 +427,7 @@ class Engine:
         last = {}
         for r in self.ledger.records():
             # "bot" records are rules scored outside the engine (bot_anatomy.py); they have no engine exit
-            if r.get("hyp_id") and r.get("status") not in ("robustness_check",) and r.get("origin") != "bot":
+            if r.get("hyp_id") and r.get("status") not in ("robustness_check",) and r.get("origin") not in EXTERNAL_ORIGINS:
                 last[r["hyp_id"]] = r
         holdout_seen = {r["hyp_id"] for r in self.ledger.records() if r.get("split") == "holdout"}
         out = []

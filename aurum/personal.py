@@ -465,6 +465,15 @@ def run(lab, R: dict, source_path=None, label: str = "owner") -> dict:
     u = pd.read_csv(path, parse_dates=["open_time", "close_time"])
     if not len(u):
         return {"status": "no_data"}
+    # the goal is the owner's DISCRETIONARY edge: analyse hand-placed trades when the export says who placed them
+    placed = u["placed_by"].fillna("unknown") if "placed_by" in u else pd.Series("unknown", index=u.index)
+    placed_counts = placed.value_counts().to_dict()
+    if (placed == "manual").sum() >= 30:
+        u = u[placed == "manual"].reset_index(drop=True)
+        scope = "manual trades only (expert-advisor trades excluded)"
+    else:
+        scope = "all trades (the export does not separate manual from EA trades)" if (placed == "unknown").all() \
+            else "all trades (fewer than 30 manual trades)"
     T = reconstruct(u, lab.f, lab.path)
     if len(T) < 10:
         return {"status": "too_few_trades", "n": len(T)}
@@ -497,7 +506,7 @@ def run(lab, R: dict, source_path=None, label: str = "owner") -> dict:
     by_side = {s: fp.merge(T[["trade_id", "direction"]], on="trade_id").query("direction == @d")["primary"]
                .value_counts(normalize=True).round(3).to_dict() for s, d in (("short", -1), ("long", 1))}
     rep = {
-        "status": "ok", "label": label, "n": len(T),
+        "status": "ok", "label": label, "n": len(T), "scope": scope, "placed_by": placed_counts,
         "date_range": [str(T["open_time"].min()), str(T["open_time"].max())],
         "r_basis": T["r_basis"].value_counts().to_dict(),
         "summary": summarise(T["r"]), "by_half": {sp: summarise(g["r"]) for sp, g in T.groupby("p_split")},
