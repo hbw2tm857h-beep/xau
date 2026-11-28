@@ -223,6 +223,14 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
                         "why_sells_lose": PF.why_sells_lose(base, cf).to_dict("records"),
                         "template": PF.TEMPLATE}
 
+    # ------------------------------------------------------------- the live bot's own trades
+    try:
+        from .bot_anatomy import report as bot_report
+        R["bot"] = bot_report(lab)
+    except Exception as e:  # the bot study must never stop a cycle
+        R["bot"] = {"error": str(e)}
+        print(f"[bot] anatomy failed: {e}")
+
     # ------------------------------------------------------------- audits
     audit_p = STORE / "leakage_audit.json"
     R["audit"] = json.loads(audit_p.read_text()) if audit_p.exists() else None

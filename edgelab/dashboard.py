@@ -263,7 +263,7 @@ const statusPill = s => {
 const TABS = [
   ["overview","Overview"],["setups","Setups"],["mistakes","Mistake taxonomy"],["atlas","Mistake × remedy"],["counterfactuals","Counterfactuals"],
   ["lookalikes","Look-alikes"],["events","Event studies"],["behaviour","Market behaviour"],["discoveries","Discoveries"],
-  ["experiments","Experiments"],["profile","Edge profile"],["inspector","Trade inspector"]];
+  ["experiments","Experiments"],["bot","Your bot"],["profile","Edge profile"],["inspector","Trade inspector"]];
 const R = {};
 
 function overview() {
@@ -630,6 +630,46 @@ function experimentsAfter() {
   $("#lg_q").oninput = draw; draw();
 }
 
+function botView() {
+  const B = D.bot; if (!B || B.error) return `<h2>Your bot</h2><p class="lead">Not available${B&&B.error?": "+esc(B.error):""}.</p>`;
+  const E = B.early, rules = Object.entries(B.rules||{});
+  return `<h2>Anatomy of your bot's losing trades</h2>
+  <p class="lead">The bot's own code (signals.py: trend, 4-hour trend, inside-day) replayed over ${B.n_trades.toLocaleString()} trades since 2008, dissected with the lab's tools. Design views use 2008-2021 only.</p>
+  <div class="callout note"><b>The essence of a loss:</b> before entry, your losers look like your winners: ${B.ex_ante_replicated} of the lab's 40 context features separate them in both periods. The difference shows up after entry: ${pct(E.losers.share_never_half_r)} of losers never reach +0.5R, against ${pct(E.winners.share_never_half_r)} of winners. But cutting slow starters early <i>lowered</i> expectancy in every version tested, because slow starters still win often.</div>
+  <div class="grid">
+    <div class="panel"><h3>How losses happen</h3><div id="bot_types" class="chart" style="min-height:300px"></div></div>
+    <div class="panel"><h3>Win rate by progress after 3 hours</h3><div id="bot_early" class="chart" style="min-height:300px"></div>
+      <p class="note">This is what the optional "3 hours in" alert reports. Turn it on with <span class="mono">anatomy_progress: True</span> in signals.py.</p></div>
+  </div>
+  <div class="panel"><h3>Warning signs on the bot's trades (ex-ante mistakes, ≥30 trades)</h3>${table(B.flags.slice(), [
+    {label:"Mistake",f:r=>`<b>${esc(r.id)}</b> ${esc(r.name)}`,html:1},{label:"n 2008-17",num:1,k:"discovery_n"},
+    {label:"Δ R 2008-17",num:1,f:r=>sgn(r.delta_disc),cls:r=>cls(r.delta_disc),sort:r=>r.delta_disc},
+    {label:"n 2018-21",num:1,k:"validation_n"},{label:"Δ R 2018-21",num:1,f:r=>sgn(r.delta_valid),cls:r=>cls(r.delta_valid)}])}
+    <p class="note">Δ R = average R of flagged trades minus unflagged ones. Only "timeframes disagree" (T2) is negative in both periods for all three strategies; it is the warning sign the bot now prints on its setup alerts.</p></div>
+  <div class="panel"><h3>Remedies tested on the bot (pre-declared; holdout looked at once)</h3>${table(rules.map(([k,v])=>({k,...v})), [
+    {label:"Rule",k:"k"},
+    {label:"2008-17",num:1,f:r=>sgn(r.discovery.delta)+" (t "+num(r.discovery.t,1)+")",cls:r=>cls(r.discovery.delta)},
+    {label:"2018-21",num:1,f:r=>sgn(r.validation.delta)+" (t "+num(r.validation.t,1)+")",cls:r=>cls(r.validation.delta)},
+    {label:"2022-26",num:1,f:r=>sgn(r.holdout.delta)+" (t "+num(r.holdout.t,1)+")",cls:r=>cls(r.holdout.delta)},
+    {label:"Max DD before → after (2022-26)",num:1,f:r=>num(r.holdout.old_dd,1)+" → "+num(r.holdout.new_dd,1)}])}
+    <p class="note">None is strong enough to change the live trading rules yet, so they are built in but off (<span class="mono">anatomy_skip_h4_conflict</span>) or documented only (trailing exits). The forward split decides.</p></div>
+  <div class="panel"><h3>Forward check (bot trades after ${esc(String(B.forward_from).slice(0,10))})</h3>${(B.forward||[]).length?table(B.forward,[
+    {label:"Strategy",k:"strategy"},{label:"Trades",num:1,k:"n"},{label:"Flagged",num:1,k:"flagged_n"},
+    {label:"Avg R flagged",num:1,f:r=>sgn(r.flagged_avg_r),cls:r=>cls(r.flagged_avg_r)},{label:"Avg R clean",num:1,f:r=>sgn(r.clean_avg_r),cls:r=>cls(r.clean_avg_r)}]):'<p class="note">No closed bot trades in the forward period yet.</p>'}</div>`;
+}
+function botAfter() {
+  const B = D.bot; if (!B || B.error) return;
+  const lt = B.loss_types;
+  plot("bot_types", [{type:"bar", orientation:"h", y:lt.map(x=>x.type).reverse(), x:lt.map(x=>x.share).reverse(), marker:{color:css("--neg")},
+    customdata:lt.map(x=>[x.n, x.avg_r]).reverse(), hovertemplate:"%{y}: %{x:.0%} of losses · n=%{customdata[0]} · avg %{customdata[1]:.2f}R<extra></extra>"}],
+    {margin:{l:260,r:10,t:10,b:36}, xaxis:{tickformat:".0%"}});
+  const S = (B.model||{}).strategies || {}, names = Object.keys(S);
+  plot("bot_early", names.map((s,i) => ({type:"bar", name:s, x:S[s].by_mfe3h.map(b=>b.hi>50?">1R":"≤"+b.hi+"R"), y:S[s].by_mfe3h.map(b=>b.win),
+    marker:{color:[css("--long"),css("--short"),css("--gold")][i%3]}, customdata:S[s].by_mfe3h.map(b=>[b.n,b.avg_r]),
+    hovertemplate:"best so far %{x}: won %{y:.0%} · n=%{customdata[0]} · avg %{customdata[1]:+.2f}R<extra>"+s+"</extra>"})),
+    {barmode:"group", yaxis:{tickformat:".0%", title:"win rate", range:[0,1]}, xaxis:{title:"best excursion in the first 3 hours"}});
+}
+
 function profile() {
   const P = D.profile;
   const src = P.source === "personal" ? `<p class="lead">Profile built from ${P.n} of your own trades.</p>` :
@@ -733,7 +773,7 @@ function show() {
 
 const VIEWS = {overview:[overview,overviewAfter], setups:[setups,setupsAfter], mistakes:[mistakes,mistakesAfter],
   atlas:[atlasView,atlasAfter], counterfactuals:[counterfactuals,counterfactualsAfter], lookalikes:[lookalikes,null], behaviour:[behaviour,behaviourAfter],
-  discoveries:[discoveries,discoveriesAfter], experiments:[experiments,experimentsAfter], profile:[profile,null], inspector:[inspector,inspectorAfter]};
+  discoveries:[discoveries,discoveriesAfter], experiments:[experiments,experimentsAfter], bot:[botView,botAfter], profile:[profile,null], inspector:[inspector,inspectorAfter]};
 function route() {
   const id = (location.hash||"#overview").slice(1); const key = VIEWS[id] ? id : "overview";
   $("#tabs").innerHTML = TABS.map(([k,l]) => `<a href="#${k}" class="${k===key?'on':''}">${l}</a>`).join("");

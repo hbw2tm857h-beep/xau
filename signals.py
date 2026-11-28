@@ -127,6 +127,12 @@ CONFIG = {
     # its high and a sell-stop at its low (one cancels the other), stop at the
     # other side, and close at the next daily close. Runs alongside the trend
     # setups with its own alerts and its own line in the scorecard.
+    # Loss anatomy (edgelab/bot_anatomy.py). Notes only add information to alerts; the two
+    # behaviour switches stay off until forward results confirm them (see edgelab/README.md).
+    "anatomy_notes": True,              # warning-sign line on setup alerts + flags saved in the journal
+    "anatomy_progress": False,          # post a "3 hours in" progress note with historical win rates
+    "anatomy_skip_h4_conflict": False,  # research candidate: skip 4H setups when H1/4H/daily trends disagree
+    "anatomy_model": "edgelab/store/bot_anatomy_model.json",
     "inside_day": True,
     "inside_day_risk_mult": 0.5,  # size at half the normal risk: the two together had the best return per drawdown
     "inside_day_track_record": "Tested 2008-2026: 726 trades, 49% winners, +0.10R per trade after costs",
@@ -674,6 +680,85 @@ def nearest_below(levels, p):
 # --------------------------------------------------------------------------
 # Features: everything the rules need, computed once, no look-ahead
 # --------------------------------------------------------------------------
+# --------------------------------------------------------------------------
+# Loss anatomy: what the lab learned about this bot's losing trades
+# --------------------------------------------------------------------------
+_ANATOMY = {}
+
+
+def anatomy_model(cfg):
+    path = cfg.get("anatomy_model")
+    if path not in _ANATOMY:
+        try:
+            with open(path) as f:
+                _ANATOMY[path] = json.load(f)
+        except (OSError, ValueError, TypeError):
+            _ANATOMY[path] = None
+    return _ANATOMY[path]
+
+
+def _ema_pair(values, fast, slow):
+    a, b = ema_last(values, fast), ema_last(values, slow)
+    return None if a is None or b is None else (1 if a > b else (-1 if a < b else 0))
+
+
+def anatomy_flags(F, i):
+    """Warning signs known at the close of H1 bar i (same definitions as the lab's taxonomy).
+
+    tf_conflict (lab mistake T2): the H1 trend (EMA20 vs EMA50), the 4H trend (EMA20 vs EMA50)
+    and the daily trend (EMA50 now vs 10 days ago) do not all point the same way.
+    """
+    h1c = [b["c"] for b in F.h1[max(0, i - 600):i + 1]]
+    k4 = F.h4_idx[i]
+    h4c = [x["c"] for x in F.h4[max(0, k4 - 300):k4 + 1]] if k4 >= 0 else []
+    kd = F.d_idx[i]
+    dc = [x["c"] for x in F.daily[max(0, kd - 400):kd + 1]] if kd >= 0 else []
+    h1t, h4t = _ema_pair(h1c, 20, 50), _ema_pair(h4c, 20, 50)
+    e_now, e_then = ema_last(dc, 50), ema_last(dc[:-10], 50)
+    dt = None if e_now is None or e_then is None else (1 if e_now > e_then else (-1 if e_now < e_then else 0))
+    if None in (h1t, h4t, dt):
+        return None
+    return {"tf_conflict": not (h1t == h4t == dt and h1t != 0), "h1": h1t, "h4": h4t, "d1": dt}
+
+
+def anatomy_note(idea, cfg):
+    """One line for the setup alert: the warning sign and what it has meant historically."""
+    a, model = idea.get("anatomy"), anatomy_model(cfg)
+    if not a or not model or cfg.get("market_name"):   # the statistics are for gold only
+        return None
+    s = (model.get("strategies") or {}).get(idea.get("strategy", "trend")) or {}
+    if not a.get("tf_conflict"):
+        clean = s.get("clean") or {}
+        return (f"-# Anatomy check: hourly, 4-hour and daily trends agree. Since 2008 this setup made "
+                f"{clean.get('avg_r', 0):+.2f}R on average when they agreed ({clean.get('n', 0)} trades).")
+    fl, cl = s.get("flagged") or {}, s.get("clean") or {}
+    return (f"-# Anatomy check: hourly, 4-hour and daily trends disagree. Since 2008 these setups made "
+            f"{fl.get('avg_r', 0):+.2f}R on average ({fl.get('n', 0)} trades) vs {cl.get('avg_r', 0):+.2f}R "
+            f"when they agreed. Still a valid setup; size it with that in mind.")
+
+
+def anatomy_progress(F, i, idea, cfg):
+    """'Is it working?' note 3 H1 bars after the fill (fill bar + 2), or None."""
+    model = anatomy_model(cfg)
+    if not model or not idea or not idea.get("triggered") or not idea.get("entry_time"):
+        return None
+    fill_close = datetime.fromisoformat(idea["entry_time"])
+    due = fill_close + 2 * H1                     # fill bar + 2 bars; fires once, on the first bar at/after it
+    if F.close_time(i) < due or (i > 0 and F.close_time(i - 1) >= due):
+        return None
+    d, e0 = idea["dir"], idea["entry"]
+    risk = idea.get("risk") or abs(idea["entry"] - idea["stop"])
+    bars = [b for b in F.h1[max(0, i - 6):i + 1] if b["t"] + H1 >= fill_close]
+    best = max((b["h"] - e0) if d == 1 else (e0 - b["l"]) for b in bars) / risk
+    s = (model.get("strategies") or {}).get(idea.get("strategy", "trend")) or {}
+    row = next((x for x in s.get("by_mfe3h", []) if x["lo"] < best <= x["hi"]), None)
+    if not row:
+        return None
+    return (f"## Gold · {side_word(d)} · 3 hours in\nBest so far: *{best:+.2f}R*. Trades at this stage have won "
+            f"{row['win']:.0%} of the time since 2008 (average {row['avg_r']:+.2f}R, {row['n']} trades).\n"
+            "-# Don't cut it early: the lab found that closing slow starters loses more than it saves.")
+
+
 class Features:
     def __init__(self, h1, cfg):
         self.h1, self.cfg = h1, cfg
@@ -1643,7 +1728,8 @@ def card(e, cfg, sizing):
             f"*Entry:* {px(idea['entry'])}{lots_bit(idea.get('risk', 0))}",
             f"*Stop loss:* {px(idea['stop'])}",
             *targets(),
-            f"-# Valid for {hours} hours. We'll post when it fills, or tell you to delete it."])
+            f"-# Valid for {hours} hours. We'll post when it fills, or tell you to delete it.",
+            *([n] if (cfg.get("anatomy_notes") and (n := anatomy_note(idea, cfg))) else [])])
     if base == "entry":
         return "\n".join([
             f"## Gold · {tag}{sw} filled",
@@ -1660,7 +1746,8 @@ def card(e, cfg, sizing):
             f"*Buy-stop:* {px(hi)}, stop loss {px(lo)}{lots_bit(abs(hi - lo))}",
             f"*Sell-stop:* {px(lo)}, stop loss {px(hi)}",
             "-# When one fills, delete the other. There's no take-profit: the trade closes at the daily close "
-            "(usually 22:00 UK). Delete both if neither fills by then."])
+            "(usually 22:00 UK). Delete both if neither fills by then.",
+            *([n] if (cfg.get("anatomy_notes") and (n := anatomy_note(dict(idea, strategy="inside_day"), cfg))) else [])])
     if base == "ib_entry":
         return "\n".join([
             f"## Gold · {sw} filled",
@@ -1863,6 +1950,7 @@ def journal_add(journal, e):
         "exit_time": e["t"].isoformat(), "dir": idea["dir"], "grade": idea.get("grade"),
         "entry": idea["entry"], "exit": round(e["price"], 2), "r": round(e["r"], 3),
         "how": e["type"], "strategy": idea.get("strategy", "trend"),
+        **({"anatomy": idea["anatomy"]} if idea.get("anatomy") else {}),
     })
 
 
@@ -3305,6 +3393,24 @@ def event_alert(e, state, cfg, sizing, tier, now, nursery):
     return None
 
 
+def anatomy_tag(F, i, state, evs, cfg):
+    """Attach warning signs to new setups (state + event), and optionally drop conflicted 4H setups."""
+    out = []
+    for e in evs:
+        if e["type"] in ("signal", "h4_signal", "ib_signal"):
+            a = anatomy_flags(F, i)
+            key = {"signal": "idea", "h4_signal": "h4", "ib_signal": "ib"}[e["type"]]
+            if a is not None:
+                e["idea"]["anatomy"] = a
+                if state.get(key) and state[key].get("sig_time") == e["idea"].get("sig_time"):
+                    state[key]["anatomy"] = a
+            if e["type"] == "h4_signal" and cfg.get("anatomy_skip_h4_conflict") and a and a["tf_conflict"]:
+                state[key] = None
+                continue
+        out.append(e)
+    return out
+
+
 def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nursery=None):
     out = []
     if nursery is None:
@@ -3343,6 +3449,8 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
         before = state_label(state)
         evs = (step(F, i, state, cfg, news) + ib_step(F, i, state, cfg)
                + h4_step(F, i, state, cfg))
+        if (cfg.get("anatomy_notes") or cfg.get("anatomy_skip_h4_conflict")) and not cfg.get("market_name"):
+            evs = anatomy_tag(F, i, state, evs, cfg)
         led.append(ledger_row(F, i, cfg, evs, before, "live"))
         for e in evs:
             if e["type"] in ("exit", "stop", "target", "ib_stop", "ib_close",
@@ -3381,6 +3489,11 @@ def run_live(state, journal, h1_raw, now, cfg, sizing=None, news_fn=None, nurser
             m = event_alert(e, state, cfg, sizing, tier, now, nursery)
             if m:
                 out.append(m)
+        if cfg.get("anatomy_progress") and not cfg.get("market_name"):
+            for key in ("idea", "h4", "ib"):
+                note = anatomy_progress(F, i, state.get(key), cfg)
+                if note and not (state.get(key) or {}).get("unannounced"):
+                    out.append(Msg(note, (state.get(key) or {}).get("strategy", "trend")))
     if dropped:
         name = cfg.get("market_name", "Gold")
         out.append(Msg(f":fast_forward: *{name}: {len(dropped)} late trade{'s' if len(dropped) != 1 else ''} not posted.* "

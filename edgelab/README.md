@@ -185,6 +185,40 @@ What it means:
 6. With about 2 million trials now counted, the Reality Check over the engine's 2,931 hypotheses gives p = 0.32, and
    nothing survives Romano-Wolf.
 
+## Round 4: anatomy of the live bot's losing trades (`bot_anatomy.py`)
+
+`signals.py` is replayed with its own code (trend, 4-hour trend and inside-day strategies: 1,968 trades since 2008,
+the same counts the bot publishes). The lab then dissects every trade.
+
+**Findings (2008-2021 only; the holdout was opened once, for the three pre-declared rules):**
+1. **Before entry, the bot's losers look like its winners.** None of the lab's 40 context features separates them in
+   both periods. The bot's own rules already remove the visible mistakes. The one warning sign that is negative in both
+   periods for all three strategies is **timeframes disagreeing** (H1, 4-hour and daily trends not aligned, lab mistake T2):
+   trend +0.07R vs +0.19R when aligned, 4-hour trend −0.09R vs +0.16R, inside-day +0.07R vs +0.12R.
+2. **The essence of a loss is that it never gets going.** 68% of losers never reach +0.5R, against 4% of winners.
+   Progress after 3 hours is strongly informative: a trend trade below +0.25R wins 46% of the time, while one above +1R wins 97%.
+3. **But "cut it if it isn't working" is the wrong remedy.** Early exits lowered expectancy in all 18 versions tested
+   (t ≈ −2.5 to −3.8 in 2008-17). Slow starters still win often, and exiting locks in about −0.3R.
+4. **How losses happen:** 52% move a little and then reverse, 42% never work at all, and only 2% are stop hunts.
+5. **Remedies scored once on the 2022-26 holdout:**
+   - trail the whole trend trade at 3 ATR after +1R: +0.06 / +0.09 / +0.02R;
+   - the same for inside-day: +0.02 / +0.05 / +0.10R (t 2.0);
+   - skip conflicted 4-hour setups: +0.01 / +0.12 / −0.04R, with less drawdown.
+
+   All are positive or neutral, and none is strong enough to change live trading without forward evidence.
+
+**What the bot now does (signals.py)**
+* `anatomy_notes: True`: every gold setup alert ends with one line saying whether the H1, 4-hour and daily trends agree,
+  and what that has meant for that strategy since 2008. The flags are saved with each trade in `journal.json`, so their
+  live value is measured. The stdlib implementation matches the lab's definition on 99.9% of 1,925 historical signals.
+* `anatomy_progress: False` (opt-in): a "3 hours in" note giving the best excursion so far and the historical win rate at
+  that stage, with an explicit "don't cut it early".
+* `anatomy_skip_h4_conflict: False` (research candidate): skip 4-hour setups when timeframes disagree. Turn it on only if
+  the forward results in the dashboard's "Your bot" tab support it.
+* The trading rules are unchanged. These changes only take effect on `main`, because the hourly workflow runs from there.
+
+Each research cycle re-scores all of this on new trades (forward section of the "Your bot" tab).
+
 ## Ongoing research (how the lab keeps running)
 
 ```

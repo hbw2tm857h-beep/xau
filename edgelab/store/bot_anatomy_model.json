@@ -1,0 +1,236 @@
+{
+ "built_from": "2008-03-26 .. 2021-12-31 (discovery + validation)",
+ "definition": "tf_conflict = H1 EMA20/50, 4H EMA20/50 and daily EMA50 10-day slope do not all agree (lab mistake T2)",
+ "strategies": {
+  "h4_trend": {
+   "flagged": {
+    "n": 168,
+    "win": 0.47024,
+    "avg_r": -0.09317
+   },
+   "clean": {
+    "n": 215,
+    "win": 0.5814,
+    "avg_r": 0.16268
+   },
+   "all": {
+    "n": 383,
+    "win": 0.53264,
+    "avg_r": 0.05045
+   },
+   "by_mfe3h": [
+    {
+     "lo": -99.0,
+     "hi": 0.25,
+     "n": 256,
+     "win": 0.48047,
+     "avg_r": -0.04069
+    },
+    {
+     "lo": 0.25,
+     "hi": 0.5,
+     "n": 72,
+     "win": 0.54167,
+     "avg_r": 0.06167
+    },
+    {
+     "lo": 0.5,
+     "hi": 1.0,
+     "n": 41,
+     "win": 0.70732,
+     "avg_r": 0.3237
+    },
+    {
+     "lo": 1.0,
+     "hi": 99.0,
+     "n": 14,
+     "win": 0.92857,
+     "avg_r": 0.85924
+    }
+   ]
+  },
+  "inside_day": {
+   "flagged": {
+    "n": 313,
+    "win": 0.48243,
+    "avg_r": 0.06805
+   },
+   "clean": {
+    "n": 245,
+    "win": 0.47755,
+    "avg_r": 0.12009
+   },
+   "all": {
+    "n": 558,
+    "win": 0.48029,
+    "avg_r": 0.0909
+   },
+   "by_mfe3h": [
+    {
+     "lo": -99.0,
+     "hi": 0.25,
+     "n": 295,
+     "win": 0.38305,
+     "avg_r": -0.06886
+    },
+    {
+     "lo": 0.25,
+     "hi": 0.5,
+     "n": 146,
+     "win": 0.49315,
+     "avg_r": 0.09852
+    },
+    {
+     "lo": 0.5,
+     "hi": 1.0,
+     "n": 92,
+     "win": 0.70652,
+     "avg_r": 0.38077
+    },
+    {
+     "lo": 1.0,
+     "hi": 99.0,
+     "n": 25,
+     "win": 0.72,
+     "avg_r": 0.86486
+    }
+   ]
+  },
+  "trend": {
+   "flagged": {
+    "n": 173,
+    "win": 0.56069,
+    "avg_r": 0.0679
+   },
+   "clean": {
+    "n": 345,
+    "win": 0.61449,
+    "avg_r": 0.19458
+   },
+   "all": {
+    "n": 518,
+    "win": 0.59653,
+    "avg_r": 0.15227
+   },
+   "by_mfe3h": [
+    {
+     "lo": -99.0,
+     "hi": 0.25,
+     "n": 216,
+     "win": 0.45833,
+     "avg_r": -0.10387
+    },
+    {
+     "lo": 0.25,
+     "hi": 0.5,
+     "n": 125,
+     "win": 0.496,
+     "avg_r": -0.03817
+    },
+    {
+     "lo": 0.5,
+     "hi": 1.0,
+     "n": 112,
+     "win": 0.75893,
+     "avg_r": 0.43363
+    },
+    {
+     "lo": 1.0,
+     "hi": 99.0,
+     "n": 65,
+     "win": 0.96923,
+     "avg_r": 0.88488
+    }
+   ]
+  }
+ },
+ "rules_tested": {
+  "BOT-1 trend: whole trade on 3 ATR trail after +1R (BE at +1R) instead of half 1R + rest 2R": {
+   "discovery": {
+    "n": 383,
+    "delta": 0.05981,
+    "t": 1.2319,
+    "new_avg_r": 0.20385,
+    "old_avg_r": 0.14404,
+    "new_dd": 10.20785,
+    "old_dd": 9.15274
+   },
+   "validation": {
+    "n": 135,
+    "delta": 0.08703,
+    "t": 1.07927,
+    "new_avg_r": 0.26193,
+    "old_avg_r": 0.17491,
+    "new_dd": 8.23206,
+    "old_dd": 5.58702
+   },
+   "holdout": {
+    "n": 202,
+    "delta": 0.01804,
+    "t": 0.28628,
+    "new_avg_r": 0.23517,
+    "old_avg_r": 0.21713,
+    "new_dd": 6.39647,
+    "old_dd": 5.13449
+   }
+  },
+  "BOT-2 inside_day: whole trade on 3 ATR trail after +1R (BE at +1R) instead of half 1R + rest 2R": {
+   "discovery": {
+    "n": 408,
+    "delta": 0.01546,
+    "t": 0.52056,
+    "new_avg_r": 0.11852,
+    "old_avg_r": 0.10306,
+    "new_dd": 16.19467,
+    "old_dd": 13.36337
+   },
+   "validation": {
+    "n": 149,
+    "delta": 0.05167,
+    "t": 0.97793,
+    "new_avg_r": 0.14279,
+    "old_avg_r": 0.09111,
+    "new_dd": 11.99274,
+    "old_dd": 9.97694
+   },
+   "holdout": {
+    "n": 164,
+    "delta": 0.09633,
+    "t": 1.96755,
+    "new_avg_r": 0.23818,
+    "old_avg_r": 0.14185,
+    "new_dd": 6.13123,
+    "old_dd": 4.17714
+   }
+  },
+  "BOT-3 h4_trend: skip when H1/H4/D1 trends disagree (T2)": {
+   "discovery": {
+    "n": 261,
+    "delta": 0.00513,
+    "t": 0.11881,
+    "new_avg_r": 0.10535,
+    "old_avg_r": 0.10022,
+    "new_dd": 11.34227,
+    "old_dd": 10.85165
+   },
+   "validation": {
+    "n": 122,
+    "delta": 0.11733,
+    "t": 1.88975,
+    "new_avg_r": 0.06131,
+    "old_avg_r": -0.05602,
+    "new_dd": 7.39395,
+    "old_dd": 16.8387
+   },
+   "holdout": {
+    "n": 143,
+    "delta": -0.03769,
+    "t": -0.70417,
+    "new_avg_r": 0.33752,
+    "old_avg_r": 0.37521,
+    "new_dd": 2.1143,
+    "old_dd": 6.16949
+   }
+  }
+ }
+}
