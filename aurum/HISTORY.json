@@ -1,6 +1,6 @@
 {
  "schema": "aurum-history/1",
- "generated_at_utc": "2026-11-28 11:10",
+ "generated_at_utc": "2026-11-28 11:31",
  "project": {
   "name": "Aurum",
   "previous_name": "The Edge Lab (package 'edgelab'), renamed 2026-11-28 at the owner's request",
@@ -114,6 +114,20 @@
   },
   {
    "date": "2026-11-28",
+   "stage": "Round 5: personal edge reconstruction",
+   "built": [
+    "Ingestion for MT4/MT5 reports, broker CSV/XLSX, TradingView trade lists, manual records and screenshots (transcription queue with confirmation).",
+    "Broker-clock detection by matching prices to candles (fixed offsets and New York + 7h with daylight saving); stop grading and estimated initial stops.",
+    "Personal reconstruction at the exact decision time, random-timing benchmark, short-side falsification battery, two-axis mistake fingerprint, decision reconstruction, natural-setup clustering, edge transfer.",
+    "Bot knowledge transfer: 54 candidates tested on the bot's trades, 14 frozen for forward testing; 4-hour structure warning added to alerts (information only)."
+   ],
+   "findings": [
+    "No personal trade history has been provided yet; the pipeline was verified end to end on a labelled stand-in (the bot's trades in MetaTrader format).",
+    "For the bot, contextual warnings transfer best; avoidance rules add little; trailing exits help modestly. Nothing changes live behaviour."
+   ]
+  },
+  {
+   "date": "2026-11-28",
    "stage": "Rename and this file",
    "built": [
     "Package renamed to 'aurum'; HISTORY.json generated from the live record and rebuilt every cycle."
@@ -175,12 +189,14 @@
    "atlas.py": "The Mistake x Remedy atlas: every combination of ex-ante mistakes x every composite remedy.",
    "behaviour.py": "Why does price behave the way it does around decisions? Market-level studies.",
    "bot_anatomy.py": "Anatomy of the live bot's losing trades (signals.py), using the lab's tools.",
+   "bot_transfer.py": "Bot knowledge transfer: which Aurum findings could improve signals.py, tested on the bot's own trades.",
    "comparison.py": "Success vs failure: compare trades that LOOKED the same but ended differently.",
    "config.py": "Central configuration: paths, chronological splits, cost model, defaults.",
    "counterfactual.py": "Counterfactual replay: what if the same decision had been executed differently?",
    "cycle.py": "One autonomous research cycle. Designed to be run on a schedule, forever.",
    "dashboard.py": "Build lab_output/dashboard.html: a single self-contained research dashboard.",
    "data.py": "Historical data loading, cleaning, multi-timeframe construction.",
+   "demo_personal.py": "Stand-in personal data so the whole personal pipeline can be exercised before the owner's file arrives.",
    "discovery.py": "Edge discovery: exhaustive condition scan + walk-forward machine learning.",
    "experiments.py": "Autonomous experiment engine.",
    "features.py": "Causal technical features.",
@@ -188,7 +204,9 @@
    "frame.py": "Build the decision frame: H1 bars + causal features + structure + H4/D1 context.",
    "history.py": "Builds aurum/HISTORY.json: the whole project explained, from its creation to now.",
    "hypothesis.py": "Hypothesis specification + evaluation on the trade universe.",
+   "ingest.py": "Personal trade-history ingestion: broker exports, CSV, manual records, screenshots.",
    "ledger.py": "Append-only hypothesis / experiment ledger.",
+   "personal.py": "Personal edge reconstruction: what distinguishes the owner's good decisions from bad ones.",
    "pipeline.py": "End-to-end research run. ``python -m aurum run``",
    "profile.py": "Personal edge profiling.",
    "regimes.py": "Causal market-regime classification on daily bars.",
@@ -229,18 +247,22 @@
   }
  },
  "state_now": {
-  "trials_counted": 2045874,
-  "hypotheses_in_ledger": 2503,
-  "ledger_records": 3373,
+  "trials_counted": 2046008,
+  "hypotheses_in_ledger": 2661,
+  "ledger_records": 3636,
   "status_counts": {
-   "rejected_discovery": 1656,
-   "negative_edge": 106,
-   "failed_validation": 678,
+   "rejected_discovery": 1708,
+   "negative_edge": 107,
+   "failed_validation": 705,
    "robustness_check": 60,
-   "bot_rule_holdout_once": 3
+   "bot_rule_holdout_once": 3,
+   "replicated": 11,
+   "not_replicated": 13,
+   "bot_candidate_fail": 40,
+   "bot_candidate_pass": 14
   },
   "reality_check": {
-   "n_hypotheses": 3081,
+   "n_hypotheses": 3161,
    "p_reality_check": 0.042,
    "p_studentised": 0.334,
    "best": "SHORT range_breakout when er10 >= 0.52 AND rel_mtf_votes >= 1.0 [exit: trail_3atr_after_1r]",
@@ -1441,6 +1463,11 @@
     "ts": "2026-11-28 11:09",
     "bars_added": 0,
     "changes": 14
+   },
+   {
+    "ts": "2026-11-28 11:31",
+    "bars_added": 0,
+    "changes": 2
    }
   ]
  },
@@ -1457,7 +1484,7 @@
  "open_questions": [
   "Forward data: do the frozen hypotheses (ML-selected longs with trailing exit, the atlas cells, the late-entry + wide-stop idea) hold after 2026-11-23?",
   "Does the bot's timeframe-conflict warning keep separating weaker trades live? (journal.json now records the flag)",
-  "Personal profile: needs the owner's own trade history in aurum/store/my_trades.csv to test the short-side self-assessment.",
+  "Personal edge: needs the owner's own trade history in aurum/inbox/ (broker exports, CSV, manual records or screenshots).",
   "Better execution data: real historical spreads and tick data around news would tighten every cost-sensitive result."
  ],
  "commit_history": [
@@ -1477,6 +1504,13 @@
   "2026-11-28 Edge Lab cycle 3: atlas results, holdout tests of replicated cells",
   "2026-11-28 Bot loss anatomy: replay signals.py trades, dissect losers, anatomy notes in alerts (behaviour switches off)",
   "2026-11-28 Edge Lab: cycle in progress (ledger, queue)",
-  "2026-11-28 Rename The Edge Lab -> Aurum (package aurum); HISTORY.json generator; skip external bot records in engine"
+  "2026-11-28 Rename The Edge Lab -> Aurum (package aurum); HISTORY.json generator; skip external bot records in engine",
+  "2026-11-28 Aurum: HISTORY.json (creation to now), cycle results under the new name",
+  "2026-11-28 Aurum: refreshed M15 file (re-fetched last day)",
+  "2026-11-28 Aurum round 5: personal trade ingestion and edge reconstruction, bot knowledge transfer, 4H structure warning (info only)",
+  "2026-11-28 Aurum: cycle in progress (ledger, bot transfer, demo personal data)",
+  "2026-11-28 Aurum: owner account summary (no per-trade data; identifiers not stored)",
+  "2026-11-28 Aurum: cycle in progress (ledger)",
+  "2026-11-28 Aurum: read-only MT5 history exporter (initial stops, manual vs EA), skip external ledger records in the engine"
  ]
 }

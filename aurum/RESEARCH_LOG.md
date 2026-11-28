@@ -4,6 +4,18 @@ Newest first. Written automatically by `python -m aurum cycle`.
 
 
 
+## Cycle 2026-11-28 11:31 UTC
+
+- +158 hypotheses tested (total 2,661; trials counted 2,046,008).
+- Reality Check (studentised) p = 0.334; best: SHORT range_breakout when er10 >= 0.52 AND rel_mtf_votes >= 1.0 [exit: trail_3atr_after_1r]; Romano-Wolf survivors: 0.
+
+Next in the queue:
+- SHORT sweep_reversal when rel_d_structure == -0.0 AND stop_atr >= 0.867 [exit: confirm_close]
+- SHORT sweep_reversal when rel_d_structure == -0.0 AND stop_atr >= 0.867 [exit: trail_2atr]
+- SHORT sweep_reversal when rel_d_structure == -0.0 AND stop_atr >= 0.867 [exit: trail_3atr_after_1r]
+- SHORT sweep_reversal when rel_d_structure == -0.0 AND stop_atr >= 0.867 [exit: partial_1r_trail]
+- LONG rsi_extreme when er10 < 0.532 AND regime_trend == bear [exit: target_1r]
+
 ## Cycle 2026-11-28 11:09 UTC
 
 - +153 hypotheses tested (total 2,503; trials counted 2,045,874).
