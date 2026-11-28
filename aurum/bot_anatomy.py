@@ -317,7 +317,9 @@ def build_model(T: pd.DataFrame, rules: dict | None = None) -> dict:
     bins = [(-99.0, 0.25), (0.25, 0.5), (0.5, 1.0), (1.0, 99.0)]
     for s, g in d.groupby("strategy"):
         fl = g["flag_T2"].astype(bool)
+        f8 = g["flag_T8"].astype(bool)
         rec = {"flagged": _brief(g.loc[fl, "r"]), "clean": _brief(g.loc[~fl, "r"]), "all": _brief(g["r"]),
+               "h4_structure_against": {"flagged": _brief(g.loc[f8, "r"]), "clean": _brief(g.loc[~f8, "r"])},
                "by_mfe3h": []}
         for lo, hi in bins:
             x = g[(g["mfe3h"] > lo) & (g["mfe3h"] <= hi)]
@@ -345,7 +347,7 @@ def parity(T: pd.DataFrame) -> dict:
         os.chdir(cwd)
     F = S.Features(h1, S.CONFIG)
     times = {b["t"].replace(tzinfo=None) + pd.Timedelta(hours=1): i for i, b in enumerate(F.h1)}
-    agree = n = 0
+    agree = n = agree8 = 0
     for r in T.itertuples():
         i = times.get(r.sig_time.to_pydatetime())
         if i is None:
@@ -355,7 +357,9 @@ def parity(T: pd.DataFrame) -> dict:
             continue
         n += 1
         agree += int(a["tf_conflict"] == bool(r.flag_T2))
-    return {"checked": n, "agree": agree, "agreement": agree / n if n else None}
+        agree8 += int((a["h4_structure"] == -r.direction) == bool(r.flag_T8))
+    return {"checked": n, "agree": agree, "agreement": agree / n if n else None,
+            "t8_agreement": agree8 / n if n else None}
 
 
 def report(lab) -> dict:

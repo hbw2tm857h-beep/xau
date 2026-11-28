@@ -89,6 +89,14 @@ def run_cycle(budget: int = 300, fetch: bool = True, user_trades: str | None = N
             upd = {"bars_added": 0, "error": str(e)}
             print(f"[update] failed: {e}")
     rebuild = upd.get("bars_added", 0) > 0
+    # personal trade files dropped in aurum/inbox/ are ingested every cycle
+    try:
+        from .ingest import ingest, INBOX
+        if any(p.is_file() and not p.name.startswith("README") for p in INBOX.glob("*")) or \
+                any((INBOX / "screenshots").glob("*")):
+            ingest(verbose=False)
+    except Exception as e:  # noqa: BLE001
+        print(f"[ingest] failed: {e}")
     if rebuild:
         for p in CACHE.glob("*.pkl"):
             p.unlink()

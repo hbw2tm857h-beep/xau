@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import pickle
 import time
 from pathlib import Path as FsPath
@@ -231,6 +232,33 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     except Exception as e:  # the bot study must never stop a cycle
         R["bot"] = {"error": str(e)}
         print(f"[bot] anatomy failed: {e}")
+
+    # ------------------------------------------------------------- personal edge (owner) + stand-in demo
+    from . import personal as PS
+    try:
+        R["personal"] = PS.run(lab, R, label="owner")
+    except Exception as e:  # noqa: BLE001
+        R["personal"] = {"status": "error", "error": str(e)}
+        print(f"[personal] failed: {e}")
+    ing = STORE / "personal" / "ingest_report.json"
+    R["personal_ingest"] = json.loads(ing.read_text()) if ing.exists() else None
+    if R["personal"].get("status") != "ok":
+        try:
+            from .demo_personal import build_demo_export, DEMO_DIR
+            from .ingest import ingest as _ingest
+            if not (DEMO_DIR / "trades_normalized.csv").exists():
+                _ingest([Path(build_demo_export())], out_dir=DEMO_DIR, verbose=False)
+            R["personal_demo"] = PS.run(lab, R, source_path=DEMO_DIR / "trades_normalized.csv", label="demo")
+            R["personal_demo_ingest"] = json.loads((DEMO_DIR / "ingest_report.json").read_text())
+        except Exception as e:  # noqa: BLE001
+            R["personal_demo"] = {"status": "error", "error": str(e)}
+            print(f"[personal-demo] failed: {e}")
+    try:
+        from . import bot_transfer as BT
+        R["bot_transfer"] = BT.run(lab)
+    except Exception as e:  # noqa: BLE001
+        R["bot_transfer"] = {"error": str(e)}
+        print(f"[bot-transfer] failed: {e}")
 
     # ------------------------------------------------------------- audits
     audit_p = STORE / "leakage_audit.json"

@@ -219,6 +219,55 @@ the same counts the bot publishes). The lab then dissects every trade.
 
 Each research cycle re-scores all of this on new trades (forward section of the "Your bot" tab).
 
+## Round 5: personal edge reconstruction (`ingest.py`, `personal.py`, `bot_transfer.py`)
+
+**Your data in:** drop files in `aurum/inbox/` (see its README):
+- MT5 reports (HTML/XLSX), MT4 statements, cTrader or any broker CSV/XLSX (columns matched by name);
+- TradingView trade lists;
+- `manual_trades.csv` for hand-kept records;
+- screenshots, which a Claude session transcribes into confirmed rows.
+
+Then run `python -m aurum personal`, or let the weekly cycle do it.
+* **Clock alignment:** each file's broker time zone is detected by matching prices to the real candles. It tests fixed
+  offsets and the common MetaTrader "New York + 7h" clock with daylight saving.
+* **Stops are graded:** initial, broker-final, moved or missing. Missing initial stops are estimated from your own
+  typical stop in ATR and labelled `estimated_stop`.
+
+**What it produces** (dashboard → Personal edge):
+1. **Short-side test, built to disprove the claim:**
+   - the gap with a bootstrap confidence interval and a permutation test;
+   - how much of it is explained by *when* the trades were taken (regime mix vs within-regime);
+   - timing alpha against random entries on the same day, side and stop;
+   - the sign in both halves of your history, and the share of years where shorts did better;
+   - comparisons of momentum, structure, volatility, timeframe alignment, duration, MFE, MAE and R distributions;
+   - the smallest gap your sample can detect.
+2. **Decision reconstruction** for each trade:
+   - what was visible at entry (closed candles plus the part of the current hour already seen);
+   - what was relevant (features that separate your wins from losses and hold up in both halves);
+   - what was misleading (signs the lab found to be folklore or contradicted);
+   - what was avoidable;
+   - whether the loss was simply variance.
+
+   The chart shows only what you could see; the outcome is hidden until you ask.
+3. **Mistake fingerprint.** Each trade gets two separate answers: whether the decision was avoidable (only warning
+   signs confirmed harmful lab-wide, or in BOTH halves of your own history), and how it failed (wrong direction, poor
+   timing, poor exit, regime misread, risk management judged against your own norms, or valid trade that lost).
+4. **Natural setups:** your decisions clustered by context, bottom-up, without forcing them into lab categories.
+5. **Edge transfer:** which lab findings and mistake verdicts agree with your results, and which your results contradict.
+
+**Integrity:** your history is split in time (first 60% to find patterns, last 40% to check them), and every
+personal test is written to the ledger. The market holdout stays sealed.
+
+**Bot knowledge transfer** (dashboard → Your bot): 54 candidate improvements (warnings, avoidance, confirmation, exits)
+were tested on the bot's own trades. 14 improved both 2008-17 and 2018-21 and are frozen for forward testing (grade B);
+28 did not. Nothing is applied automatically. One grade-B *warning* is now shown on alerts as information only:
+**4-hour swing structure against the trade** (trend trades +0.08R vs +0.16R, 4-hour trend trades −0.24R vs +0.10R).
+It matches the lab's definition on 99.9% of historical signals.
+
+**Status:** no personal trades have been added yet. Until they are, the tab runs on a clearly labelled DEMO: the live
+bot's own trades exported in MetaTrader format. It verified the pipeline end to end, including detecting the
+New York + 7h broker clock (92% price match, against 40% if read as UTC).
+
 ## Ongoing research (how the lab keeps running)
 
 ```

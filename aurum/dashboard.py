@@ -263,7 +263,7 @@ const statusPill = s => {
 const TABS = [
   ["overview","Overview"],["setups","Setups"],["mistakes","Mistake taxonomy"],["atlas","Mistake × remedy"],["counterfactuals","Counterfactuals"],
   ["lookalikes","Look-alikes"],["events","Event studies"],["behaviour","Market behaviour"],["discoveries","Discoveries"],
-  ["experiments","Experiments"],["bot","Your bot"],["profile","Edge profile"],["inspector","Trade inspector"]];
+  ["experiments","Experiments"],["bot","Your bot"],["profile","Personal edge"],["inspector","Trade inspector"]];
 const R = {};
 
 function overview() {
@@ -653,9 +653,20 @@ function botView() {
     {label:"2022-26",num:1,f:r=>sgn(r.holdout.delta)+" (t "+num(r.holdout.t,1)+")",cls:r=>cls(r.holdout.delta)},
     {label:"Max DD before → after (2022-26)",num:1,f:r=>num(r.holdout.old_dd,1)+" → "+num(r.holdout.new_dd,1)}])}
     <p class="note">None is strong enough to change the live trading rules yet, so they are built in but off (<span class="mono">anatomy_skip_h4_conflict</span>) or documented only (trailing exits). The forward split decides.</p></div>
+  ${botTransfer()}
   <div class="panel"><h3>Forward check (bot trades after ${esc(String(B.forward_from).slice(0,10))})</h3>${(B.forward||[]).length?table(B.forward,[
     {label:"Strategy",k:"strategy"},{label:"Trades",num:1,k:"n"},{label:"Flagged",num:1,k:"flagged_n"},
     {label:"Avg R flagged",num:1,f:r=>sgn(r.flagged_avg_r),cls:r=>cls(r.flagged_avg_r)},{label:"Avg R clean",num:1,f:r=>sgn(r.clean_avg_r),cls:r=>cls(r.clean_avg_r)}]):'<p class="note">No closed bot trades in the forward period yet.</p>'}</div>`;
+}
+function botTransfer() {
+  const T = D.bot_transfer; if (!T || T.error) return "";
+  const g = r => `<span class="pill ${r.grade==="A"?"good":r.grade==="B"?"warn":"muted"}">${r.grade}</span>`;
+  const per = (r,k) => { const x=r[k]||{}; return r.kind==="warning" ? (x.delta==null?"–":sgn(x.delta)+" ("+x.n_flagged+" flagged)") : (x.delta==null?"–":sgn(x.delta)+" (t "+num(x.t,1)+")"); };
+  return `<div class="panel"><h3>Knowledge transfer: ${T.n_candidates} candidate improvements tested on the bot's trades</h3>
+    <p class="note">${esc(T.policy)} Grades: A forward-confirmed · B improved 2008-17 and 2018-21, frozen, forward accumulating · C one period · D no improvement. Counts: ${Object.entries(T.grades).map(([k,v])=>k+" "+v).join(", ")}.</p>
+    ${table(T.all.slice().sort((a,b)=>a.grade.localeCompare(b.grade)), [{label:"Grade",html:1,f:g,sort:r=>r.grade},{label:"Kind",k:"kind"},{label:"Candidate",k:"name"},
+      {label:"2008-17",num:1,f:r=>per(r,"discovery")},{label:"2018-21",num:1,f:r=>per(r,"validation")},
+      {label:"Forward n",num:1,f:r=>r.forward?r.forward.n:"–"}])}</div>`;
 }
 function botAfter() {
   const B = D.bot; if (!B || B.error) return;
@@ -668,6 +679,94 @@ function botAfter() {
     marker:{color:[css("--long"),css("--short"),css("--gold")][i%3]}, customdata:S[s].by_mfe3h.map(b=>[b.n,b.avg_r]),
     hovertemplate:"best so far %{x}: won %{y:.0%} · n=%{customdata[0]} · avg %{customdata[1]:+.2f}R<extra>"+s+"</extra>"})),
     {barmode:"group", yaxis:{tickformat:".0%", title:"win rate", range:[0,1]}, xaxis:{title:"best excursion in the first 3 hours"}});
+}
+
+function personalView() {
+  const own = D.personal && D.personal.status === "ok";
+  const P = own ? D.personal : D.personal_demo;
+  const ing = own ? D.personal_ingest : D.personal_demo_ingest;
+  if (!P || P.status !== "ok") return `<h2>Personal edge</h2><p class="lead">No personal trades yet. Drop broker exports, CSV files or screenshots in <span class="mono">aurum/inbox/</span> and run <span class="mono">python -m aurum personal</span>.</p>`;
+  const d = P.directional;
+  const banner = own ? `<p class="lead">${P.n} of your trades, ${esc(P.date_range[0].slice(0,10))} → ${esc(P.date_range[1].slice(0,10))}. Your history is split in time: the first 60% is used to find patterns, the last 40% to check them.</p>`
+    : `<div class="callout"><b>DEMO: these are not your trades.</b> No personal trade file has been added yet, so this tab runs the full pipeline on a stand-in: the live bot's own ${P.n.toLocaleString()} trades, exported in MetaTrader format with broker time and moved stops. It shows exactly what you will get. Add your history to <span class="mono">aurum/inbox/</span> (MT4/MT5 reports, broker CSV, TradingView exports, <span class="mono">manual_trades.csv</span>, or screenshots) and this tab switches to you.</div>`;
+  const files = (ing && ing.files) || [];
+  return `<h2>Personal edge${own?"":" (demo)"}</h2>${banner}
+  <div class="kpis">
+    <div class="kpi"><small>Trades reconstructed</small><b>${P.n.toLocaleString()}</b><small>${Object.entries(P.r_basis).map(([k,v])=>v+" "+k.replace("_"," ")).join(" · ")}</small></div>
+    <div class="kpi"><small>Average R</small><b class="${cls(P.summary.avg_r)}">${sgn(P.summary.avg_r)}</b><small>win ${pct(P.summary.win)} · max DD ${num(P.summary.max_dd,1)}R</small></div>
+    <div class="kpi"><small>Losses that were avoidable</small><b>${pct(P.avoidable_share_of_losses)}</b><small>a confirmed warning sign was visible at entry</small></div>
+    <div class="kpi"><small>Losses that were just variance</small><b>${pct(P.unpredictable_share_of_losses)}</b><small>no warning, no process fault</small></div>
+  </div>
+  <div class="panel"><h3>Is the short-side advantage real?</h3>
+    <p><b>${esc(d.verdict)}</b></p>
+    <dl class="kv">
+      <dt>Shorts</dt><dd>n=${d.n_short} · avg ${sgn(d.short.avg_r)}R · win ${pct(d.short.win)}</dd>
+      <dt>Longs</dt><dd>n=${d.n_long} · avg ${sgn(d.long.avg_r)}R · win ${pct(d.long.win)}</dd>
+      <dt>Short − long, 95% CI</dt><dd>${sgn(d.gap)}R [${num(d.gap_ci[0])}, ${num(d.gap_ci[1])}] · permutation p ${num(d.perm_p,3)}</dd>
+      <dt>Explained by WHEN trades were taken</dt><dd>${pct(d.composition_share)} of the gap is regime mix (${sgn(d.oaxaca.composition_effect)}R); within the same regimes: ${sgn(d.oaxaca.within_regime_effect)}R</dd>
+      <dt>Beyond random timing</dt><dd>timing alpha short ${sgn(d.timing_alpha.short.avg_r)}R vs long ${sgn(d.timing_alpha.long.avg_r)}R · gap CI [${num(d.timing_alpha.gap_ci[0])}, ${num(d.timing_alpha.gap_ci[1])}]</dd>
+      <dt>Both halves of your history</dt><dd>${Object.entries(d.halves).map(([k,v])=>k.replace("p_","")+" "+sgn(v.gap)).join(" · ")}</dd>
+      <dt>Years where shorts did better</dt><dd>${pct(d.years_short_better.share)} of ${d.years_short_better.n_years}</dd>
+      <dt>Smallest gap this sample can detect</dt><dd>${num(d.min_detectable_gap,2)}R</dd></dl>
+    <div id="pe_hist" class="chart" style="min-height:280px"></div>
+    ${table(Object.entries(d.dimensions).map(([k,v])=>({k,...v})), [{label:"Dimension",k:"label"},{label:"Shorts",num:1,f:r=>num(r.short,2)},{label:"Longs",num:1,f:r=>num(r.long,2)},{label:"p",num:1,f:r=>num(r.p,3)}])}</div>
+  <div class="grid">
+    <div class="panel"><h3>Mistake fingerprint</h3><div id="pe_fp" class="chart" style="min-height:300px"></div>
+      <p class="note">How losses failed: ${Object.entries(P.how_losses_failed||{}).map(([k,v])=>esc(k)+" "+pct(v)).join(" · ")}. Avoidable warning signs used: lab-confirmed ${esc((P.avoidable_flags.lab_confirmed||[]).join(", "))}; confirmed in this history ${esc((P.avoidable_flags.owner_confirmed||[]).join(", ")||"none")}.</p></div>
+    <div class="panel"><h3>What separates winners from losers in this history</h3>${table(P.discriminators.slice(0,12), [{label:"Feature",k:"feature"},
+      {label:"Effect, first 60%",num:1,f:r=>sgn(r.p_discovery_effect,2),cls:r=>cls(r.p_discovery_effect)},{label:"Effect, last 40%",num:1,f:r=>sgn(r.p_validation_effect,2),cls:r=>cls(r.p_validation_effect)},
+      {label:"Holds up",html:1,f:r=>r.replicates?'<span class="pill good">yes</span>':'<span class="pill muted">no</span>'}])}
+      <p class="note">Effect = (winners − losers) in standard deviations. Every row is recorded in the experiment ledger.</p></div>
+  </div>
+  <div class="panel"><h3>Natural setups (found bottom-up, not forced into lab categories)</h3>${table((P.natural_setups.clusters||[]).slice(), [
+    {label:"Group",k:"cluster"},{label:"Trades",num:1,k:"n"},{label:"Context",k:"description"},{label:"Short share",num:1,f:r=>pct(r.short_share)},
+    {label:"Avg R",num:1,f:r=>sgn(r.perf.avg_r),cls:r=>cls(r.perf.avg_r)},{label:"First 60% / last 40%",num:1,f:r=>Object.values(r.avg_r_by_half).map(v=>sgn(v)).join(" / ")},
+    {label:"Your labels",f:r=>Object.keys(r.owner_labels||{}).join(", ")}])}</div>
+  <div class="grid">
+    <div class="panel"><h3>Do Aurum's findings explain this trading?</h3>${table((P.edge_transfer.mistakes||[]).slice(0,15), [{label:"Warning sign",f:r=>r.id+" "+r.name},
+      {label:"Lab verdict",k:"lab_verdict"},{label:"Here: flagged − clean",num:1,f:r=>sgn(r.owner_delta_r),cls:r=>cls(r.owner_delta_r)},{label:"Relation",k:"relation"}])}</div>
+    <div class="panel"><h3>Lab discoveries applied to these trades</h3>${table((P.edge_transfer.discoveries||[]).slice(0,15), [{label:"Condition",k:"condition"},{label:"Lab status",k:"lab_status"},
+      {label:"Trades",num:1,k:"owner_n"},{label:"Inside",num:1,f:r=>sgn(r.owner_avg_r_inside),cls:r=>cls(r.owner_avg_r_inside)},{label:"Outside",num:1,f:r=>sgn(r.owner_avg_r_outside)}])}</div>
+  </div>
+  <div class="panel"><h3>Decision reconstruction</h3>
+    <div class="row"><select id="pe_trade" style="flex:1 1 320px;min-width:0">${P.decisions.slice().reverse().map(t=>`<option value="${t.trade_id}">${esc(t.open_time.slice(0,16))} · ${t.direction>0?"long":"short"} · ${sgn(t.r,2)}R · ${esc(t.primary_label||"")}</option>`).join("")}</select>
+      <label><input type="checkbox" id="pe_after"> show what happened next</label></div>
+    <div class="grid" style="grid-template-columns:minmax(0,2fr) minmax(260px,1fr)"><div id="pe_chart" class="chart" style="min-height:380px"></div><div id="pe_side"></div></div></div>
+  <div class="panel"><h3>Ingestion</h3>${table(files, [{label:"File",k:"file"},{label:"Rows",num:1,k:"rows"},{label:"Gold trades",num:1,k:"gold_trades"},
+    {label:"Clock",f:r=>r.clock?String(r.clock.best_offset_h)+" ("+pct(r.clock.match_rate)+" price match)":esc(r.error||"")},
+    {label:"Stops",f:r=>r.stops?Object.entries(r.stops).map(([k,v])=>k+" "+v).join(", "):""},{label:"Warning",f:r=>esc(r.warning||"")}])}</div>`;
+}
+function personalAfter() {
+  const own = D.personal && D.personal.status === "ok";
+  const P = own ? D.personal : D.personal_demo; if (!P || P.status !== "ok") return;
+  const h = P.directional.r_hist, x = h.bins.slice(0,-1).map((b,i)=>(b+h.bins[i+1])/2);
+  plot("pe_hist", [{type:"bar", name:"shorts", x, y:h.short, marker:{color:css("--short")}}, {type:"bar", name:"longs", x, y:h.long, marker:{color:css("--long")}}],
+    {barmode:"group", xaxis:{title:"R per trade"}, yaxis:{title:"trades"}});
+  const fp = P.fingerprint;
+  plot("pe_fp", [{type:"bar", orientation:"h", y:fp.map(r=>r.label).reverse(), x:fp.map(r=>r.share).reverse(),
+    marker:{color:fp.map(r=>["good trade","lucky win"].includes(r.label)?css("--pos"):(r.label==="valid trade that lost"?css("--mid"):css("--neg"))).reverse()},
+    customdata:fp.map(r=>[r.n,r.avg_r,r.short_share]).reverse(), hovertemplate:"%{y}: %{x:.0%} · n=%{customdata[0]} · avg %{customdata[1]:+.2f}R · shorts %{customdata[2]:.0%}<extra></extra>"}],
+    {margin:{l:220,r:10,t:10,b:36}, xaxis:{tickformat:".0%"}});
+  const show = () => { const t = P.decisions.find(z=>z.trade_id===$("#pe_trade").value); if (!t) return;
+    const after = $("#pe_after").checked, bars = after ? t.chart_before.concat(t.chart_after) : t.chart_before, xs = bars.map(b=>b[0]);
+    const last = t.chart_before[t.chart_before.length-1][0];
+    const shapes = [{type:"line", x0:last, x1:last, yref:"paper", y0:0, y1:1, line:{color:css("--gold"), dash:"dash", width:1}},
+      {type:"line", xref:"paper", x0:0, x1:1, y0:t.entry, y1:t.entry, line:{color:css("--ink"), width:1}}];
+    if (t.stop) shapes.push({type:"line", xref:"paper", x0:0, x1:1, y0:t.stop, y1:t.stop, line:{color:css("--neg"), width:1, dash:"dot"}});
+    plot("pe_chart", [{type:"candlestick", x:xs, open:bars.map(b=>b[1]), high:bars.map(b=>b[2]), low:bars.map(b=>b[3]), close:bars.map(b=>b[4]),
+      increasing:{line:{color:css("--pos")}}, decreasing:{line:{color:css("--neg")}}}],
+      {xaxis:{type:"category", rangeslider:{visible:false}, nticks:8}, shapes, showlegend:false,
+       annotations:[{x:last, yref:"paper", y:1.03, text:"your entry ("+(t.direction>0?"long":"short")+")", showarrow:false, font:{size:10,color:css("--gold")}}]});
+    const kv = o => Object.entries(o||{}).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v==null?"–":v)}</dd>`).join("");
+    $("#pe_side").innerHTML = `<h3>${esc(t.open_time.slice(0,16))} · ${t.direction>0?"long":"short"}</h3>
+      <div class="row"><span class="pill ${t.r>0?"good":"crit"}">${sgn(t.r,2)}R (${esc(t.r_basis)})</span><span class="pill">${esc(t.primary_label||"")}</span>${t.unpredictable?'<span class="pill muted">variance</span>':""}</div>
+      ${t.owner_setup?`<p class="note">Your label: ${esc(t.owner_setup)}${t.notes?" · "+esc(t.notes):""}</p>`:""}
+      <h3 style="margin-top:8px">Visible at entry</h3><dl class="kv">${kv(t.visible)}</dl>
+      <h3 style="margin-top:8px">Relevant (separates wins from losses here)</h3><dl class="kv">${kv(t.relevant)}</dl>
+      <h3 style="margin-top:8px">Misleading signs present</h3><p class="note">${t.misleading.length?t.misleading.map(m=>esc(m.name)+" ("+esc(m.lab_verdict)+")").join("; "):"none"}</p>
+      <h3 style="margin-top:8px">Avoidable</h3><p class="note">${t.avoidable.length?t.avoidable.map(m=>esc(m.name)).join("; "):"nothing confirmed harmful was visible"}</p>
+      <p class="note">The chart stops at your entry: only what you could see. Tick "show what happened next" for the outcome.</p>`; };
+  $("#pe_trade").onchange = show; $("#pe_after").onchange = show; show();
 }
 
 function profile() {
@@ -773,7 +872,7 @@ function show() {
 
 const VIEWS = {overview:[overview,overviewAfter], setups:[setups,setupsAfter], mistakes:[mistakes,mistakesAfter],
   atlas:[atlasView,atlasAfter], counterfactuals:[counterfactuals,counterfactualsAfter], lookalikes:[lookalikes,null], behaviour:[behaviour,behaviourAfter],
-  discoveries:[discoveries,discoveriesAfter], experiments:[experiments,experimentsAfter], bot:[botView,botAfter], profile:[profile,null], inspector:[inspector,inspectorAfter]};
+  discoveries:[discoveries,discoveriesAfter], experiments:[experiments,experimentsAfter], bot:[botView,botAfter], profile:[personalView,personalAfter], inspector:[inspector,inspectorAfter]};
 function route() {
   const id = (location.hash||"#overview").slice(1); const key = VIEWS[id] ? id : "overview";
   $("#tabs").innerHTML = TABS.map(([k,l]) => `<a href="#${k}" class="${k===key?'on':''}">${l}</a>`).join("");

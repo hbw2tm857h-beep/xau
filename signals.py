@@ -718,23 +718,51 @@ def anatomy_flags(F, i):
     dt = None if e_now is None or e_then is None else (1 if e_now > e_then else (-1 if e_now < e_then else 0))
     if None in (h1t, h4t, dt):
         return None
-    return {"tf_conflict": not (h1t == h4t == dt and h1t != 0), "h1": h1t, "h4": h4t, "d1": dt}
+    return {"tf_conflict": not (h1t == h4t == dt and h1t != 0), "h1": h1t, "h4": h4t, "d1": dt,
+            "h4_structure": _h4_structure(F, k4) if k4 >= 0 else 0}
+
+
+def _h4_structure(F, k4, left=5, right=5):
+    """4-hour swing structure known at 4H candle k4: +1 higher highs and lows, -1 lower, 0 mixed (lab definition)."""
+    bars = F.h4[max(0, k4 - 400):k4 + 1]
+    n = len(bars)
+    highs, lows = [], []
+    for p in range(left, n - right):
+        w = bars[p - left:p + right + 1]
+        if bars[p]["h"] >= max(b["h"] for b in w):
+            highs.append(bars[p]["h"])
+        if bars[p]["l"] <= min(b["l"] for b in w):
+            lows.append(bars[p]["l"])
+    if len(highs) < 2 or len(lows) < 2:
+        return 0
+    if highs[-1] > highs[-2] and lows[-1] > lows[-2]:
+        return 1
+    if highs[-1] < highs[-2] and lows[-1] < lows[-2]:
+        return -1
+    return 0
 
 
 def anatomy_note(idea, cfg):
-    """One line for the setup alert: the warning sign and what it has meant historically."""
+    """One line for the setup alert: the warning signs present and what they have meant historically."""
     a, model = idea.get("anatomy"), anatomy_model(cfg)
     if not a or not model or cfg.get("market_name"):   # the statistics are for gold only
         return None
     s = (model.get("strategies") or {}).get(idea.get("strategy", "trend")) or {}
-    if not a.get("tf_conflict"):
+    d = idea.get("dir")
+    signs = []
+    if a.get("tf_conflict"):
+        fl, cl = s.get("flagged") or {}, s.get("clean") or {}
+        signs.append(f"hourly, 4-hour and daily trends disagree ({fl.get('avg_r', 0):+.2f}R on average since 2008, "
+                     f"vs {cl.get('avg_r', 0):+.2f}R when they agree)")
+    t8 = s.get("h4_structure_against") or {}
+    if d and a.get("h4_structure") == -d and t8.get("flagged"):
+        signs.append(f"4-hour swing structure points the other way ({t8['flagged'].get('avg_r', 0):+.2f}R on average, "
+                     f"vs {t8['clean'].get('avg_r', 0):+.2f}R otherwise)")
+    if not signs:
         clean = s.get("clean") or {}
-        return (f"-# Anatomy check: hourly, 4-hour and daily trends agree. Since 2008 this setup made "
-                f"{clean.get('avg_r', 0):+.2f}R on average when they agreed ({clean.get('n', 0)} trades).")
-    fl, cl = s.get("flagged") or {}, s.get("clean") or {}
-    return (f"-# Anatomy check: hourly, 4-hour and daily trends disagree. Since 2008 these setups made "
-            f"{fl.get('avg_r', 0):+.2f}R on average ({fl.get('n', 0)} trades) vs {cl.get('avg_r', 0):+.2f}R "
-            f"when they agreed. Still a valid setup; size it with that in mind.")
+        return (f"-# Anatomy check: no warning signs. Since 2008 this setup made "
+                f"{clean.get('avg_r', 0):+.2f}R on average when the timeframes agreed ({clean.get('n', 0)} trades).")
+    return ("-# Anatomy check: " + "; ".join(signs) + ". Still a valid setup; size it with that in mind.")
 
 
 def anatomy_progress(F, i, idea, cfg):

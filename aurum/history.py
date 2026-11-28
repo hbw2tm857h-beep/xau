@@ -100,6 +100,15 @@ TIMELINE = [
          "Before entry the bot's losers look like its winners; the one consistent warning sign is H1/4H/daily trend disagreement.",
          "68% of losers never reach +0.5R (winners: 4%), but cutting slow starters early lowered expectancy in all 18 versions tested.",
          "Trailing exits and the 4H conflict skip were positive or neutral on the holdout, not strong enough to change live trading yet."]},
+    {"date": "2026-11-28", "stage": "Round 5: personal edge reconstruction",
+     "built": [
+         "Ingestion for MT4/MT5 reports, broker CSV/XLSX, TradingView trade lists, manual records and screenshots (transcription queue with confirmation).",
+         "Broker-clock detection by matching prices to candles (fixed offsets and New York + 7h with daylight saving); stop grading and estimated initial stops.",
+         "Personal reconstruction at the exact decision time, random-timing benchmark, short-side falsification battery, two-axis mistake fingerprint, decision reconstruction, natural-setup clustering, edge transfer.",
+         "Bot knowledge transfer: 54 candidates tested on the bot's trades, 14 frozen for forward testing; 4-hour structure warning added to alerts (information only)."],
+     "findings": [
+         "No personal trade history has been provided yet; the pipeline was verified end to end on a labelled stand-in (the bot's trades in MetaTrader format).",
+         "For the bot, contextual warnings transfer best; avoidance rules add little; trailing exits help modestly. Nothing changes live behaviour."]},
     {"date": "2026-11-28", "stage": "Rename and this file",
      "built": ["Package renamed to 'aurum'; HISTORY.json generated from the live record and rebuilt every cycle."]},
 ]
@@ -228,7 +237,7 @@ def build() -> dict:
         "open_questions": [
             "Forward data: do the frozen hypotheses (ML-selected longs with trailing exit, the atlas cells, the late-entry + wide-stop idea) hold after 2026-11-23?",
             "Does the bot's timeframe-conflict warning keep separating weaker trades live? (journal.json now records the flag)",
-            "Personal profile: needs the owner's own trade history in aurum/store/my_trades.csv to test the short-side self-assessment.",
+            "Personal edge: needs the owner's own trade history in aurum/inbox/ (broker exports, CSV, manual records or screenshots).",
             "Better execution data: real historical spreads and tick data around news would tighten every cost-sensitive result."],
         "commit_history": [c for c in commits.splitlines()
                            if any(k in c for k in ("Edge Lab", "Aurum", "aurum", "edgelab", "Bot loss", "Rename"))][-200:],
