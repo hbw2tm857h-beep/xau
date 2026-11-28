@@ -1,0 +1,26 @@
+{
+ "files": [
+  {
+   "file": "demo_broker_export.csv",
+   "rows": 1968,
+   "gold_trades": 1961,
+   "clock": {
+    "best_offset_h": "ny+7",
+    "match_rate": 0.9242733299337073,
+    "second_best": 0.7361040285568587,
+    "utc_match_rate": 0.40005099439061703
+   },
+   "stops": {
+    "initial": 1236,
+    "moved": 725
+   },
+   "warning": null
+  }
+ ],
+ "screenshots": [],
+ "trades": 1961,
+ "date_range": [
+  "2008-03-26 20:30:00",
+  "2026-11-12 08:30:00"
+ ]
+}

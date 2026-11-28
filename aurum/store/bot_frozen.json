@@ -1,0 +1,114 @@
+[
+ {
+  "name": "h4_trend: warn when T8 is present",
+  "kind": "warning",
+  "strategy": "h4_trend",
+  "flag": "T8",
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "name": "h4_trend: skip when T8 is present",
+  "kind": "avoid",
+  "strategy": "h4_trend",
+  "flag": "T8",
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "name": "trend: warn when T8 is present",
+  "kind": "warning",
+  "strategy": "trend",
+  "flag": "T8",
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "name": "h4_trend: warn when T2 is present",
+  "kind": "warning",
+  "strategy": "h4_trend",
+  "flag": "T2",
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "name": "h4_trend: skip when T2 is present",
+  "kind": "avoid",
+  "strategy": "h4_trend",
+  "flag": "T2",
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "name": "trend: warn when T2 is present",
+  "kind": "warning",
+  "strategy": "trend",
+  "flag": "T2",
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "name": "h4_trend: whole trade on a 3 ATR trail after +1R",
+  "kind": "exit",
+  "strategy": "h4_trend",
+  "flag": null,
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "name": "h4_trend: half at +1R, rest on a 3 ATR trail",
+  "kind": "exit",
+  "strategy": "h4_trend",
+  "flag": null,
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "name": "h4_trend: half at +1R, rest at +3R",
+  "kind": "exit",
+  "strategy": "h4_trend",
+  "flag": null,
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "name": "inside_day: whole trade on a 3 ATR trail after +1R",
+  "kind": "exit",
+  "strategy": "inside_day",
+  "flag": null,
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "name": "trend: only keep fills whose candle closes beyond the entry",
+  "kind": "confirm",
+  "strategy": "trend",
+  "flag": null,
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "name": "trend: whole trade on a 3 ATR trail after +1R",
+  "kind": "exit",
+  "strategy": "trend",
+  "flag": null,
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "name": "trend: half at +1R, rest on a 3 ATR trail",
+  "kind": "exit",
+  "strategy": "trend",
+  "flag": null,
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ },
+ {
+  "name": "trend: half at +1R, rest at +3R",
+  "kind": "exit",
+  "strategy": "trend",
+  "flag": null,
+  "frozen_at": "2026-11-12 08:00:00",
+  "frozen_on": "2026-11-28"
+ }
+]
