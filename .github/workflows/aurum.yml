@@ -1,6 +1,6 @@
-name: Edge Lab research cycle
+name: Aurum research cycle
 
-# Runs one autonomous research cycle of edgelab/ (research only: no broker, no orders):
+# Runs one autonomous research cycle of aurum/ (research only: no broker, no orders):
 #   download new XAUUSD candles -> experiments (pre-registered agenda first) -> forward-test frozen
 #   hypotheses -> research log + dashboard -> commit.
 # Scheduled workflows only fire from the default branch, so the schedule activates once this
@@ -19,7 +19,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: edgelab
+  group: aurum
   cancel-in-progress: false
 
 jobs:
@@ -31,17 +31,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -r edgelab/requirements.txt
+      - run: pip install -r aurum/requirements.txt
       - name: Leakage audit
-        run: python -m edgelab audit
+        run: python -m aurum audit
       - name: Research cycle
-        run: python -m edgelab cycle --budget "${{ github.event.inputs.budget || '300' }}"
+        run: python -m aurum cycle --budget "${{ github.event.inputs.budget || '300' }}"
       - name: Commit results
         run: |
-          git config user.name "edgelab-bot"
-          git config user.email "edgelab-bot@users.noreply.github.com"
-          git add edgelab/store/*.json edgelab/store/*.jsonl edgelab/store/*.csv edgelab/RESEARCH_LOG.md lab_output data/xauusd_m15_*.csv.gz
-          git commit -m "Edge Lab research cycle $(date -u +%F)" || exit 0
+          git config user.name "aurum-bot"
+          git config user.email "aurum-bot@users.noreply.github.com"
+          git add aurum/store/*.json aurum/store/*.jsonl aurum/store/*.csv aurum/RESEARCH_LOG.md lab_output data/xauusd_m15_*.csv.gz
+          git commit -m "Aurum research cycle $(date -u +%F)" || exit 0
           for i in 1 2 3 4 5; do
             git pull --rebase --quiet origin "${GITHUB_REF_NAME}" && git push --quiet && break
             git rebase --abort 2>/dev/null || true

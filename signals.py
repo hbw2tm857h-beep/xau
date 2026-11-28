@@ -127,12 +127,12 @@ CONFIG = {
     # its high and a sell-stop at its low (one cancels the other), stop at the
     # other side, and close at the next daily close. Runs alongside the trend
     # setups with its own alerts and its own line in the scorecard.
-    # Loss anatomy (edgelab/bot_anatomy.py). Notes only add information to alerts; the two
-    # behaviour switches stay off until forward results confirm them (see edgelab/README.md).
+    # Loss anatomy (aurum/bot_anatomy.py). Notes only add information to alerts; the two
+    # behaviour switches stay off until forward results confirm them (see aurum/README.md).
     "anatomy_notes": True,              # warning-sign line on setup alerts + flags saved in the journal
     "anatomy_progress": False,          # post a "3 hours in" progress note with historical win rates
     "anatomy_skip_h4_conflict": False,  # research candidate: skip 4H setups when H1/4H/daily trends disagree
-    "anatomy_model": "edgelab/store/bot_anatomy_model.json",
+    "anatomy_model": "aurum/store/bot_anatomy_model.json",
     "inside_day": True,
     "inside_day_risk_mult": 0.5,  # size at half the normal risk: the two together had the best return per drawdown
     "inside_day_track_record": "Tested 2008-2026: 726 trades, 49% winners, +0.10R per trade after costs",

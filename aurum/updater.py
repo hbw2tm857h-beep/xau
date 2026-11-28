@@ -26,7 +26,7 @@ POINT = 1000.0
 def _get(url: str, tries: int = 6) -> bytes | None:
     for i in range(tries):
         try:
-            req = urllib.request.Request(url, headers={"User-Agent": "edgelab-research/0.2"})
+            req = urllib.request.Request(url, headers={"User-Agent": "aurum-research/0.2"})
             with urllib.request.urlopen(req, timeout=30) as r:
                 return r.read()
         except urllib.error.HTTPError as e:

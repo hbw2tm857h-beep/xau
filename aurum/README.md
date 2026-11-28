@@ -1,19 +1,19 @@
-# The Edge Lab
+# Aurum
 
 A research lab for working out why discretionary XAUUSD trades succeed or fail. It is **not** a trading bot. It never connects to a broker, never places orders and never reads live prices.
 
 ```
-python -m edgelab audit                    # prove there is no look-ahead (features + setup signals)
-python -m edgelab run --budget 150         # full research run + 150 experiments + dashboard
-python -m edgelab experiment --budget 300  # continue the experiment queue (append-only ledger)
-python -m edgelab run --trades my.csv      # add your own trade history to the edge profile
-python -m edgelab template                 # CSV template for your trades
+python -m aurum audit                    # prove there is no look-ahead (features + setup signals)
+python -m aurum run --budget 150         # full research run + 150 experiments + dashboard
+python -m aurum experiment --budget 300  # continue the experiment queue (append-only ledger)
+python -m aurum run --trades my.csv      # add your own trade history to the edge profile
+python -m aurum template                 # CSV template for your trades
 python -m pytest tests                     # simulator / statistics / leakage tests
 ```
 
 Open `lab_output/dashboard.html` in a browser. It is one self-contained file with Plotly loaded from a CDN.
-Needs: Python 3.11+, numpy, pandas, scipy, scikit-learn (`pip install -r edgelab/requirements.txt`).
-The first run takes about 2 minutes. It builds caches in `edgelab/store/cache/`, which git ignores.
+Needs: Python 3.11+, numpy, pandas, scipy, scikit-learn (`pip install -r aurum/requirements.txt`).
+The first run takes about 2 minutes. It builds caches in `aurum/store/cache/`, which git ignores.
 
 ---
 
@@ -84,7 +84,7 @@ Data that would improve the lab, in order of value: (1) **your own trade log** f
 * **Multiple testing:** every scan cell and every ledger test counts. The 1,430 rows logged by earlier `research/`
   rounds count as well, because those rounds already looked at 2008-2026. Deflated Sharpe and BH q-values use that total.
   The holdout is therefore out-of-sample for this lab, but it is not untouched data.
-* **No look-ahead:** `python -m edgelab audit` rebuilds the frame on data cut at random bars and checks that every
+* **No look-ahead:** `python -m aurum audit` rebuilds the frame on data cut at random bars and checks that every
   feature and every setup signal is identical to the full-history value. Current result: 0 mismatches.
 * **Costs:** all R figures are net. Gross figures are shown next to them so a cost problem is not mistaken for a bad idea.
 
@@ -122,7 +122,7 @@ There is no personal trade file yet, so the six self-assessment tests run on the
 Across all 16 setups, shorts trail longs by 0.04 R. Almost none of that gap (0.001 R) comes from regime mix; it shows up
 inside the same regimes, and is consistent with gold's long-run up-drift and the down-move behaviour in finding 9.
 A personal short-side edge has to beat this baseline to count as skill. Export your trades to
-`edgelab/store/my_trades.csv` (`python -m edgelab template`) and the profile switches to your data. It then adds a
+`aurum/store/my_trades.csv` (`python -m aurum template`) and the profile switches to your data. It then adds a
 random-timing benchmark per trade (same day, same side, same stop distance), so timing skill can be told apart from drift.
 
 ## Round 2 (same day): exits, momentum, family-wise controls
@@ -222,18 +222,18 @@ Each research cycle re-scores all of this on new trades (forward section of the 
 ## Ongoing research (how the lab keeps running)
 
 ```
-python -m edgelab update                    # pull new candles from Dukascopy (complete UTC days -> M15 files)
-python -m edgelab cycle --budget 300        # one full cycle: update -> experiments -> forward test -> log
+python -m aurum update                    # pull new candles from Dukascopy (complete UTC days -> M15 files)
+python -m aurum cycle --budget 300        # one full cycle: update -> experiments -> forward test -> log
 ```
 
 Each **cycle** does the following:
 1. Downloads new XAUUSD candles directly from the Dukascopy feed and rebuilds the caches if the data grew.
-2. Tests the **pre-registered agenda** first (`edgelab/agenda.json`), then the engine's own queue: mutations, contradiction
+2. Tests the **pre-registered agenda** first (`aurum/agenda.json`), then the engine's own queue: mutations, contradiction
    probes, scan cells, and coverage-seeking exploration, so the queue never runs dry.
 3. Re-runs the Reality Check over the whole family. Every new hypothesis raises the bar for all the others.
 4. Freezes any newly surviving hypothesis and scores all frozen ones on the **forward split**: data after 2026-11-23 that no
    test has ever used. After 30 forward trades each gets a verdict: `forward_confirmed`, `forward_failed` or `forward_inconclusive`.
-5. Writes what changed to `edgelab/RESEARCH_LOG.md` (newest first) and `store/cycles.jsonl`, and rebuilds the dashboard.
+5. Writes what changed to `aurum/RESEARCH_LOG.md` (newest first) and `store/cycles.jsonl`, and rebuilds the dashboard.
 
 The holdout is now fixed at 2022-01-01 to 2026-11-23, so results stay reproducible. New data only ever lands in `forward`.
 
@@ -248,11 +248,11 @@ and shown on the affected cards: the ML exit choice, and the cycle-0 agenda that
   pre-registers 3-6 new hypotheses in `agenda.json` for the next cycle, writes "Researcher notes" into the log, and pushes to
   this branch. It may design hypotheses only from discovery/validation evidence, never from holdout or forward numbers.
   Manage or stop it under scheduled tasks in Claude Code on the web.
-* **GitHub Actions** `.github/workflows/edgelab.yml` (Sundays 03:17 UTC, or by hand). This is the mechanical cycle with no
+* **GitHub Actions** `.github/workflows/aurum.yml` (Sundays 03:17 UTC, or by hand). This is the mechanical cycle with no
   reasoning step. GitHub only runs scheduled workflows from the default branch, so it activates once merged to `main`.
   The Claude session skips its own cycle when one ran in the last 12 hours.
 
-**Adding your own ideas:** append a spec to `edgelab/agenda.json`, for example
+**Adding your own ideas:** append a spec to `aurum/agenda.json`, for example
 `{"setup": "breakout", "direction": -1, "conditions": [{"f": "session", "op": "==", "v": "london"}], "exit": "trail_2atr", "rationale": "...", "author": "me"}`.
 It is tested first in the next cycle and pays the same multiple-testing price as everything else.
 

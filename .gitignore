@@ -2,5 +2,5 @@ __pycache__/
 *.pyc
 research/reddit_raw/
 .env
-edgelab/store/cache/
-edgelab/store/atlas_validation.csv
+aurum/store/cache/
+aurum/store/atlas_validation.csv

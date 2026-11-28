@@ -1,4 +1,4 @@
-"""THE EDGE LAB — a research environment for reverse-engineering discretionary
+"""AURUM — a research environment for reverse-engineering discretionary
 trading decisions on XAUUSD.
 
 It never connects to a broker and never places trades. Everything here works on

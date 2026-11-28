@@ -121,7 +121,7 @@ def build(R: dict, lab) -> str:
     return str(p)
 
 
-TEMPLATE = r"""<title>The Edge Lab</title>
+TEMPLATE = r"""<title>Aurum</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -192,7 +192,7 @@ dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;font-family:var(--f-mono)}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 <header><div class="wrap">
-  <h1>The <span>Edge</span> Lab</h1>
+  <h1>Aur<span>um</span></h1>
   <p class="sub" id="subtitle">XAUUSD decision reconstruction, mistake taxonomy and hypothesis testing. Research only: no live trading, no broker connection.</p>
   <div style="height:8px"></div>
 </div></header>
@@ -279,7 +279,7 @@ function overview() {
     <div class="kpi"><small>Scan cells p&lt;0.05 vs chance</small><b>${sc.observed_p05} / ${Math.round(sc.expected_false_at_p05)}</b><small>FDR survivors: ${sc.fdr_survivors}</small></div>
     <div class="kpi"><small>Reality Check (best of family)</small><b>p=${D.reality_check&&D.reality_check.p_studentised!=null?num(D.reality_check.p_studentised,3):"–"}</b><small>${D.reality_check?D.reality_check.n_hypotheses+" hypotheses · "+(D.reality_check.rw_survivors||[]).length+" survive FWER":""}</small></div>
     <div class="kpi"><small>Validated discoveries</small><b>${val}</b><small>of ${ex.n_hypotheses} hypotheses tested</small></div>
-    <div class="kpi"><small>Look-ahead audit</small><b>${audit ? (audit.feature_mismatches + audit.mismatches === 0 ? "clean" : "LEAK") : "not run"}</b><small>${audit ? audit.feature_checks+" feature + "+audit.decisions_checked+" decision checks" : "python -m edgelab audit"}</small></div>
+    <div class="kpi"><small>Look-ahead audit</small><b>${audit ? (audit.feature_mismatches + audit.mismatches === 0 ? "clean" : "LEAK") : "not run"}</b><small>${audit ? audit.feature_checks+" feature + "+audit.decisions_checked+" decision checks" : "python -m aurum audit"}</small></div>
   </div>
   <div class="grid">
     <div class="panel"><h3>Headline findings</h3><div id="headlines"></div></div>
@@ -561,7 +561,7 @@ function behaviourAfter() {
 
 function discoveries() {
   const ds = D.discoveries || [];
-  if (!ds.length) return `<h2>Discoveries</h2><p class="lead">No hypothesis has survived discovery and validation yet. Run more experiments: <span class="mono">python -m edgelab experiment --budget 200</span>.</p>`;
+  if (!ds.length) return `<h2>Discoveries</h2><p class="lead">No hypothesis has survived discovery and validation yet. Run more experiments: <span class="mono">python -m aurum experiment --budget 200</span>.</p>`;
   return `<h2>Discoveries</h2><p class="lead">Hypotheses that survived the discovery gate and were scored on validation, and on holdout only if validation passed. Each card carries the ten required fields. Status and evidence score (0–100) weigh in-sample strength, replication, regime stability and the deflated Sharpe ratio, which accounts for ${D.experiments.n_trials_total.toLocaleString()} trials.</p>
   ${ds.map((d,i) => {
     const s = d.by_split, o = d.out_of_sample;
@@ -673,7 +673,7 @@ function botAfter() {
 function profile() {
   const P = D.profile;
   const src = P.source === "personal" ? `<p class="lead">Profile built from ${P.n} of your own trades.</p>` :
-   `<div class="callout"><b>No personal trade file found.</b> These tests run on the lab's ${P.n.toLocaleString()} mechanical trades. That makes them a <i>market baseline</i>: a personal edge has to beat these numbers to count as skill. Add your history at <span class="mono">edgelab/store/my_trades.csv</span> (template below) and rerun.</div>`;
+   `<div class="callout"><b>No personal trade file found.</b> These tests run on the lab's ${P.n.toLocaleString()} mechanical trades. That makes them a <i>market baseline</i>: a personal edge has to beat these numbers to count as skill. Add your history at <span class="mono">aurum/store/my_trades.csv</span> (template below) and rerun.</div>`;
   return `<h2>Edge profile: testing the self-assessment</h2>${src}
   <div class="panel">${table(P.tests, [{label:"Claim",f:r=>`<b>${esc(r.id)}</b> ${esc(r.claim)}`,html:1},{label:"How it is falsified",k:"test"},
     {label:"Verdict",html:1,f:r=>r.verdict==="supported"?'<span class="pill good">supported</span>':(r.verdict.startsWith("insuff")?'<span class="pill muted">'+r.verdict+'</span>':'<span class="pill crit">'+r.verdict+'</span>')},
@@ -779,7 +779,7 @@ function route() {
   $("#tabs").innerHTML = TABS.map(([k,l]) => `<a href="#${k}" class="${k===key?'on':''}">${l}</a>`).join("");
   $("#main").innerHTML = `<section>${VIEWS[key][0]()}</section>`;
   if (VIEWS[key][1]) VIEWS[key][1]();
-  try { localStorage.setItem("edgelab_tab", key); } catch(e) {}
+  try { localStorage.setItem("aurum_tab", key); } catch(e) {}
 }
 window.addEventListener("hashchange", route);
 if (window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventListener("change", route);

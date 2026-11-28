@@ -1,0 +1,950 @@
+[
+ {
+  "hyp_id": "Hd9aa7656b8",
+  "priority": 64.40108,
+  "spec": {
+   "setup": "session_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      0.9401,
+      2.6517
+     ]
+    },
+    {
+     "f": "dist_round50",
+     "op": ">=",
+     "v": 5.3557
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.88, lift +0.559R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H3fdd09e214",
+  "priority": 64.39947,
+  "spec": {
+   "setup": "breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_pos50",
+     "op": "between",
+     "v": [
+      0.6468,
+      0.9195
+     ]
+    },
+    {
+     "f": "adx",
+     "op": "<",
+     "v": 19.0644
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.88, lift +0.251R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H60fafe1054",
+  "priority": 64.28337,
+  "spec": {
+   "setup": "sweep_reversal",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_structure",
+     "op": "==",
+     "v": -0.0
+    },
+    {
+     "f": "stop_atr",
+     "op": ">=",
+     "v": 0.8667
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.86, lift +0.438R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H5a13fb26ab",
+  "priority": 64.16484,
+  "spec": {
+   "setup": "rsi_extreme",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "er10",
+     "op": "<",
+     "v": 0.5324
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "bear"
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.83, lift +0.728R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H90590c9feb",
+  "priority": 64.13004,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_dist_ema200",
+     "op": "between",
+     "v": [
+      0.5268,
+      4.8899
+     ]
+    },
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0065,
+      0.0079
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.83, lift +0.391R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H427f20607f",
+  "priority": 63.99873,
+  "spec": {
+   "setup": "bb_squeeze_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0067,
+      0.0073
+     ]
+    },
+    {
+     "f": "room_fwd",
+     "op": "<",
+     "v": 0.2009
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.80, lift +0.520R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H2e46533ff0",
+  "priority": 63.99206,
+  "spec": {
+   "setup": "ma_cross",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_mom6",
+     "op": ">=",
+     "v": 2.0698
+    },
+    {
+     "f": "room_in_r_htf",
+     "op": "between",
+     "v": [
+      0.5063,
+      1.3894
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.80, lift +0.471R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H03546bb066",
+  "priority": 63.97668,
+  "spec": {
+   "setup": "burst_pullback",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.6784,
+      2.961
+     ]
+    },
+    {
+     "f": "regime_vol",
+     "op": "==",
+     "v": "highvol"
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.80, lift +0.632R on discovery."
+  }
+ },
+ {
+  "hyp_id": "He0b02ddb7d",
+  "priority": 63.94065,
+  "spec": {
+   "setup": "bb_squeeze_breakout",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_usd_chg20",
+     "op": "between",
+     "v": [
+      -0.0067,
+      0.0073
+     ]
+    },
+    {
+     "f": "rel_mom24",
+     "op": "between",
+     "v": [
+      0.9296,
+      2.5243
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.79, lift +0.476R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H2011192ba0",
+  "priority": 63.90964,
+  "spec": {
+   "setup": "sweep_reversal",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_structure",
+     "op": "==",
+     "v": -0.0
+    },
+    {
+     "f": "vol_rel",
+     "op": ">=",
+     "v": 1.5477
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.78, lift +0.447R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H7313c0624e",
+  "priority": 63.88107,
+  "spec": {
+   "setup": "burst_pullback",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_dist_ema50",
+     "op": "between",
+     "v": [
+      1.6784,
+      2.961
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined",
+   "rationale": "Scan cell t=2.78, lift +0.382R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H789c1b0589",
+  "priority": 63.83577,
+  "spec": {
+   "setup": "burst_pullback",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_dist_ema20",
+     "op": "between",
+     "v": [
+      0.9571,
+      1.6781
+     ]
+    },
+    {
+     "f": "rel_h4_dist_ema20",
+     "op": "between",
+     "v": [
+      0.8645,
+      1.8348
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.77, lift +0.608R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H1e04e3892b",
+  "priority": 63.83454,
+  "spec": {
+   "setup": "wick_rejection",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_mom24",
+     "op": "between",
+     "v": [
+      -1.566,
+      0.6055
+     ]
+    },
+    {
+     "f": "rel_run_len",
+     "op": "between",
+     "v": [
+      -1.0,
+      1.0
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.77, lift +0.690R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H6a1d8bfe16",
+  "priority": 63.8163,
+  "spec": {
+   "setup": "sweep_reversal",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_structure",
+     "op": "==",
+     "v": -0.0
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "bear"
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.76, lift +0.525R on discovery."
+  }
+ },
+ {
+  "hyp_id": "Ha46fba3208",
+  "priority": 63.71219,
+  "spec": {
+   "setup": "burst_pullback",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      59.3054,
+      66.0358
+     ]
+    },
+    {
+     "f": "room_fwd",
+     "op": ">=",
+     "v": 1.0026
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.74, lift +0.603R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H92b7f4db34",
+  "priority": 63.67426,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_d_ema50_slope",
+     "op": "between",
+     "v": [
+      -0.5846,
+      0.2126
+     ]
+    },
+    {
+     "f": "regime_trend",
+     "op": "==",
+     "v": "neutral"
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.73, lift +0.176R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H85aabf5b29",
+  "priority": 63.59411,
+  "spec": {
+   "setup": "bb_squeeze_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "vix",
+     "op": "between",
+     "v": [
+      14.8967,
+      20.8767
+     ]
+    },
+    {
+     "f": "range_atr",
+     "op": "between",
+     "v": [
+      1.4183,
+      2.0503
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.72, lift +0.406R on discovery."
+  }
+ },
+ {
+  "hyp_id": "H34d97cf20a",
+  "priority": 63.59126,
+  "spec": {
+   "setup": "bb_squeeze_breakout",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "range20_atr",
+     "op": "between",
+     "v": [
+      3.2481,
+      3.8372
+     ]
+    },
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.7905,
+      2.1532
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.72, lift +0.403R on discovery."
+  }
+ },
+ {
+  "hyp_id": "Hcd7afeb822",
+  "priority": 63.57265,
+  "spec": {
+   "setup": "ma_cross",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "adx",
+     "op": "<",
+     "v": 18.466
+    },
+    {
+     "f": "rel_dist_ema200",
+     "op": ">=",
+     "v": 1.6635
+    }
+   ],
+   "exit": "base",
+   "origin": "mined_pair",
+   "rationale": "Pair-scan cell t=2.71, lift +0.532R on discovery."
+  }
+ },
+ {
+  "hyp_id": "Hd859f9b4b1",
+  "priority": 35.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "<",
+     "v": -0.2235
+    },
+    {
+     "f": "rel_mom24",
+     "op": "<",
+     "v": -0.4889
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Add look-alike discriminator rel_mom24.",
+   "parent": "Had4fcc4f2f"
+  }
+ },
+ {
+  "hyp_id": "H0aff1b0178",
+  "priority": 35.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "<",
+     "v": -0.2235
+    },
+    {
+     "f": "rel_d_structure",
+     "op": "<",
+     "v": 0.0
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Add look-alike discriminator rel_d_structure.",
+   "parent": "Had4fcc4f2f"
+  }
+ },
+ {
+  "hyp_id": "H50a836849d",
+  "priority": 35.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "<",
+     "v": -0.2235
+    },
+    {
+     "f": "rel_h4_mom6",
+     "op": "<",
+     "v": -1.0217
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Add look-alike discriminator rel_h4_mom6.",
+   "parent": "Had4fcc4f2f"
+  }
+ },
+ {
+  "hyp_id": "Ha503dea8c0",
+  "priority": 35.0,
+  "spec": {
+   "setup": "momentum_bar",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_ema50_slope",
+     "op": "<",
+     "v": -0.2235
+    },
+    {
+     "f": "room_fwd",
+     "op": "<",
+     "v": 0.3342
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Add look-alike discriminator room_fwd.",
+   "parent": "Had4fcc4f2f"
+  }
+ },
+ {
+  "hyp_id": "H874a4835b2",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      65.0541,
+      71.8778
+     ]
+    },
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    }
+   ],
+   "exit": "target_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_1r'.",
+   "parent": "H132138a07c"
+  }
+ },
+ {
+  "hyp_id": "H88bca0ee35",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      65.0541,
+      71.8778
+     ]
+    },
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    }
+   ],
+   "exit": "target_3r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'target_3r'.",
+   "parent": "H132138a07c"
+  }
+ },
+ {
+  "hyp_id": "Hac2136500f",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      65.0541,
+      71.8778
+     ]
+    },
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    }
+   ],
+   "exit": "breakeven_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'breakeven_1r'.",
+   "parent": "H132138a07c"
+  }
+ },
+ {
+  "hyp_id": "H75e252df63",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      65.0541,
+      71.8778
+     ]
+    },
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    }
+   ],
+   "exit": "stop_1.5x",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'stop_1.5x'.",
+   "parent": "H132138a07c"
+  }
+ },
+ {
+  "hyp_id": "H5f9dae6d29",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      65.0541,
+      71.8778
+     ]
+    },
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    }
+   ],
+   "exit": "time_exit_12h",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'time_exit_12h'.",
+   "parent": "H132138a07c"
+  }
+ },
+ {
+  "hyp_id": "Hb03e49aed2",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      65.0541,
+      71.8778
+     ]
+    },
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    }
+   ],
+   "exit": "retest_limit",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'retest_limit'.",
+   "parent": "H132138a07c"
+  }
+ },
+ {
+  "hyp_id": "H0b929d2bf6",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      65.0541,
+      71.8778
+     ]
+    },
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    }
+   ],
+   "exit": "confirm_close",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'confirm_close'.",
+   "parent": "H132138a07c"
+  }
+ },
+ {
+  "hyp_id": "H26995578ca",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      65.0541,
+      71.8778
+     ]
+    },
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    }
+   ],
+   "exit": "trail_2atr",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_2atr'.",
+   "parent": "H132138a07c"
+  }
+ },
+ {
+  "hyp_id": "H8457490306",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      65.0541,
+      71.8778
+     ]
+    },
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    }
+   ],
+   "exit": "trail_3atr_after_1r",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'trail_3atr_after_1r'.",
+   "parent": "H132138a07c"
+  }
+ },
+ {
+  "hyp_id": "Hda0108466a",
+  "priority": 45.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      65.0541,
+      71.8778
+     ]
+    },
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    }
+   ],
+   "exit": "partial_1r_trail",
+   "origin": "mutation",
+   "rationale": "Same entry, exit 'partial_1r_trail'.",
+   "parent": "H132138a07c"
+  }
+ },
+ {
+  "hyp_id": "Hd60884350f",
+  "priority": 50.0,
+  "spec": {
+   "setup": "*",
+   "direction": -1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      65.0541,
+      71.8778
+     ]
+    },
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "mutation",
+   "rationale": "Does the condition generalise across all setups?",
+   "parent": "H132138a07c"
+  }
+ },
+ {
+  "hyp_id": "H268ef65645",
+  "priority": 50.0,
+  "spec": {
+   "setup": "momentum_burst",
+   "direction": 1,
+   "conditions": [
+    {
+     "f": "rel_rsi",
+     "op": "between",
+     "v": [
+      65.0541,
+      71.8778
+     ]
+    },
+    {
+     "f": "room_fwd_htf",
+     "op": "between",
+     "v": [
+      0.8861,
+      2.4279
+     ]
+    }
+   ],
+   "exit": "base",
+   "origin": "contradiction",
+   "rationale": "Directional asymmetry probe: same condition, other side.",
+   "parent": "H132138a07c"
+  }
+ }
+]

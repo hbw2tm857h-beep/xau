@@ -1,4 +1,4 @@
-"""End-to-end research run. ``python -m edgelab run``"""
+"""End-to-end research run. ``python -m aurum run``"""
 from __future__ import annotations
 
 import json
@@ -190,7 +190,8 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     from .discovery import scan_to_spec
     seen, fam = set(), []
     for rec in led.records():
-        if rec.get("split") == "discovery" and rec.get("hyp_id") not in seen and rec.get("spec"):
+        if rec.get("split") == "discovery" and rec.get("hyp_id") not in seen and rec.get("spec") \
+                and rec.get("origin") != "bot":
             seen.add(rec["hyp_id"]); fam.append(rec["spec"])
     fam += [scan_to_spec(r) for _, r in sc.head(600).iterrows()]
     X, keep = daily_matrix(T, cf_ext, fam)

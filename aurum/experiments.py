@@ -183,13 +183,13 @@ class Engine:
         self.save()
 
     def seed_agenda(self):
-        """Pre-registered hypotheses from edgelab/agenda.json (written by you or a research session).
+        """Pre-registered hypotheses from aurum/agenda.json (written by you or a research session).
 
         Each entry is a hypothesis spec plus "rationale" and "author". Entries are registered
         BEFORE they are tested, and re-pushing an already-tested one is a no-op.
         """
         from .config import ROOT
-        p = ROOT / "edgelab" / "agenda.json"
+        p = ROOT / "aurum" / "agenda.json"
         if not p.exists():
             return 0
         n = 0
@@ -426,7 +426,8 @@ class Engine:
         """Regenerate discovery cards from the ledger (e.g. after a report-format change)."""
         last = {}
         for r in self.ledger.records():
-            if r.get("hyp_id") and r.get("status") not in ("robustness_check",):
+            # "bot" records are rules scored outside the engine (bot_anatomy.py); they have no engine exit
+            if r.get("hyp_id") and r.get("status") not in ("robustness_check",) and r.get("origin") != "bot":
                 last[r["hyp_id"]] = r
         holdout_seen = {r["hyp_id"] for r in self.ledger.records() if r.get("split") == "holdout"}
         out = []

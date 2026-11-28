@@ -4,7 +4,7 @@
 store/frozen.json with a timestamp equal to the last decision bar in the data.
 ``score`` evaluates them ONLY on trades decided after that timestamp. Run it after
 the data files are refreshed (the "Fetch gold history" workflow) and rebuild the
-caches with ``python -m edgelab run --rebuild``.
+caches with ``python -m aurum run --rebuild``.
 """
 from __future__ import annotations
 

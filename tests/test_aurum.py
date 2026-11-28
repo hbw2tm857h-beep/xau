@@ -3,11 +3,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from edgelab import data as D
-from edgelab.config import CostModel
-from edgelab.simulator import Path, simulate
-from edgelab.stats import benjamini_hochberg, max_drawdown, deflated_sharpe, summarise
-from edgelab.structure import pivots
+from aurum import data as D
+from aurum.config import CostModel
+from aurum.simulator import Path, simulate
+from aurum.stats import benjamini_hochberg, max_drawdown, deflated_sharpe, summarise
+from aurum.structure import pivots
 
 
 def _path(rows, minutes=15):
@@ -84,7 +84,7 @@ def test_summarise_basic():
 
 @pytest.mark.slow
 def test_truncation_audit_clean():
-    from edgelab.validation import truncation_audit
+    from aurum.validation import truncation_audit
     a = truncation_audit(D.load_h1(), n_cuts=2, window=3000)
     assert a["mismatches"].sum() == 0
 
@@ -101,6 +101,6 @@ def test_trailing_stop_uses_only_past_bars():
 
 
 def test_every_setup_has_unique_trade_code():
-    from edgelab.setups import SETUPS
-    from edgelab.trades import CODE
+    from aurum.setups import SETUPS
+    from aurum.trades import CODE
     assert set(SETUPS) <= set(CODE) and len(set(CODE.values())) == len(CODE)

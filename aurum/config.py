@@ -6,8 +6,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
-STORE = ROOT / "edgelab" / "store"          # committed research record (ledger, queue)
-CACHE = ROOT / "edgelab" / "store" / "cache"  # not committed (rebuildable)
+STORE = ROOT / "aurum" / "store"          # committed research record (ledger, queue)
+CACHE = ROOT / "aurum" / "store" / "cache"  # not committed (rebuildable)
 OUTPUT = ROOT / "lab_output"                # dashboard + summary artefacts
 
 # ---------------------------------------------------------------------------

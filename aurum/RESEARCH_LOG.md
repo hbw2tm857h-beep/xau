@@ -1,6 +1,6 @@
-# Edge Lab research log
+# Aurum research log
 
-Newest first. Written automatically by `python -m edgelab cycle`.
+Newest first. Written automatically by `python -m aurum cycle`.
 
 
 

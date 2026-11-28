@@ -1,4 +1,4 @@
-"""Command line:  python -m edgelab <command>
+"""Command line:  python -m aurum <command>
 
   run         full research run (+ experiments, + dashboard)       [--budget N] [--rebuild] [--trades my.csv]
   experiment  run N more experiments from the queue                 [--budget N]
@@ -6,6 +6,7 @@
   dashboard   rebuild the dashboard from the last run
   template    print the personal-trades CSV template
   update      download new candles from Dukascopy (complete UTC days)
+  history     rebuild aurum/HISTORY.json (the project explained, creation to now)
   cycle       one autonomous research cycle: update -> experiments -> forward test -> log  [--budget N] [--no-fetch]
 """
 from __future__ import annotations
@@ -15,8 +16,8 @@ import json
 
 
 def main():
-    ap = argparse.ArgumentParser(prog="edgelab")
-    ap.add_argument("command", choices=["run", "experiment", "audit", "dashboard", "template", "update", "cycle"])
+    ap = argparse.ArgumentParser(prog="aurum")
+    ap.add_argument("command", choices=["run", "experiment", "audit", "dashboard", "template", "update", "cycle", "history"])
     ap.add_argument("--budget", type=int, default=60)
     ap.add_argument("--rebuild", action="store_true")
     ap.add_argument("--trades", default=None)
@@ -59,6 +60,9 @@ def main():
             print(f"[cycle] last cycle {h:.1f}h ago (< {a.skip_if_recent}h): skipping, results are current")
         else:
             run_cycle(a.budget, fetch=not a.no_fetch, user_trades=a.trades)
+    elif a.command == "history":
+        from .history import write
+        print(f"wrote {write()}")
     elif a.command == "template":
         from .profile import TEMPLATE
         print(TEMPLATE)

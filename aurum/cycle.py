@@ -1,6 +1,6 @@
 """One autonomous research cycle. Designed to be run on a schedule, forever.
 
-    python -m edgelab cycle --budget 300
+    python -m aurum cycle --budget 300
 
 1. pull new candles (Dukascopy) and rebuild caches if the data changed
 2. run the pipeline: engine experiments (agenda first), reality check, forward scoring, dashboard
@@ -19,7 +19,7 @@ from .stats import jsonable
 
 STATE = STORE / "cycle_state.json"
 CYCLES = STORE / "cycles.jsonl"
-LOG = ROOT / "edgelab" / "RESEARCH_LOG.md"
+LOG = ROOT / "aurum" / "RESEARCH_LOG.md"
 
 
 def hours_since_last() -> float | None:
@@ -106,8 +106,13 @@ def run_cycle(budget: int = 300, fetch: bool = True, user_trades: str | None = N
     md = [f"## Cycle {entry['ts']} UTC", ""]
     md += [f"- {c}" for c in changes]
     md += ["", "Next in the queue:"] + [f"- {x}" for x in entry["next"]] + [""]
-    old = LOG.read_text() if LOG.exists() else "# Edge Lab research log\n\nNewest first. Written automatically by `python -m edgelab cycle`.\n\n"
+    old = LOG.read_text() if LOG.exists() else "# Aurum research log\n\nNewest first. Written automatically by `python -m aurum cycle`.\n\n"
     head, _, rest = old.partition("\n\n## ")
     LOG.write_text(head + "\n\n" + "\n".join(md) + ("\n## " + rest if rest else ""))
     print("\n".join(md))
+    try:
+        from .history import write
+        write()
+    except Exception as e:  # noqa: BLE001 - the history file must never stop a cycle
+        print(f"[history] failed: {e}")
     return entry
