@@ -173,6 +173,12 @@ Each **cycle** does the following:
 
 The holdout is now fixed at 2022-01-01 to 2026-11-23, so results stay reproducible. New data only ever lands in `forward`.
 
+**The holdout is sealed.** Every descriptive view — taxonomy verdicts, look-alike replication, event studies, momentum and
+asymmetry studies, setup tables, the ML charts — uses discovery + validation only. Holdout numbers appear only on the card of a
+hypothesis that passed validation, after it has been scored. Researchers (you, me, the weekly session) design hypotheses from
+what the dashboard shows, so this keeps the holdout from leaking into ideas. Two earlier leaks are recorded in the ledger
+and shown on the affected cards: the ML exit choice, and the cycle-0 agenda that was built from pooled verdicts.
+
 **Schedulers**
 * **Weekly Claude research session** (Sundays 04:23 UTC). It runs a cycle, reads the results as a researcher,
   pre-registers 3-6 new hypotheses in `agenda.json` for the next cycle, writes "Researcher notes" into the log, and pushes to

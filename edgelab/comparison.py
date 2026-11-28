@@ -88,7 +88,7 @@ def compare_pairs(t: pd.DataFrame, pairs: pd.DataFrame, by: list[str] | None = N
 def replication(t: pd.DataFrame, pairs: pd.DataFrame) -> pd.DataFrame:
     """A difference only counts if it has the same sign in discovery and in later data."""
     a = compare_pairs(t, pairs[pairs["split"] == "discovery"])
-    b = compare_pairs(t, pairs[pairs["split"].isin(["validation", "holdout"])])
+    b = compare_pairs(t, pairs[pairs["split"] == "validation"])   # holdout sealed
     if not len(a) or not len(b):
         return a
     m = a.merge(b[["feature", "mean_diff", "effect", "p_value", "consistency"]], on="feature",

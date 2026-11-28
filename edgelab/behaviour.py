@@ -26,7 +26,7 @@ def forward_returns(f: pd.DataFrame, horizons=(1, 3, 6, 12, 24)) -> pd.DataFrame
 
 
 def momentum_persistence(f: pd.DataFrame, fr: pd.DataFrame, look="mom6", horizon="fwd12",
-                         split_col="split", splits=("discovery", "validation", "holdout")) -> pd.DataFrame:
+                         split_col="split", splits=("discovery", "validation")) -> pd.DataFrame:
     """Forward move conditional on past move, separately for up-moves and down-moves.
 
     Positive 'continuation' means the next move goes the same way as the past move.
@@ -51,7 +51,7 @@ def momentum_persistence(f: pd.DataFrame, fr: pd.DataFrame, look="mom6", horizon
 def directional_asymmetry(f: pd.DataFrame, fr: pd.DataFrame) -> dict:
     """Do down-moves behave differently from up-moves in gold? ('stairs up, elevator down')."""
     d = pd.concat([f, fr], axis=1)
-    d = d[d["split"].isin(["discovery", "validation", "holdout"])].dropna(subset=["mom6", "fwd12"])
+    d = d[d["split"].isin(["discovery", "validation"])].dropna(subset=["mom6", "fwd12"])
     out = {}
     # 1. speed: average absolute bar return on down bars vs up bars
     body = d["close"] - d["open"]
@@ -87,7 +87,7 @@ def directional_asymmetry(f: pd.DataFrame, fr: pd.DataFrame) -> dict:
     return out
 
 
-def setup_side_profile(t: pd.DataFrame, splits=("discovery", "validation", "holdout")) -> pd.DataFrame:
+def setup_side_profile(t: pd.DataFrame, splits=("discovery", "validation")) -> pd.DataFrame:
     """Long vs short for every setup, with regime control."""
     d = t[t["split"].isin(splits)]
     rows = []
@@ -130,12 +130,12 @@ def conventional_scoreboard(t: pd.DataFrame, cat_stats: pd.DataFrame) -> pd.Data
     for name, s in SETUPS.items():
         g = t[t["setup"] == name]
         row = {"setup": name, "claim": s.claim, "family": s.family}
-        for sp in ("discovery", "validation", "holdout"):
+        for sp in ("discovery", "validation"):
             x = g[g["split"] == sp]
             row[f"gross_{sp}"] = x["r_gross"].mean()
             row[f"net_{sp}"] = x["r"].mean()
             row[f"n_{sp}"] = len(x)
-        oos = g[g["split"].isin(["validation", "holdout"])]
+        oos = g[g["split"] == "validation"]
         gross = summarise(oos["r_gross"].values)
         row["oos_gross_t"] = gross["t"]
         if gross["t"] > 2:
@@ -149,7 +149,7 @@ def conventional_scoreboard(t: pd.DataFrame, cat_stats: pd.DataFrame) -> pd.Data
 
 
 def event_paths(f: pd.DataFrame, t: pd.DataFrame, pre: int = 24, post: int = 48,
-                splits=("discovery", "validation", "holdout")) -> dict:
+                splits=("discovery", "validation")) -> dict:
     """Average trade-relative price path (in ATR at decision) around every setup trigger.
 
     k < 0 shows what led INTO the setup; k > 0 what followed. Winners/losers are split

@@ -20,7 +20,7 @@ INSPECT_COLS = ["trade_id", "setup", "family", "direction", "split", "regime", "
 
 def _sample_trades(lab, R, per_cell: int = 4) -> pd.DataFrame:
     T = lab.trades
-    pool = T[T["split"].isin(["discovery", "validation", "holdout"])]
+    pool = T[T["split"].isin(["discovery", "validation"])]
     picks = []
     for (s, d), g in pool.groupby(["setup", "direction"]):
         for win in (1, 0):
@@ -81,7 +81,7 @@ def _regime_series(lab) -> dict:
 
 def _distributions(lab) -> dict:
     T = lab.trades
-    T = T[T["split"].isin(["discovery", "validation", "holdout"])]
+    T = T[T["split"].isin(["discovery", "validation"])]
     bins = np.arange(-2.0, 4.01, 0.25)
     out = {"bins": bins.tolist()}
     for s, g in T.groupby("setup"):
@@ -301,7 +301,7 @@ function headlines() {
   const h = [];
   const conv = D.conventional || [];
   const anyGross = conv.filter(c => c.oos_gross_t > 2).length;
-  h.push(`<b>${conv.length - anyGross} of ${conv.length}</b> textbook setups show no out-of-sample edge even <i>before</i> costs. After costs, every one is ≤ ${sgn(Math.max(...conv.map(c=>c.net_holdout||-9)),2)}R on the holdout.`);
+  h.push(`<b>${conv.length - anyGross} of ${conv.length}</b> textbook setups show no out-of-sample edge even <i>before</i> costs. After costs, the best is ${sgn(Math.max(...conv.map(c=>c.net_validation||-9)),2)}R per trade in validation.`);
   const tx = D.taxonomy || [];
   const contra = tx.filter(t => (t.verdict||"").startsWith("CONTRA") && t.replicated).map(t=>t.name);
   const conf = tx.filter(t => (t.verdict||"").startsWith("confirmed") && t.replicated).map(t=>t.name);
@@ -309,7 +309,7 @@ function headlines() {
   if (conf.length) h.push(`Mistakes <b>confirmed</b> in discovery and later data: ${conf.map(esc).join("; ")}.`);
   const ob = D.oaxaca; if (ob) h.push(`Shorts trail longs by ${sgn(ob.total_gap,3)}R per trade; only ${sgn(ob.composition_effect,3)}R of that is the regime mix — the rest happens within the same regimes.`);
   const sel = D.ml.oos_selected||{}, all = D.ml.oos_all||{};
-  if (sel.holdout) h.push(`The walk-forward model lifts holdout expectancy from ${sgn(all.holdout.avg_r,3)}R to ${sgn(sel.holdout.avg_r,3)}R: a real but small signal that does not clear costs.`);
+  if (sel.validation) h.push(`The walk-forward model lifts validation expectancy from ${sgn(all.validation.avg_r,3)}R to ${sgn(sel.validation.avg_r,3)}R: a real but small signal that barely clears costs.`);
   const rc = D.reality_check; if (rc && rc.n_hypotheses) h.push(`White's Reality Check over ${rc.n_hypotheses} hypotheses: the best one (<span class="mono">${esc(rc.best)}</span>) has studentised p = ${num(rc.p_studentised,3)}; <b>${(rc.rw_survivors||[]).length}</b> survive family-wise correction.`);
   const hs = D.hindsight_best_alt||{}; const top = Object.entries(hs)[0];
   if (top) h.push(`In hindsight, "${esc(top[0])}" would have rescued ${pct(top[1])} of losers — yet as a rule it adds nothing. Hindsight fixes are not edges.`);
@@ -319,7 +319,7 @@ function headlines() {
 function setups() {
   return `<h2>Setup performance</h2>
   <p class="lead">Each setup is a conventional chart idea, reconstructed bar by bar and executed with a structural stop, a 2R target and a 48h time stop. Gross = before costs.</p>
-  <div class="row"><label for="sp_split">Split</label><select id="sp_split">${["discovery","validation","holdout","archive"].map(s=>`<option>${s}</option>`).join("")}</select></div>
+  <div class="row"><label for="sp_split">Split</label><select id="sp_split">${["discovery","validation","archive"].map(s=>`<option>${s}</option>`).join("")}</select><span class="note">Holdout (2022-01 → 2026-11-23) is sealed: it is shown only for hypotheses that passed validation.</span></div>
   <div class="panel" id="sp_tbl"></div>
   <div class="grid">
     <div class="panel"><h3>Cumulative R by setup</h3><div class="row"><select id="eq_sel"></select></div><div id="eq_chart" class="chart"></div></div>
@@ -329,9 +329,8 @@ function setups() {
     {label:"Setup",k:"setup"},{label:"Claim",k:"claim"},
     {label:"Gross disc",num:1,f:r=>sgn(r.gross_discovery),cls:r=>cls(r.gross_discovery)},
     {label:"Gross valid",num:1,f:r=>sgn(r.gross_validation),cls:r=>cls(r.gross_validation)},
-    {label:"Gross hold",num:1,f:r=>sgn(r.gross_holdout),cls:r=>cls(r.gross_holdout)},
-    {label:"Net hold",num:1,f:r=>sgn(r.net_holdout),cls:r=>cls(r.net_holdout)},
-    {label:"OOS gross t",num:1,f:r=>num(r.oos_gross_t,2)},{label:"Verdict",html:1,f:r=>verdictPill(r.verdict)}])}</div>`;
+    {label:"Net valid",num:1,f:r=>sgn(r.net_validation),cls:r=>cls(r.net_validation)},
+    {label:"Valid gross t",num:1,f:r=>num(r.oos_gross_t,2)},{label:"Verdict",html:1,f:r=>verdictPill(r.verdict)}])}</div>`;
 }
 function setupsAfter() {
   const draw = () => {
@@ -367,7 +366,7 @@ function mistakes() {
   <div class="grid">
     <div class="panel"><h3>Losing trades: share flagged, by setup × category</h3><div id="tx_heat" class="chart" style="min-height:520px"></div></div>
     <div class="panel"><h3>Failed setups by hour (UTC) × weekday: average R</h3><div id="hd_heat" class="chart" style="min-height:360px"></div>
-      <p class="note">All setups, discovery to holdout. Red = worse than zero after costs.</p></div>
+      <p class="note">All setups, discovery and validation. Red = worse than zero after costs.</p></div>
   </div>`;
 }
 function mistakesAfter() {
@@ -380,7 +379,7 @@ function mistakesAfter() {
       {label:"% losers",num:1,f:r=>pct(r.freq_losers)},{label:"% winners",num:1,f:r=>pct(r.freq_winners)},
       {label:"ΔR disc",num:1,f:r=>sgn(r.delta_r),cls:r=>cls(r.delta_r),sort:r=>r.delta_r},
       {label:"q",num:1,f:r=>num(r.q_value,3)},{label:"Verdict (disc)",html:1,f:r=>verdictPill(r.verdict)},
-      {label:"ΔR OOS",num:1,f:r=>sgn(r.delta_r_oos),cls:r=>cls(r.delta_r_oos)},{label:"Verdict (OOS)",html:1,f:r=>verdictPill(r.verdict_oos)}]);
+      {label:"ΔR valid",num:1,f:r=>sgn(r.delta_r_oos),cls:r=>cls(r.delta_r_oos)},{label:"Verdict (valid)",html:1,f:r=>verdictPill(r.verdict_oos)}]);
   };
   $("#tx_phase").onchange = draw; draw();
   const mb = D.mistake_by_setup; const ids = D.mistake_defs.map(m=>m.id);
@@ -397,7 +396,7 @@ function mistakesAfter() {
 function counterfactuals() {
   return `<h2>Counterfactual replay</h2>
   <p class="lead">Every trade was re-run 17 ways. The <b>policy</b> view applies one alternative to all trades of a setup, winners included. That is the only view that could become a rule. The <b>hindsight</b> view picks the best alternative after the fact and is shown only to demonstrate how misleading it is.</p>
-  <div class="row"><label for="cf_split">Data</label><select id="cf_split"><option value="discovery">discovery</option><option value="oos">validation + holdout</option></select></div>
+  <div class="row"><label for="cf_split">Data</label><select id="cf_split"><option value="discovery">discovery</option><option value="oos">validation</option></select></div>
   <div class="panel"><h3>Change in expectancy vs. base (R per trade, in original-risk units)</h3><div id="cf_heat" class="chart" style="min-height:620px"></div></div>
   <div class="grid">
     <div class="panel"><h3>Hindsight: best alternative for each loser</h3><div id="hs_chart" class="chart"></div></div>
@@ -423,7 +422,7 @@ function counterfactualsAfter() {
 function lookalikes() {
   const rows = D.lookalike || [];
   return `<h2>Winners vs. look-alike losers</h2>
-  <p class="lead">${D.lookalike_pairs.toLocaleString()} loser→winner pairs matched on what the chart showed at the signal candle (candle shape, wicks, stop size, short-term move). The table lists hidden context features that differ inside pairs. "Replicates" requires the same sign with q&lt;0.05 in discovery and p&lt;0.05 in later data.</p>
+  <p class="lead">${D.lookalike_pairs.toLocaleString()} loser→winner pairs matched on what the chart showed at the signal candle (candle shape, wicks, stop size, short-term move). The table lists hidden context features that differ inside pairs. "Replicates" requires the same sign with q&lt;0.05 in discovery and p&lt;0.05 in validation (holdout is sealed).</p>
   <div class="callout note">Effect sizes are tiny (a few hundredths of a standard deviation, and winners are "higher" in only ~48–50% of pairs). At the one-hour scale, setups that look the same mostly diverge on noise. Any edge built on these differences will be thin.</div>
   <div class="panel">${table(rows, [
     {label:"Feature",k:"feature"},{label:"Group",k:"group"},{label:"Winner mean",num:1,f:r=>num(r.winner_mean)},
@@ -580,7 +579,7 @@ function profile() {
     {label:"Verdict",html:1,f:r=>r.verdict==="supported"?'<span class="pill good">supported</span>':(r.verdict.startsWith("insuff")?'<span class="pill muted">'+r.verdict+'</span>':'<span class="pill crit">'+r.verdict+'</span>')},
     {label:"Key evidence",f:r=>evidence(r),html:1}])}</div>
   <div class="grid">
-    <div class="panel"><h3>Long vs. short by setup (all later splits)</h3>${table(D.side_profile, [{label:"Setup",k:"setup"},{label:"Long R",num:1,f:r=>sgn(r.avg_r_long),cls:r=>cls(r.avg_r_long)},
+    <div class="panel"><h3>Long vs. short by setup (discovery + validation)</h3>${table(D.side_profile, [{label:"Setup",k:"setup"},{label:"Long R",num:1,f:r=>sgn(r.avg_r_long),cls:r=>cls(r.avg_r_long)},
       {label:"Short R",num:1,f:r=>sgn(r.avg_r_short),cls:r=>cls(r.avg_r_short)},{label:"Short−Long",num:1,f:r=>sgn(r.short_minus_long),sort:r=>r.short_minus_long},
       {label:"Min to MFE L/S",num:1,f:r=>num(r.minutes_to_mfe_long,0)+" / "+num(r.minutes_to_mfe_short,0)},{label:"p",num:1,f:r=>num(r.p_value,3)}])}</div>
     <div class="panel"><h3>Why good-looking sells lose</h3>${table(P.why_sells_lose||[], [{label:"Category",f:r=>r.id+" "+r.name},{label:"Phase",k:"phase"},

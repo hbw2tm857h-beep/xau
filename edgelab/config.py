@@ -32,6 +32,9 @@ SPLITS = {
 }
 SPLIT_ORDER = ["archive", "discovery", "validation", "holdout", "forward"]
 RESEARCH_SPLITS = ["discovery", "validation", "holdout"]
+# Splits a researcher (human or Claude) may LOOK AT when designing hypotheses. Holdout is sealed:
+# its numbers appear only on discovery cards of hypotheses that passed validation.
+DESIGN_SPLITS = ["discovery", "validation"]
 
 # Embargo between splits: trades whose holding window crosses a split boundary
 # are dropped from the later split's statistics (prevents overlap leakage).

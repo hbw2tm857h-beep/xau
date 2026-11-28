@@ -9,7 +9,7 @@ from pathlib import Path as FsPath
 import numpy as np
 import pandas as pd
 
-from .config import CACHE, STORE, OUTPUT, DEFAULT, SPLITS, RESEARCH_SPLITS
+from .config import CACHE, STORE, OUTPUT, DEFAULT, SPLITS, RESEARCH_SPLITS, DESIGN_SPLITS
 from .frame import load_frame, load_m15_cached
 from .simulator import Path
 from .setups import generate_decisions, SETUPS
@@ -69,7 +69,7 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
 
     # ------------------------------------------------------------- setups
     perf = []
-    for (s, d, sp), g in T.groupby(["setup", "direction", "split"]):
+    for (s, d, sp), g in T[T["split"].isin(["archive"] + DESIGN_SPLITS)].groupby(["setup", "direction", "split"]):
         x = summarise(g["r"].values)
         perf.append({"setup": s, "direction": int(d), "split": sp, "gross": float(g["r_gross"].mean()),
                      "cost": float(g["cost_r"].mean()), **x})
@@ -78,21 +78,21 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
 
     # ------------------------------------------------------------- taxonomy
     cs_d = category_stats(T, lab.flags, "discovery")
-    cs_o = category_stats(T[T["split"].isin(["validation", "holdout"])].assign(split="oos"),
-                          lab.flags[T["split"].isin(["validation", "holdout"])], "oos")
+    cs_o = category_stats(T[T["split"] == "validation"].assign(split="oos"),
+                          lab.flags[T["split"] == "validation"], "oos")
     cs = cs_d.merge(cs_o[["id", "n_flagged", "delta_r", "p_value", "q_value", "verdict"]], on="id",
                     suffixes=("", "_oos"))
     cs["replicated"] = (cs["verdict"] == cs["verdict_oos"]) & cs["verdict"].str.startswith(("confirmed", "CONTRA"))
     R["taxonomy"] = cs.merge(category_table()[["id", "definition"]], on="id").to_dict("records")
-    losers = T[T["r"] < 0]
+    losers = T[(T["r"] < 0) & T["split"].isin(DESIGN_SPLITS)]
     R["mistake_by_setup"] = (lab.flags.loc[losers.index].groupby(losers["setup"]).mean()).round(3).reset_index().to_dict("records")
     hf = hindsight_fix(cf)
     hf = hf.merge(T[["trade_id", "r", "setup", "direction", "split"]], on="trade_id")
-    R["hindsight_best_alt"] = hf[hf["r"] < 0]["best_alt"].value_counts(normalize=True).round(4).to_dict()
+    R["hindsight_best_alt"] = hf[(hf["r"] < 0) & hf["split"].isin(DESIGN_SPLITS)]["best_alt"].value_counts(normalize=True).round(4).to_dict()
 
     # ------------------------------------------------------------- counterfactual policies
     pol_d = policy_table(T, cf, split="discovery")
-    pol_o = policy_table(T[T["split"].isin(["validation", "holdout"])].assign(split="oos"), cf, split="oos")
+    pol_o = policy_table(T[T["split"] == "validation"].assign(split="oos"), cf, split="oos")
     R["policy"] = {"variants": VARIANTS,
                    "discovery": pol_d.reset_index().to_dict("records"),
                    "oos": pol_o.reset_index().to_dict("records")}
@@ -110,12 +110,12 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     R["momentum"] = {k: B.momentum_persistence(f, fr, look=k).to_dict("records") for k in ("mom1", "mom6", "mom24")}
     R["asymmetry"] = B.directional_asymmetry(f, fr)
     R["side_profile"] = B.setup_side_profile(T).to_dict("records")
-    R["oaxaca"] = B.oaxaca(T[T["split"].isin(["discovery", "validation", "holdout"])])
+    R["oaxaca"] = B.oaxaca(T[T["split"].isin(DESIGN_SPLITS)])
     R["conventional"] = B.conventional_scoreboard(T, cs).to_dict("records")
-    reg = T[T["split"].isin(RESEARCH_SPLITS)].groupby(["setup", "regime_trend"])["r"].agg(["mean", "size"]).reset_index()
+    reg = T[T["split"].isin(DESIGN_SPLITS)].groupby(["setup", "regime_trend"])["r"].agg(["mean", "size"]).reset_index()
     R["setup_regime"] = reg.to_dict("records")
-    hm = T[T["split"].isin(RESEARCH_SPLITS)].groupby(["dow", "hour"])["r"].agg(["mean", "size"]).reset_index()
-    hm["loss_rate"] = T[T["split"].isin(RESEARCH_SPLITS)].groupby(["dow", "hour"])["win"].mean().values
+    hm = T[T["split"].isin(DESIGN_SPLITS)].groupby(["dow", "hour"])["r"].agg(["mean", "size"]).reset_index()
+    hm["loss_rate"] = T[T["split"].isin(DESIGN_SPLITS)].groupby(["dow", "hour"])["win"].mean().values
     R["heat_hour_dow"] = hm.to_dict("records")
 
     # ------------------------------------------------------------- discovery scan + ML
@@ -133,6 +133,10 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
                  "top": sc.head(25).drop(columns=["conds"], errors="ignore").to_dict("records")}
     ml = walk_forward_ml(T, cf=cf)
     pred = ml.pop("predictions")
+    # seal holdout/forward in the descriptive ML views (the predictions themselves stay usable as a feature)
+    ml["per_year"] = [y for y in ml["per_year"] if y["year"] < 2022]
+    for k in ("oos_selected", "oos_all", "auc"):
+        ml[k] = {sp: v for sp, v in ml[k].items() if sp in DESIGN_SPLITS}
     pred[["trade_id", "p"]].to_pickle(CACHE / "ml_pred.pkl")
     R["ml"] = ml
     T = T.drop(columns=["ml_p"], errors="ignore").merge(pred[["trade_id", "p"]].rename(columns={"p": "ml_p"}), on="trade_id", how="left")
@@ -191,7 +195,7 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
                         "tests": PF.test_self_assessment(ut, T),
                         "why_sells_lose": PF.why_sells_lose(ut).to_dict("records")}
     else:
-        base = T[T["split"].isin(["discovery", "validation", "holdout"])]
+        base = T[T["split"].isin(DESIGN_SPLITS)]
         R["profile"] = {"source": "market_baseline", "n": len(base),
                         "tests": PF.test_self_assessment(base, T),
                         "why_sells_lose": PF.why_sells_lose(base, cf).to_dict("records"),
