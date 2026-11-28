@@ -3,3 +3,4 @@ __pycache__/
 research/reddit_raw/
 .env
 edgelab/store/cache/
+edgelab/store/atlas_validation.csv

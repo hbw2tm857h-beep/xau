@@ -151,8 +151,9 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     V = AT.validate(T, atl)
     H = AT.hindsight_map(T, lab.rm)
     R["atlas"] = AT.summarise_atlas(T, atl, V, H)
-    atl["cells"].sort_values("ev_t", ascending=False).head(3000).to_csv(STORE / "atlas_top_cells.csv", index=False)
-    V.to_csv(STORE / "atlas_validation.csv", index=False)
+    atl["cells"].sort_values("ev_t", ascending=False).head(3000).round(4).to_csv(STORE / "atlas_top_cells.csv", index=False)
+    (V[V["ev_replicates"] | V["delta_replicates"]].round(4)
+     .to_csv(STORE / "atlas_replicated.csv.gz", index=False, compression="gzip"))
     n_atlas = int(len(atl["cells"]))
     atlas_specs = AT.to_specs(V)
     del atl
