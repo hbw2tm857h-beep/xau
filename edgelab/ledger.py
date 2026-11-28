@@ -28,6 +28,10 @@ def hyp_id(spec: dict) -> str:
     return "H" + hashlib.sha1(key.encode()).hexdigest()[:10]
 
 
+from functools import lru_cache
+
+
+@lru_cache(maxsize=1)
 def legacy_trial_count() -> int:
     """Rows logged by earlier research rounds in research/ (prior data snooping)."""
     n = 0
@@ -49,33 +53,41 @@ class Ledger:
     def __init__(self, path: Path = LEDGER):
         self.path = path
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._recs: list[dict] | None = None
+        self._tested: set | None = None
 
     def append(self, rec: dict) -> None:
-        rec = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S"), **rec}
+        rec = jsonable({"ts": time.strftime("%Y-%m-%dT%H:%M:%S"), **rec})
         with open(self.path, "a") as fh:
-            fh.write(json.dumps(jsonable(rec), default=str) + "\n")
+            fh.write(json.dumps(rec, default=str) + "\n")
+        if self._recs is not None:
+            self._recs.append(json.loads(json.dumps(rec, default=str)))
+            if rec.get("hyp_id"):
+                self._tested.add((rec["hyp_id"], rec.get("split")))
 
     def records(self) -> list[dict]:
-        if not self.path.exists():
-            return []
-        return [json.loads(x) for x in self.path.read_text().splitlines() if x.strip()]
+        """All records (cached in memory; the file stays the source of truth and is append-only)."""
+        if self._recs is None:
+            self._recs = ([json.loads(x) for x in self.path.read_text().splitlines() if x.strip()]
+                          if self.path.exists() else [])
+            self._tested = {(r.get("hyp_id"), r.get("split")) for r in self._recs if r.get("hyp_id")}
+        return self._recs
 
     def frame(self) -> pd.DataFrame:
         r = self.records()
         return pd.json_normalize(r) if r else pd.DataFrame()
 
     def tested(self, hid: str, split: str) -> bool:
-        return any(r.get("hyp_id") == hid and r.get("split") == split for r in self.records())
+        self.records()
+        return (hid, split) in self._tested
 
     def n_trials(self, include_legacy: bool = True) -> int:
         n = sum(1 for r in self.records() if r.get("split") == "discovery")
         return n + (legacy_trial_count() if include_legacy else 0)
 
     def sharpe_var(self) -> float:
-        df = self.frame()
-        if not len(df) or "stats.sharpe" not in df:
-            return 0.01
-        s = df.loc[df["split"] == "discovery", "stats.sharpe"].dropna()
+        s = pd.Series([(r.get("stats") or {}).get("sharpe") for r in self.records()
+                       if r.get("split") == "discovery"], dtype=float).dropna()
         return float(s.var()) if len(s) > 5 else 0.01
 
     def corrected(self) -> pd.DataFrame:

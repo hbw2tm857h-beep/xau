@@ -15,6 +15,8 @@ import pandas as pd
 
 from .stats import summarise, max_drawdown, deflated_sharpe, bootstrap_ci
 
+_R_CACHE: dict = {}
+_CF_INDEX: dict = {}
 STOP_SCALE = {"stop_0.5x": 0.5, "stop_1.5x": 1.5, "stop_2x": 2.0}
 
 
@@ -76,12 +78,20 @@ def trade_r(t: pd.DataFrame, cf: pd.DataFrame | None, exit_: str = "base") -> pd
     """R per trade under an exit variant, in the variant's OWN risk units."""
     if exit_ == "base" or cf is None:
         return t["r"]
-    col = t[["trade_id"]].merge(cf[["trade_id", exit_]], on="trade_id", how="left")[exit_]
-    col.index = t.index
+    key = (id(t), len(t), id(cf), exit_)
+    if key in _R_CACHE:
+        return _R_CACHE[key]
+    if id(cf) not in _CF_INDEX:
+        _CF_INDEX.clear()
+        _CF_INDEX[id(cf)] = cf.set_index("trade_id")
+    col = pd.Series(_CF_INDEX[id(cf)][exit_].reindex(t["trade_id"].values).values, index=t.index, dtype=float)
     if exit_ in STOP_SCALE:
         col = col / STOP_SCALE[exit_]
     elif exit_ == "stop_atr2":
         col = col * t["stop_atr"] / 2.0
+    if len(_R_CACHE) > 400:
+        _R_CACHE.clear()
+    _R_CACHE[key] = col
     return col
 
 

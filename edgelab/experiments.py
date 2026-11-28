@@ -312,14 +312,12 @@ class Engine:
     # ------------------------------------------------------------------ comparison / contradictions
     def relate(self, spec: dict, rep: dict) -> list[dict]:
         out = []
-        m_new = mask(self.t, spec) & (self.t["split"] == "discovery")
-        ids_new = set(self.t.loc[m_new, "trade_id"])
+        ids_new = self._disc_set(rep["hyp_id"], spec)
         feats_new = {c["f"] for c in spec.get("conditions", [])}
         for other in self.discoveries:
             if other["hyp_id"] == rep["hyp_id"]:
                 continue
-            m_o = mask(self.t, other["spec"]) & (self.t["split"] == "discovery")
-            ids_o = set(self.t.loc[m_o, "trade_id"])
+            ids_o = self._disc_set(other["hyp_id"], other["spec"])
             j = len(ids_new & ids_o) / max(1, len(ids_new | ids_o))
             if j > 0.3:
                 out.append({"type": "overlap", "with": other["hyp_id"], "jaccard": round(j, 3),
@@ -339,6 +337,15 @@ class Engine:
             out.append({"type": "regime_dependence", "detail": {k: int(v) for k, v in signs.items()},
                         "note": "Works in some trend regimes and loses in others."})
         return out
+
+    def _disc_set(self, hid: str, spec: dict) -> frozenset:
+        """Discovery-split trade ids of a hypothesis (cached; masks are expensive)."""
+        if not hasattr(self, "_sets"):
+            self._sets = {}
+        if hid not in self._sets:
+            m = mask(self.t, spec) & (self.t["split"] == "discovery")
+            self._sets[hid] = frozenset(np.flatnonzero(m.values))
+        return self._sets[hid]
 
     # ------------------------------------------------------------------ proposals
     def propose(self, outcome: dict):
@@ -424,13 +431,17 @@ class Engine:
         holdout_seen = {r["hyp_id"] for r in self.ledger.records() if r.get("split") == "holdout"}
         out = []
         var_sr = self.ledger.sharpe_var()
+        hold_status, disc_trials = {}, {}
+        for x in self.ledger.records():
+            if x.get("split") == "holdout":
+                hold_status[x.get("hyp_id")] = x["status"]
+            elif x.get("split") == "discovery" and x.get("hyp_id") not in disc_trials:
+                disc_trials[x.get("hyp_id")] = x.get("n_trials_at_test")
         for hid, r in last.items():
-            st = [x for x in self.ledger.records() if x.get("hyp_id") == hid and x.get("split") == "holdout"]
-            status = st[-1]["status"] if st else r["status"]
+            status = hold_status.get(hid, r["status"])
             if status in ("rejected_discovery", "negative_edge", "error"):
                 continue
-            n_tr = next((x.get("n_trials_at_test") for x in self.ledger.records()
-                         if x.get("hyp_id") == hid and x.get("split") == "discovery"), self.n_trials())
+            n_tr = disc_trials.get(hid) or self.n_trials()
             rep = full_report(self.t, self.cf, r["spec"], n_tr, var_sr, reveal_holdout=hid in holdout_seen)
             rep.update(status=status, n_trials_at_test=n_tr)
             from .robustness import stress
@@ -441,6 +452,7 @@ class Engine:
             rep["evidence_score"] = evidence_score(rep["by_split"], rep["regimes"])
             out.append(rep)
         notes = [r for r in self.ledger.records() if r.get("type") == "note" and r.get("hyp_ids")]
+        # (reports below: one pass over the ledger, not one per hypothesis)
         self.discoveries = []
         for rep in out:
             rep["caveats"] = [n["note"] for n in notes if rep["hyp_id"] in n["hyp_ids"]]
