@@ -47,8 +47,9 @@ class Lab:
         self.cf = _cached("counterfactuals", lambda: run_counterfactuals(self.trades, self.f, self.path), rebuild)
         flags = flag_trades(self.trades, self.cf)
         self.flags = flags
-        for c in flags.columns:
-            self.trades[f"flag_{c}"] = flags[c].values
+        self.trades = pd.concat([self.trades, flags.add_prefix("flag_").set_index(self.trades.index)], axis=1)
+        from .remedies import run_remedies
+        self.rm = _cached("remedies", lambda: run_remedies(self.trades, self.f, self.path, self.cf), rebuild)
         mp = CACHE / "ml_pred.pkl"
         if mp.exists():
             self.trades = self.trades.merge(pd.read_pickle(mp).rename(columns={"p": "ml_p"}), on="trade_id", how="left")
@@ -143,13 +144,33 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     T["ml_sel"] = T["trade_id"].isin(set(pred.loc[pred["selected"], "trade_id"]))
     lab.trades = T
 
+    # ------------------------------------------------------------- mistake x remedy atlas
+    from . import atlas as AT
+    t_at = time.time()
+    atl = AT.build(T, lab.rm)
+    V = AT.validate(T, atl)
+    H = AT.hindsight_map(T, lab.rm)
+    R["atlas"] = AT.summarise_atlas(T, atl, V, H)
+    atl["cells"].sort_values("ev_t", ascending=False).head(3000).to_csv(STORE / "atlas_top_cells.csv", index=False)
+    V.to_csv(STORE / "atlas_validation.csv", index=False)
+    n_atlas = int(len(atl["cells"]))
+    atlas_specs = AT.to_specs(V)
+    del atl
+    print(f"[atlas] {n_atlas:,} cells, {R['atlas']['ev_replicated']} EV-replicated, "
+          f"{R['atlas']['delta_replicated']} improvement-replicated in {time.time()-t_at:.0f}s")
+
     # ------------------------------------------------------------- experiment engine
     led = Ledger()
-    eng = Engine(T, cf, led, scan_df=sc, lookalike=rep if len(rep) else None, extra_trials=len(sc))
+    cf_ext = cf.merge(lab.rm.drop(columns=["skip", "opposite"]), on="trade_id", how="left")
+    eng = Engine(T, cf_ext, led, scan_df=sc, lookalike=rep if len(rep) else None,
+                 extra_trials=len(sc) + n_atlas)
     if not eng.queue and not led.records():
         eng.seed(cs, pol_d)
     eng.seed_momentum_track()
     eng.seed_agenda()
+    for sp_ in atlas_specs:
+        eng.push(sp_, 96)
+    eng.save()
     eng.seed_ml()
     print(f"[engine] running {budget} experiments (queue {len(eng.queue)})")
     eng.run(budget)
@@ -157,7 +178,7 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     df = led.frame()
     R["experiments"] = {
         "n_records": len(df), "n_hypotheses": int(df["hyp_id"].nunique()) if len(df) else 0,
-        "n_trials_total": eng.n_trials(), "legacy_trials": legacy_trial_count(), "scan_trials": len(sc),
+        "n_trials_total": eng.n_trials(), "legacy_trials": legacy_trial_count(), "scan_trials": len(sc), "atlas_trials": n_atlas,
         "status_counts": df.groupby("hyp_id")["status"].last().value_counts().to_dict() if len(df) else {},
         "next": eng.next_proposals(12),
     }
@@ -171,7 +192,7 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
         if rec.get("split") == "discovery" and rec.get("hyp_id") not in seen and rec.get("spec"):
             seen.add(rec["hyp_id"]); fam.append(rec["spec"])
     fam += [scan_to_spec(r) for _, r in sc.head(600).iterrows()]
-    X, keep = daily_matrix(T, cf, fam)
+    X, keep = daily_matrix(T, cf_ext, fam)
     rc = reality_check(X, n_boot=500)
     if rc.get("n_hypotheses"):
         rc["best"] = describe(fam[keep[rc["best_index"]]])
@@ -182,7 +203,7 @@ def run(budget: int = 60, rebuild: bool = False, user_trades: str | None = None,
     from . import forward as FW
     data_end = str(f["tc"].max())
     R["frozen"] = FW.freeze(eng.discoveries, data_end)
-    R["forward"] = FW.score(T, cf)
+    R["forward"] = FW.score(T, cf_ext)
     R["discoveries"] = sorted(eng.discoveries, key=lambda d: -d.get("evidence_score", 0))
 
     # ------------------------------------------------------------- personal / directional profile

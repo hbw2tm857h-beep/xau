@@ -107,6 +107,8 @@ def build(R: dict, lab) -> str:
     payload["regime_series"] = _regime_series(lab)
     payload["dist"] = _distributions(lab)
     payload["variants"] = VARIANTS
+    from .remedies import REMEDIES, describe as rdesc
+    payload["remedy_text"] = {r: rdesc(r) for r in REMEDIES}
     payload["mistake_defs"] = [{"id": m.id, "name": m.name, "family": m.family, "phase": m.phase,
                                "definition": m.definition} for m in MISTAKES]
     payload["ledger"] = R.get("ledger", [])[-1500:]
@@ -259,7 +261,7 @@ const statusPill = s => {
 
 /* ------------------------------------------------------------------ tabs */
 const TABS = [
-  ["overview","Overview"],["setups","Setups"],["mistakes","Mistake taxonomy"],["counterfactuals","Counterfactuals"],
+  ["overview","Overview"],["setups","Setups"],["mistakes","Mistake taxonomy"],["atlas","Mistake × remedy"],["counterfactuals","Counterfactuals"],
   ["lookalikes","Look-alikes"],["events","Event studies"],["behaviour","Market behaviour"],["discoveries","Discoveries"],
   ["experiments","Experiments"],["profile","Edge profile"],["inspector","Trade inspector"]];
 const R = {};
@@ -273,7 +275,7 @@ function overview() {
   <div class="kpis">
     <div class="kpi"><small>H1 bars (M15 for fills)</small><b>${D.data.h1_bars.toLocaleString()}</b><small>${D.data.h1_from.slice(0,10)} → ${D.data.h1_to.slice(0,10)}</small></div>
     <div class="kpi"><small>Reconstructed decisions</small><b>${D.data.trades.toLocaleString()}</b><small>16 setups × long/short</small></div>
-    <div class="kpi"><small>Trials counted (incl. legacy)</small><b>${ex.n_trials_total.toLocaleString()}</b><small>${ex.legacy_trials} legacy · ${ex.scan_trials} scan · ledger</small></div>
+    <div class="kpi"><small>Trials counted (incl. legacy)</small><b>${ex.n_trials_total.toLocaleString()}</b><small>${ex.legacy_trials} legacy · ${ex.scan_trials} scan · ${(ex.atlas_trials||0).toLocaleString()} atlas · ledger</small></div>
     <div class="kpi"><small>Scan cells p&lt;0.05 vs chance</small><b>${sc.observed_p05} / ${Math.round(sc.expected_false_at_p05)}</b><small>FDR survivors: ${sc.fdr_survivors}</small></div>
     <div class="kpi"><small>Reality Check (best of family)</small><b>p=${D.reality_check&&D.reality_check.p_studentised!=null?num(D.reality_check.p_studentised,3):"–"}</b><small>${D.reality_check?D.reality_check.n_hypotheses+" hypotheses · "+(D.reality_check.rw_survivors||[]).length+" survive FWER":""}</small></div>
     <div class="kpi"><small>Validated discoveries</small><b>${val}</b><small>of ${ex.n_hypotheses} hypotheses tested</small></div>
@@ -396,6 +398,58 @@ function mistakesAfter() {
   plot("hd_heat", [{type:"heatmap", x:[...Array(24).keys()], y:[0,1,2,3,4,6].map(d=>days[d]), z, zmid:0,
       colorscale:[[0,css("--neg")],[0.5,css("--panel")],[1,css("--pos")]], hovertemplate:"%{y} %{x}:00 · avg %{z:.3f}R<extra></extra>"}],
       {margin:{l:44,r:10,t:10,b:36}, xaxis:{title:"hour UTC", dtick:2}});
+}
+
+function atlasView() {
+  const A = D.atlas; if (!A) return "<h2>Mistake × remedy atlas</h2><p class='lead'>Not built yet.</p>";
+  const nm = id => id.split("+").map(x => A.mistake_names[x] || x).join(" + ");
+  return `<h2>Mistake × remedy atlas</h2>
+  <p class="lead">Every ex-ante mistake, alone, in every pair and in every triple with ≥40 discovery trades, crossed with ${A.n_remedies} remedies (5 entry × 4 stop × 8 exit fixes, plus skip and opposite), per side and per setup. "Improves" = paired change versus the trade as taken; "profitable" = expectancy of the remedied trades after costs. Discovery only; replication is measured on validation with nothing re-fitted. The holdout is never read here.</p>
+  <div class="kpis">
+    <div class="kpi"><small>Cells tested</small><b>${A.n_cells.toLocaleString()}</b><small>${A.n_combos.toLocaleString()} mistake combinations × scope</small></div>
+    <div class="kpi"><small>Profitable at p&lt;0.05 vs chance</small><b>${A.positive_ev_p05.toLocaleString()} / ${Math.round(A.expected_p05_under_null).toLocaleString()}</b><small>BH survivors: ${A.ev_bh_survivors.toLocaleString()}</small></div>
+    <div class="kpi"><small>Profitable and replicated vs luck</small><b>${A.ev_replicated.toLocaleString()} / ${Math.round(A.ev_replicated_expected||0).toLocaleString()}</b><small>of ${A.validated_cells.toLocaleString()} re-measured on validation</small></div>
+    <div class="kpi"><small>Improvement replicated vs luck</small><b>${A.delta_replicated.toLocaleString()} / ${Math.round(A.delta_replicated_expected||0).toLocaleString()}</b><small>BH survivors: ${A.delta_bh_survivors.toLocaleString()}</small></div>
+    <div class="kpi"><small>Sign agreement in validation</small><b>${pct(A.ev_sign_agreement)} / ${pct(A.delta_sign_agreement)}</b><small>profit / improvement · 50% = pure chance</small></div>
+  </div>
+  <div class="panel"><h3>Which remedy ingredients help? (mean improvement over all single-mistake cells, discovery)</h3><div id="at_comp" class="chart" style="min-height:300px"></div></div>
+  <div class="panel"><h3>Single mistakes × remedies: improvement versus the trade as taken</h3>
+    <div class="row"><select id="at_scope"><option value="all">all trades</option><option value="long">longs</option><option value="short">shorts</option></select>
+    <select id="at_split"><option value="disc">discovery</option><option value="valid">validation</option></select></div>
+    <div id="at_heat" class="chart" style="min-height:760px"></div>
+    <p class="note">Columns are grouped by entry fix, then stop, then exit. Hover for the full remedy. Blue = the remedy helps; red = it hurts.</p></div>
+  <div class="panel"><h3>Best remedy for each single mistake (pooled; chosen on discovery, checked on validation)</h3>${table(A.best_per_mistake.slice(), [
+    {label:"Mistake",f:r=>`<b>${esc(r.id)}</b> ${esc(r.name)}`,html:1},{label:"n",num:1,k:"n"},{label:"As taken",num:1,f:r=>sgn(r.base_ev),cls:r=>cls(r.base_ev)},
+    {label:"Best remedy",k:"remedy_text"},{label:"Δ disc",num:1,f:r=>sgn(r.delta),cls:r=>cls(r.delta)},{label:"t",num:1,f:r=>num(r.delta_t,1)},
+    {label:"EV disc",num:1,f:r=>sgn(r.ev),cls:r=>cls(r.ev)},{label:"Δ valid",num:1,f:r=>sgn(r.v_delta),cls:r=>cls(r.v_delta),sort:r=>r.v_delta},
+    {label:"EV valid",num:1,f:r=>sgn(r.v_ev),cls:r=>cls(r.v_ev),sort:r=>r.v_ev}])}</div>
+  <div class="panel"><h3>Mistake combinations that become PROFITABLE with a remedy, and stayed profitable in validation</h3>${table(A.top_ev.slice(), [
+    {label:"Scope",k:"scope"},{label:"Mistakes present",f:r=>esc(r.combo_text),html:1},{label:"Remedy",k:"remedy_text"},
+    {label:"n disc",num:1,k:"n"},{label:"EV disc",num:1,f:r=>sgn(r.ev),cls:r=>cls(r.ev)},{label:"t",num:1,f:r=>num(r.ev_t,1)},
+    {label:"n valid",num:1,k:"v_n"},{label:"EV valid",num:1,f:r=>sgn(r.v_ev),cls:r=>cls(r.v_ev)},{label:"t valid",num:1,f:r=>num(r.v_ev_t,1),sort:r=>r.v_ev_t}])}
+    <p class="note">The strongest of these go to the experiment engine as hypotheses (origin "atlas") for their one look at the holdout, and the Reality Check counts all ${A.n_cells.toLocaleString()} cells.</p></div>
+  <div class="panel"><h3>Largest replicated improvements (may still lose money)</h3>${table(A.top_delta.slice(0,40), [
+    {label:"Scope",k:"scope"},{label:"Mistakes present",f:r=>esc(r.combo_text),html:1},{label:"Remedy",k:"remedy_text"},
+    {label:"n",num:1,k:"n"},{label:"Δ disc",num:1,f:r=>sgn(r.delta),cls:r=>cls(r.delta)},{label:"Δ valid",num:1,f:r=>sgn(r.v_delta),cls:r=>cls(r.v_delta)},
+    {label:"EV valid",num:1,f:r=>sgn(r.v_ev),cls:r=>cls(r.v_ev)}])}</div>
+  <div class="panel"><h3>Hindsight map: what would have fixed each after-the-fact mistake</h3>
+    <p class="note">Descriptive only (discovery + validation). These diagnoses are known only after the trade, so the remedy cannot be chosen in advance.</p>
+    ${table(A.hindsight.slice(), [{label:"Diagnosis",f:r=>`<b>${esc(r.id)}</b> ${esc(r.name)}`,html:1},{label:"n",num:1,k:"n"},
+      {label:"Best remedy in hindsight",k:"best_remedy_text"},{label:"Improvement",num:1,f:r=>sgn(r.best_improvement),cls:r=>cls(r.best_improvement)}])}</div>`;
+}
+function atlasAfter() {
+  const A = D.atlas; if (!A) return;
+  const C = A.components, parts = ["entry","stop","exit"];
+  plot("at_comp", parts.map((p,i) => { const g = C.filter(c=>c.part===p);
+    return {type:"bar", name:p, x:g.map(c=>c.value), y:g.map(c=>c.mean_delta), marker:{color:[css("--gold"),css("--long"),css("--short")][i]},
+      customdata:g.map(c=>c.share_positive), hovertemplate:"%{x}: %{y:+.3f}R · helps in %{customdata:.0%} of cells<extra>"+p+"</extra>"}; }),
+    {yaxis:{title:"mean Δ R vs as taken", zerolinecolor:css("--muted")}});
+  const draw = () => { const h = A.heat[$("#at_scope").value], z = h[$("#at_split").value];
+    plot("at_heat", [{type:"heatmap", x:h.cols.map((c,i)=>i), y:h.rows.map(r=>r+" "+(A.mistake_names[r]||"")), z, zmid:0, zmin:-0.4, zmax:0.4,
+      colorscale:[[0,css("--neg")],[0.5,css("--panel")],[1,css("--pos")]], customdata:h.rows.map(()=>h.cols.map(c=>D.remedy_text[c]||c)),
+      hovertemplate:"%{y}<br>%{customdata}<br>Δ %{z:+.3f}R<extra></extra>"}],
+      {margin:{l:300,r:10,t:10,b:30}, xaxis:{showticklabels:false, title:"remedies (entry → stop → exit)"}, yaxis:{tickfont:{size:10}, autorange:"reversed"}}); };
+  $("#at_scope").onchange = draw; $("#at_split").onchange = draw; draw();
 }
 
 function counterfactuals() {
@@ -678,7 +732,7 @@ function show() {
 }
 
 const VIEWS = {overview:[overview,overviewAfter], setups:[setups,setupsAfter], mistakes:[mistakes,mistakesAfter],
-  counterfactuals:[counterfactuals,counterfactualsAfter], lookalikes:[lookalikes,null], behaviour:[behaviour,behaviourAfter],
+  atlas:[atlasView,atlasAfter], counterfactuals:[counterfactuals,counterfactualsAfter], lookalikes:[lookalikes,null], behaviour:[behaviour,behaviourAfter],
   discoveries:[discoveries,discoveriesAfter], experiments:[experiments,experimentsAfter], profile:[profile,null], inspector:[inspector,inspectorAfter]};
 function route() {
   const id = (location.hash||"#overview").slice(1); const key = VIEWS[id] ? id : "overview";
